@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% load kpi_tags %}
+{% block title %}Branch Head Dashboard - iTechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+  <div class="page-title-group">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--tp-text-primary); margin: 0;">Branch Workspace</h1>
+      <span class="badge tp-badge" style="background: var(--tp-primary-50); color: var(--tp-primary-700); border: 1px solid var(--tp-primary-200); font-size: 0.82rem; padding: 5px 12px;">
+        {{ user.branch.name|default:"General Branch" }}
+      </span>
+    </div>
+    <p style="font-size: 0.9rem; color: var(--tp-text-muted); margin: 6px 0 0 0;">
+      Real-time branch analytics, counselor &amp; telecaller performance breakdown, RNR tracking, and pipeline conversions.
+    </p>
+  </div>
+  <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="{% url 'branch_head_counselors_list' %}" class="btn btn-secondary tp-btn-secondary">Counselors</a>
+    <a href="{% url 'branch_head_telecallers_list' %}" class="btn btn-secondary tp-btn-secondary">Telecallers</a>
+    <a href="{% url 'branch_head_leads_list' %}" class="btn btn-primary tp-btn-primary">Branch Leads</a>
+    <a href="{% url 'admin_enrolled_students' %}" class="btn btn-secondary tp-btn-secondary">Enrolled Students</a>
+  </div>
+</div>
+
+<!-- PERIOD FILTER BAR -->
+<div class="filter-card tp-card" style="padding: 14px 18px; margin-bottom: 24px;">
+  <form method="get" class="filter-form" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <!-- Preset Period Buttons -->
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-right: 4px;">Period:</span>
+      <a href="?period=all" class="btn {% if period == 'all' or not period %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">All Time</a>
+      <a href="?period=today" class="btn {% if period == 'today' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">Today</a>
+      <a href="?period=week" class="btn {% if period == 'week' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">This Week</a>
+      <a href="?period=month" class="btn {% if period == 'month' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">This Month</a>
+    </div>
+
+    {% include "partials/date_range_picker.html" with from_name="start_date" to_name="end_date" from_val=start_date to_val=end_date period_name="period" period_val="custom" %}
+  </form>
+</div>
+
+<!-- CLICKABLE KPI CARDS -->
+<div class="kpi-grid tp-kpi-grid-6 tp-stagger-container" style="gap: 12px; margin-bottom: 20px;">
+  <!-- Total Branch Leads -->
+  <a href="{% build_kpi_url 'branch_head_leads_list' kpi_label='Total Branch Leads' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view all branch leads in active period">
+    <div class="kpi-info">
+      <h4>Total Leads</h4>
+      <div class="kpi-value" style="color: var(--tp-primary-600);">{{ branch_leads_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap blue">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+    </div>
+  </a>
+
+  <!-- Attended Leads -->
+  <a href="{% build_kpi_url 'branch_head_leads_list' 'status_group' 'attended' kpi_label='Attended Leads' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view contacted/attended leads in active period">
+    <div class="kpi-info">
+      <h4>Attended Leads</h4>
+      <div class="kpi-value" style="color: #059669;">{{ attended_leads_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap green">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+  </a>
+
+  <!-- Visited Leads -->
+  <a href="{% build_kpi_url 'branch_head_leads_list' 'status_group' 'visits' kpi_label='Center Visits' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view center visits in active period">
+    <div class="kpi-info">
+      <h4>Center Visits</h4>
+      <div class="kpi-value" style="color: #7c3aed;">{{ visits_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap purple">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </div>
+  </a>
+
+  <!-- Enrolled Leads & Students -->
+  <a href="{% build_kpi_url 'admin_enrolled_students' kpi_label='Enrolled Students' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view enrolled student admissions in active period">
+    <div class="kpi-info">
+      <h4>Enrolled Students</h4>
+      <div class="kpi-value" style="color: #10b981;">{{ joined_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap green">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+    </div>
+  </a>
+
+  <!-- RNR Leads -->
+  <a href="{% build_kpi_url 'branch_head_leads_list' 'status_group' 'rnr' kpi_label='RNR Leads' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view Ring No Response leads in active period">
+    <div class="kpi-info">
+      <h4>RNR Leads</h4>
+      <div class="kpi-value" style="color: #dc2626;">{{ rnr_leads_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap rose">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    </div>
+  </a>
+
+  <!-- Pending Follow-ups -->
+  <a href="{% build_kpi_url 'admin_followups_list' 'status' 'pending' kpi_label='Pending Follow-ups' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view pending follow-ups in active period">
+    <div class="kpi-info">
+      <h4>Pending Follow-ups</h4>
+      <div class="kpi-value" style="color: #d97706;">{{ pending_followups_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap amber">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+    </div>
+  </a>
+</div>
+
+<!-- DETAILED PERFORMANCE TABLES -->
+<div class="tp-grid-2col" style="gap: 24px; margin-bottom: 24px;">
+  <!-- COUNSELOR BREAKDOWN TABLE -->
+  <div class="crm-card tp-card">
+    <div class="crm-card-header tp-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">Counselor Performance Breakdown</h3>
+      <a href="{% url 'branch_head_counselors_list' %}" class="btn btn-secondary btn-sm">All Counselors</a>
+    </div>
+    <div class="table-responsive">
+      <table class="crm-table">
+        <thead>
+          <tr>
+            <th>Counselor</th>
+            <th>Active Leads</th>
+            <th>Attended</th>
+            <th>Visited</th>
+            <th>Enrolled</th>
+            <th>RNR</th>
+            <th style="text-align: right;">Drill-down</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in counselor_perf %}
+          <tr>
+            <td>
+              <strong><a href="{% url 'branch_head_counselor_detail' c.pk %}" style="text-decoration: none; color: #1e40af;">{{ c.get_full_name|default:c.username }}</a></strong>
+            </td>
+            <td><span class="badge" style="background: #e0e7ff; color: #4338ca; font-weight: 600;">{{ c.lead_count }}</span></td>
+            <td>{{ c.attended_count }}</td>
+            <td>{{ c.visits_count }}</td>
+            <td><span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 600;">{{ c.joined_count }}</span></td>
+            <td>
+              {% if c.rnr_count > 0 %}
+                <span class="badge" style="background: #fee2e2; color: #b91c1c; font-weight: 700;">{{ c.rnr_count }}</span>
+              {% else %}
+                <span style="color: #9ca3af;">0</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              <a href="{% url 'admin_counselor_leads_drilldown' c.pk %}" class="btn btn-secondary btn-sm" title="Drill down counselor leads">
+                View &rarr;
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No counselors assigned to this branch yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TELECALLER BREAKDOWN TABLE -->
+  <div class="crm-card tp-card">
+    <div class="crm-card-header tp-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">Telecaller Performance Breakdown</h3>
+      <a href="{% url 'branch_head_telecallers_list' %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">All Telecallers</a>
+    </div>
+    <div class="table-responsive">
+      <table class="crm-table">
+        <thead>
+          <tr>
+            <th>Telecaller</th>
+            <th>Counselor</th>
+            <th>Assigned Leads</th>
+            <th>Calls Made</th>
+            <th>Attended</th>
+            <th>RNR Calls</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in telecaller_perf %}
+          <tr>
+            <td>
+              <strong>{{ t.get_full_name|default:t.username }}</strong>
+            </td>
+            <td>
+              <span style="font-size: 0.8rem; color: var(--tp-text-muted);">
+                {% if t.counselor %}{{ t.counselor.get_full_name|default:t.counselor.username }}{% else %}-{% endif %}
+              </span>
+            </td>
+            <td><span class="badge tp-badge" style="background: var(--tp-primary-50); color: var(--tp-primary-700); font-weight: 600;">{{ t.lead_count }}</span></td>
+            <td>{{ t.call_count }}</td>
+            <td>{{ t.attended_count }}</td>
+            <td>
+              {% if t.rnr_count > 0 %}
+                <span class="badge tp-badge" style="background: #fee2e2; color: #b91c1c; font-weight: 700;">{{ t.rnr_count }}</span>
+              {% else %}
+                <span style="color: var(--tp-text-subtle);">0</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No telecallers assigned to this branch yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT BRANCH LEADS TABLE -->
+<div class="crm-card tp-card" style="margin-bottom: 24px;">
+  <div class="crm-card-header tp-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">Recent Branch Leads</h3>
+    <a href="{% url 'branch_head_leads_list' %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">View All Leads &rarr;</a>
+  </div>
+  <div class="table-responsive">
+    <table class="crm-table">
+      <thead>
+        <tr>
+          <th>Lead Name</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Category</th>
+          <th>Counselor</th>
+          <th>Telecaller</th>
+          <th>Captured Date</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in recent_leads %}
+        <tr>
+          <td>
+            <strong><a href="{% url 'branch_head_lead_detail' lead.pk %}" style="text-decoration: none; color: var(--tp-primary-600);">{{ lead.name }}</a></strong>
+          </td>
+          <td style="font-family: monospace; font-size: 0.85rem;">{{ lead.phone }}</td>
+          <td><span class="badge badge-{{ lead.status|lower|slugify }}">{{ lead.status }}</span></td>
+          <td>
+            <span class="badge tp-badge" style="background: {% if lead.category == 'Training' %}var(--tp-primary-50); color: var(--tp-primary-700);{% else %}#fef3c7; color: #92400e;{% endif %}">
+              {{ lead.category|default:"Training" }}
+            </span>
+          </td>
+          <td>{% if lead.assigned_counselor %}{{ lead.assigned_counselor.get_full_name|default:lead.assigned_counselor.username }}{% else %}-{% endif %}</td>
+          <td>{% if lead.assigned_telecaller %}{{ lead.assigned_telecaller.get_full_name|default:lead.assigned_telecaller.username }}{% else %}-{% endif %}</td>
+          <td>{{ lead.created_at|date:"M d, Y" }}</td>
+          <td style="text-align: right;">
+            <a href="{% url 'branch_head_lead_detail' lead.pk %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">Details</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">No leads found for the selected period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PIPELINE DISTRIBUTION CHART -->
+<div class="tp-chart-card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--tp-text-primary);">Branch Lead Pipeline Distribution</h3>
+  </div>
+  <div style="height: 270px; position: relative;">
+    <canvas id="branchHeadLeadStatusChart"></canvas>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('branchHeadLeadStatusChart');
+  if (ctx) {
+    const rawData = {{ status_dict|safe }};
+    const labels = Object.keys(rawData);
+    const data = Object.values(rawData);
+    if (window.TPCharts) {
+      window.TPCharts.createDoughnut(ctx, {
+        labels: labels,
+        data: data,
+        centerLabel: 'BRANCH LEADS',
+        cutout: '74%',
+        legendPosition: 'bottom'
+      });
+    } else {
+      if (typeof Chart.getChart === 'function') { var _ex = Chart.getChart(ctx); if (_ex) _ex.destroy(); }
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels.length ? labels : ['No Leads Yet'],
+          datasets: [{
+            data: data.length ? data : [0],
+            backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#64748b']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+  }
+});
+</script>
+{% endblock %}

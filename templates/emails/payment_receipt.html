@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tax Invoice {{ invoice_number }} — iTechPanda</title>
+  <style type="text/css">
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 620px) {
+      .email-container { width: 100% !important; }
+      .stack-column { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 24px 10px; background-color: #F1F5F9;">
+
+  <!-- Outer wrapper table -->
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9;">
+    <tr>
+      <td align="center">
+
+        <!-- 600px Container -->
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="max-width: 600px; width: 100%; background-color: #FFFFFF; border-radius: 8px; overflow: hidden; border: 1px solid #E2E8F0; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);">
+
+          <!-- 1. Header with Company Details and Badges -->
+          <tr>
+            <td style="padding: 24px 28px 16px 28px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td valign="top" style="width: 60%;">
+                    <div style="margin-bottom: 8px;">
+                      <a href="https://www.itechpanda.com" target="_blank" style="text-decoration: none; display: inline-block;">
+                        <img src="cid:itechpanda_logo" alt="iTechPanda" width="160" height="56" style="display: block; width: 160px; max-width: 160px; height: auto; max-height: 56px; border: 0; outline: none; text-decoration: none;" />
+                      </a>
+                    </div>
+                    <div style="font-size: 11px; color: #4B5563; margin-top: 4px; line-height: 1.4;">
+                      {{ invoice_config.address_lines.0 }}<br/>
+                      {{ invoice_config.address_lines.1 }}<br/>
+                      Mobile: {{ invoice_config.mobile }}<br/>
+                      GSTIN: {{ invoice_config.gstin }}<br/>
+                      Email: {{ invoice_config.email }}<br/>
+                      Website: {{ invoice_config.website }}
+                    </div>
+                  </td>
+                  <td valign="top" align="right" style="width: 40%;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="right" style="padding-bottom: 6px;">
+                          <div style="border: 1px solid #4B5563; border-radius: 14px; padding: 3px 12px; font-size: 10px; font-weight: 700; color: #1F2937; text-transform: uppercase; display: inline-block;">
+                            {% if is_without_gst %}FEE RECEIPT{% else %}TAX INVOICE{% endif %}
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="right">
+                          <div style="border: 1px solid #4B5563; border-radius: 14px; padding: 3px 12px; font-size: 10px; font-weight: 700; color: #1F2937; text-transform: uppercase; display: inline-block;">
+                            ORIGINAL FOR RECIPIENT
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- 2. Invoice Number & Date Bar -->
+          <tr>
+            <td style="padding: 0 28px 16px 28px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 4px; padding: 8px 12px;">
+                <tr>
+                  <td style="font-size: 12.5px; font-weight: 700; color: #111827;">
+                    Invoice No.: {{ invoice_number }}
+                  </td>
+                  <td align="right" style="font-size: 12.5px; font-weight: 700; color: #111827;">
+                    Invoice Date: {{ invoice_date }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- 3. BILL TO Section -->
+          <tr>
+            <td style="padding: 0 28px 16px 28px;">
+              <div style="font-size: 10px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px;">
+                BILL TO
+              </div>
+              <div style="font-size: 14px; font-weight: 700; color: #111827; margin-top: 2px;">
+                {{ customer_name }}
+              </div>
+              <div style="font-size: 12px; color: #4B5563; margin-top: 2px; line-height: 1.4;">
+                {% if customer_mobile %}Mobile: {{ customer_mobile }}<br/>{% endif %}
+                {% if customer_address %}{{ customer_address }}<br/>{% endif %}
+                Place of Supply: {{ place_of_supply }}
+              </div>
+            </td>
+          </tr>
+
+          <!-- 4. Services Table -->
+          <tr>
+            <td style="padding: 0 28px 18px 28px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;">
+                <thead>
+                  <tr>
+                    <th align="left" style="border-bottom: 2px solid #000000; padding: 6px 4px; font-size: 11px; font-weight: 700; color: #111827; width: 45%;">SERVICES</th>
+                    <th align="right" style="border-bottom: 2px solid #000000; padding: 6px 4px; font-size: 11px; font-weight: 700; color: #111827; width: 18%;">FEES</th>
+                    <th align="right" style="border-bottom: 2px solid #000000; padding: 6px 4px; font-size: 11px; font-weight: 700; color: #111827; width: 18%;">TAX</th>
+                    <th align="right" style="border-bottom: 2px solid #000000; padding: 6px 4px; font-size: 11px; font-weight: 700; color: #111827; width: 19%;">AMOUNT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td align="left" style="padding: 10px 4px; font-size: 12px; font-weight: 600; color: #111827; border-bottom: 1px solid #F3F4F6;">
+                      {{ course_name }}
+                    </td>
+                    <td align="right" style="padding: 10px 4px; font-size: 12px; color: #374151; border-bottom: 1px solid #F3F4F6;">
+                      ₹ {{ taxable_rate|floatformat:2 }}
+                    </td>
+                    <td align="right" style="padding: 10px 4px; font-size: 12px; color: #374151; border-bottom: 1px solid #F3F4F6;">
+                      ₹ {{ tax_amount|floatformat:2 }} ({{ tax_rate|floatformat:0 }}%)
+                    </td>
+                    <td align="right" style="padding: 10px 4px; font-size: 12px; font-weight: 700; color: #111827; border-bottom: 1px solid #F3F4F6;">
+                      ₹ {{ total_line_amount|floatformat:2 }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="left" style="border-top: 2px solid #000000; border-bottom: 2px solid #000000; padding: 6px 4px; font-size: 11.5px; font-weight: 700; color: #111827;">
+                      SUBTOTAL
+                    </td>
+                    <td style="border-top: 2px solid #000000; border-bottom: 2px solid #000000;"></td>
+                    <td align="right" style="border-top: 2px solid #000000; border-bottom: 2px solid #000000; padding: 6px 4px; font-size: 11.5px; font-weight: 700; color: #111827;">
+                      ₹ {{ tax_amount|floatformat:2 }}
+                    </td>
+                    <td align="right" style="border-top: 2px solid #000000; border-bottom: 2px solid #000000; padding: 6px 4px; font-size: 11.5px; font-weight: 700; color: #111827;">
+                      ₹ {{ total_line_amount|floatformat:2 }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+
+          <!-- 5. Bottom Split: Bank Details & Terms (Left) vs Summary (Right) -->
+          <tr>
+            <td style="padding: 0 28px 24px 28px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <!-- Left: Bank Details & Terms -->
+                  <td valign="top" class="stack-column" style="width: 52%; padding-right: 14px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #111827; text-transform: uppercase;">
+                      BANK DETAILS
+                    </div>
+                    <div style="font-size: 11px; color: #374151; margin-top: 3px; line-height: 1.45;">
+                      <strong>Name:</strong> {{ bank_details.name }}<br/>
+                      <strong>IFSC:</strong> {{ bank_details.ifsc }}<br/>
+                      <strong>Account No:</strong> {{ bank_details.account_number }}<br/>
+                      <strong>Bank:</strong> {{ bank_details.bank_name }}
+                    </div>
+
+                    <div style="font-size: 11px; font-weight: 700; color: #111827; text-transform: uppercase; margin-top: 14px;">
+                      TERMS AND CONDITIONS
+                    </div>
+                    {% for clause in terms_and_conditions %}
+                    <div style="font-size: 10px; color: #4B5563; margin-top: 3px; line-height: 1.35;">
+                      <strong>{{ forloop.counter }}.</strong> {{ clause }}
+                    </div>
+                    {% endfor %}
+                  </td>
+
+                  <!-- Right: Summary Table -->
+                  <td valign="top" class="stack-column" style="width: 48%; padding-left: 10px;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;">
+                      {% if is_without_gst %}
+                      <tr>
+                        <td style="padding: 3px 0; font-size: 12px; color: #4B5563;">Course Fee</td>
+                        <td align="right" style="padding: 3px 0; font-size: 12px; color: #111827;">₹ {{ base_course_fee|floatformat:2 }}</td>
+                      </tr>
+                      {% else %}
+                      <tr>
+                        <td style="padding: 3px 0; font-size: 12px; color: #4B5563;">Taxable Amount</td>
+                        <td align="right" style="padding: 3px 0; font-size: 12px; color: #111827;">₹ {{ taxable_amount|floatformat:2 }}</td>
+                      </tr>
+                      {% if is_interstate %}
+                      <tr>
+                        <td style="padding: 3px 0; font-size: 12px; color: #4B5563;">IGST @{{ igst_rate|floatformat:0 }}%</td>
+                        <td align="right" style="padding: 3px 0; font-size: 12px; color: #111827;">₹ {{ igst_amount|floatformat:2 }}</td>
+                      </tr>
+                      {% else %}
+                      <tr>
+                        <td style="padding: 3px 0; font-size: 12px; color: #4B5563;">CGST @{{ cgst_rate|floatformat:0 }}%</td>
+                        <td align="right" style="padding: 3px 0; font-size: 12px; color: #111827;">₹ {{ cgst_amount|floatformat:2 }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 3px 0; font-size: 12px; color: #4B5563;">SGST @{{ sgst_rate|floatformat:0 }}%</td>
+                        <td align="right" style="padding: 3px 0; font-size: 12px; color: #111827;">₹ {{ sgst_amount|floatformat:2 }}</td>
+                      </tr>
+                      {% endif %}
+                      {% endif %}
+                      <tr>
+                        <td style="border-top: 1px solid #D1D5DB; border-bottom: 1px solid #D1D5DB; padding: 6px 0; font-size: 13px; font-weight: 700; color: #111827;">
+                          Total Amount
+                        </td>
+                        <td align="right" style="border-top: 1px solid #D1D5DB; border-bottom: 1px solid #D1D5DB; padding: 6px 0; font-size: 13px; font-weight: 700; color: #111827;">
+                          ₹ {{ total_invoice_amount|floatformat:2 }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0 3px 0; font-size: 12px; color: #4B5563;">Received Amount</td>
+                        <td align="right" style="padding: 6px 0 3px 0; font-size: 12px; color: #111827;">₹ {{ received_amount|floatformat:2 }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 3px 0; font-size: 12.5px; font-weight: 700; color: #111827;">Balance</td>
+                        <td align="right" style="padding: 3px 0; font-size: 12.5px; font-weight: 700; color: #111827;">₹ {{ balance_amount|floatformat:2 }}</td>
+                      </tr>
+                    </table>
+
+                    <!-- Amount in words -->
+                    <div style="margin-top: 12px; font-size: 11px; color: #6B7280;">
+                      <div><strong>Total Amount (in words)</strong></div>
+                      <div style="font-style: italic; color: #111827; font-size: 11.5px; margin-top: 2px;">
+                        {{ total_amount_in_words }}
+                      </div>
+                    </div>
+
+                    <!-- Signatory -->
+                    <div align="right" style="margin-top: 18px; text-align: right;">
+                      {% if signature_cid %}
+                      <div style="margin-bottom: -6px;">
+                        <img src="cid:{{ signature_cid }}" width="140" height="36" style="width: 140px; height: 36px; display: inline-block; border: none; object-fit: contain;" alt="Authorized Signatory" />
+                      </div>
+                      {% elif is_authorized %}
+                      <div style="font-family: 'Brush Script MT', cursive, sans-serif; font-size: 22px; color: #1e3a8a; margin-bottom: -4px;">
+                        Shashikala.K
+                      </div>
+                      {% else %}
+                      <div style="height: 36px;"></div>
+                      {% endif %}
+                      <div style="font-size: 10px; font-weight: 700; color: #374151; border-top: 1px solid #6B7280; padding-top: 3px; display: inline-block; min-width: 160px;">
+                        {{ signatory_label }}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- 6. Footer Notice & PDF Attachment Indicator -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 14px 28px; text-align: center;">
+              <div style="font-size: 11.5px; color: #475569; font-weight: 500;">
+                &#128206; An official PDF copy of this Tax Invoice is attached to this email for your records.
+              </div>
+              <div style="font-size: 10.5px; color: #94A3B8; margin-top: 4px;">
+                This is a digitally generated tax invoice from <span style="font-family: 'Century Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800;"><span style="color: #174b89;">itech</span><span style="color: #36b44c;">p</span><span style="color: #262221;">anda</span></span> CRM. For inquiries, email admin@itechpanda.com or call 9884678282.
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

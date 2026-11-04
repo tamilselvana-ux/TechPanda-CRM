@@ -1,0 +1,82 @@
+<!-- Centralized Duplicate Lead Warning Component -->
+{% if duplicate_candidates %}
+<div class="alert alert-warning tp-dedupe-banner" style="border: 1px solid #f59e0b; background: #fffbeb; border-radius: 12px; padding: 18px; margin-bottom: 24px; box-shadow: 0 4px 12px -2px rgba(245, 158, 11, 0.15);">
+  <div style="display: flex; align-items: flex-start; gap: 14px;">
+    <div style="font-size: 26px; line-height: 1;">⚠️</div>
+    <div style="flex: 1;">
+      <div style="font-size: 15px; font-weight: 800; color: #92400e; margin-bottom: 4px;">
+        Possible Duplicate of Lead #{{ primary_candidate.id }} Detected
+      </div>
+      <p style="font-size: 13px; color: #b45309; margin: 0 0 12px 0;">
+        A matching record already exists in the system matching <strong>{{ primary_candidate.reason }}</strong>.
+      </p>
+      
+      <div style="background: #ffffff; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 12.5px;">
+        <div><strong>Name:</strong> {{ primary_candidate.name }}</div>
+        <div><strong>Phone:</strong> {{ primary_candidate.phone }}</div>
+        <div><strong>Email:</strong> {{ primary_candidate.email|default:'N/A' }}</div>
+        <div><strong>Branch:</strong> {{ primary_candidate.branch_name }}</div>
+        <div><strong>Status:</strong> <span class="badge" style="background: #64748b; color: white;">{{ primary_candidate.status }}</span></div>
+        <div><strong>Assigned To:</strong> {{ primary_candidate.assigned_to }}</div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="{{ primary_candidate.detail_url }}" target="_blank" class="btn btn-sm btn-primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+          🔍 Open Existing Lead #{{ primary_candidate.id }}
+        </a>
+        <button type="submit" name="action" value="merge" class="btn btn-sm btn-warning" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #78350f; background: #fef3c7; border: 1px solid #fde68a;">
+          ⚡ Merge Details into Lead #{{ primary_candidate.id }}
+        </button>
+        <button type="submit" name="force_create" value="1" class="btn btn-sm btn-outline-secondary" style="font-weight: 600;">
+          ➕ Create Anyway (Override)
+        </button>
+      </div>
+      <input type="hidden" name="merge_target_id" value="{{ primary_candidate.id }}">
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Live Duplicate Warning Modal & Real-time Indicator -->
+<div id="tpDedupeLiveAlert" style="display: none; margin-top: 8px; padding: 10px 14px; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; font-size: 12.5px; color: #92400e;">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+    <div>
+      <span style="font-weight: 700;">⚠️ Possible duplicate of Lead #<span id="tpDedupeId"></span></span>
+      <span id="tpDedupeDetails" style="color: #b45309; margin-left: 4px;"></span>
+    </div>
+    <a id="tpDedupeOpenLink" data-action="open-link" target="_blank" class="btn btn-xs btn-outline-primary" style="font-size: 11px; padding: 2px 8px; text-decoration: none;">Open Lead</a>
+  </div>
+</div>
+
+<!-- Modal Dialog -->
+<div class="modal fade" id="tpDedupePromptModal" tabindex="-1" aria-labelledby="tpDedupePromptModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+      <div class="modal-header" style="background: #fffbeb; border-bottom: 1px solid #fde68a; border-radius: 14px 14px 0 0; padding: 16px 20px;">
+        <h5 class="modal-title" id="tpDedupePromptModalLabel" style="font-size: 16px; font-weight: 800; color: #92400e; display: flex; align-items: center; gap: 8px;">
+          <span>⚠️</span> Possible Duplicate Lead Detected
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p style="font-size: 13.5px; color: #475569; margin-bottom: 14px;">
+          A matching lead record was found in the CRM. What would you like to do?
+        </p>
+        <div id="tpModalLeadCard" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; font-size: 13px; margin-bottom: 18px;">
+          <!-- Dynamically populated -->
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a id="tpModalBtnOpen" data-action="open-link" target="_blank" class="btn btn-primary" style="font-weight: 700; width: 100%;">
+            🔍 Open Existing Lead
+          </a>
+          <button type="button" id="tpModalBtnMerge" class="btn btn-warning" style="font-weight: 700; width: 100%; color: #78350f; background: #fde68a; border-color: #fcd34d;">
+            ⚡ Merge Details into Existing Lead
+          </button>
+          <button type="button" id="tpModalBtnForce" class="btn btn-outline-secondary" style="font-weight: 600; width: 100%;">
+            ➕ Create Anyway (Override & Save Duplicate)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

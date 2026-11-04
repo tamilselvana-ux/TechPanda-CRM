@@ -1,0 +1,18 @@
+{% comment %}
+  iTechPanda CRM - Compact Date Range Picker Partial
+  Usage:
+    {% include "partials/date_range_picker.html" with from_name="date_from" to_name="date_to" from_val=date_from to_val=date_to %}
+{% endcomment %}
+<div class="drp-root {{ extra_class|default:'' }}"
+     data-from-name="{{ from_name|default:'date_from' }}"
+     data-to-name="{{ to_name|default:'date_to' }}"
+     data-autosubmit="{{ autosubmit|default:'true' }}"
+     {% if label %}data-label="{{ label }}"{% endif %}
+     {% if min_date %}data-min-date="{{ min_date }}"{% endif %}
+     {% if max_date %}data-max-date="{{ max_date }}"{% endif %}>
+  <input type="hidden" name="{{ from_name|default:'date_from' }}" value="{{ from_val|default:'' }}">
+  <input type="hidden" name="{{ to_name|default:'date_to' }}" value="{{ to_val|default:'' }}">
+  {% if period_name %}
+  <input type="hidden" name="{{ period_name }}" value="{{ period_val|default:'custom' }}" data-drp-period="1" data-drp-period-val="{{ period_val|default:'custom' }}">
+  {% endif %}
+</div>

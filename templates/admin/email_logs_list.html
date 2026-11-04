@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block title %}Student Email Audit Logs - iTechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div class="page-title-group">
+    <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">Student Email Audit Logs</h1>
+    <p style="color: var(--tp-text-muted, #64748b); font-size: 0.9rem; margin-top: 4px;">
+      Comprehensive delivery tracking, idempotency verification, and retry management for all automated student emails.
+    </p>
+  </div>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <form method="post" action="{% url 'trigger_installment_reminders' %}" style="margin: 0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary tp-btn-secondary" title="Scan and dispatch upcoming and due payment reminder emails">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+        <span>Trigger Due Reminders</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Email Logs KPI Summary -->
+<div class="kpi-grid tp-stagger-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <div class="kpi-card tp-kpi-card tp-hover-lift">
+    <div class="kpi-info">
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tp-text-muted, #64748b);">Total Dispatches</h4>
+      <div class="kpi-value" style="font-size: 1.8rem; font-weight: 700; color: var(--tp-text-primary, #0f172a);">{{ total_logs }}</div>
+      <div style="font-size: 0.75rem; color: var(--tp-text-muted, #64748b); margin-top: 4px;">Recorded email activities</div>
+    </div>
+    <div class="kpi-icon-wrap blue">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+    </div>
+  </div>
+
+  <div class="kpi-card tp-kpi-card tp-hover-lift">
+    <div class="kpi-info">
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tp-text-muted, #64748b);">Successfully Delivered</h4>
+      <div class="kpi-value" style="font-size: 1.8rem; font-weight: 700; color: #10b981;">{{ sent_count }}</div>
+      <div style="font-size: 0.75rem; color: #10b981; margin-top: 4px;">Delivered to inbox</div>
+    </div>
+    <div class="kpi-icon-wrap green">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+  </div>
+
+  <div class="kpi-card tp-kpi-card tp-hover-lift">
+    <div class="kpi-info">
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tp-text-muted, #64748b);">Failed Dispatches</h4>
+      <div class="kpi-value" style="font-size: 1.8rem; font-weight: 700; color: {% if failed_count %}#ef4444{% else %}#64748b{% endif %};">{{ failed_count }}</div>
+      <div style="font-size: 0.75rem; color: {% if failed_count %}#ef4444{% else %}#10b981{% endif %}; margin-top: 4px;">
+        {% if failed_count %}Needs retry or review{% else %}Zero delivery errors{% endif %}
+      </div>
+    </div>
+    <div class="kpi-icon-wrap {% if failed_count %}rose{% else %}green{% endif %}">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    </div>
+  </div>
+
+  <div class="kpi-card tp-kpi-card tp-hover-lift">
+    <div class="kpi-info">
+      <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tp-text-muted, #64748b);">Pending / Queued</h4>
+      <div class="kpi-value" style="font-size: 1.8rem; font-weight: 700; color: #f59e0b;">{{ pending_count }}</div>
+      <div style="font-size: 0.75rem; color: #f59e0b; margin-top: 4px;">Queued for delivery</div>
+    </div>
+    <div class="kpi-icon-wrap amber">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+    </div>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card tp-card" style="padding: 16px; margin-bottom: 20px; border-radius: 12px; background: var(--tp-bg-surface, #ffffff); border: 1px solid var(--tp-border, #e2e8f0);">
+  <form method="get" action="{% url 'admin_email_logs' %}" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;">
+    <div style="flex: 2; min-width: 220px;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--tp-text-muted, #64748b); margin-bottom: 6px; display: block;">Search Recipient or Subject</label>
+      <input type="text" name="search" class="form-control form-control-sm" placeholder="Student name, email, subject, ENR number..." value="{{ search_query }}">
+    </div>
+
+    <div style="min-width: 170px;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--tp-text-muted, #64748b); margin-bottom: 6px; display: block;">Email Type</label>
+      <select name="type" class="form-select form-select-sm">
+        <option value="ALL">All Types</option>
+        {% for code, label in email_types %}
+        <option value="{{ code }}" {% if type_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="min-width: 150px;">
+      <label style="font-size: 0.8rem; font-weight: 600; color: var(--tp-text-muted, #64748b); margin-bottom: 6px; display: block;">Delivery Status</label>
+      <select name="status" class="form-select form-select-sm">
+        <option value="ALL">All Statuses</option>
+        <option value="SENT" {% if status_filter == 'SENT' %}selected{% endif %}>Sent (Success)</option>
+        <option value="FAILED" {% if status_filter == 'FAILED' %}selected{% endif %}>Failed</option>
+        <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending Retry</option>
+      </select>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-sm btn-primary tp-btn-primary" style="height: 34px; padding: 0 16px; font-weight: 600;">
+        Filter
+      </button>
+      <a href="{% url 'admin_email_logs' %}" class="btn btn-sm btn-secondary tp-btn-secondary" style="height: 34px; display: inline-flex; align-items: center; padding: 0 14px; font-weight: 600; text-decoration: none;">
+        Reset
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Logs Data Table -->
+<div class="card tp-card" style="border-radius: 12px; overflow: hidden; background: var(--tp-bg-surface, #ffffff); border: 1px solid var(--tp-border, #e2e8f0);">
+  <div class="table-responsive">
+    <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: var(--tp-bg-subtle, #f8fafc); border-bottom: 1px solid var(--tp-border, #e2e8f0);">
+          <th style="padding: 12px 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b);">Type & Subject</th>
+          <th style="padding: 12px 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b);">Recipient / Student</th>
+          <th style="padding: 12px 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b);">Enrollment</th>
+          <th style="padding: 12px 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b);">Status</th>
+          <th style="padding: 12px 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b);">Dispatched At</th>
+          <th style="padding: 12px 16px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b); text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in page_obj %}
+        <tr style="border-bottom: 1px solid var(--tp-border, #e2e8f0); transition: background-color 0.15s ease;">
+          <td style="padding: 14px 16px; vertical-align: middle;">
+            <div style="font-weight: 600; font-size: 0.88rem; color: var(--tp-text-primary, #0f172a); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ log.subject }}">
+              {{ log.subject }}
+            </div>
+            <div style="margin-top: 4px;">
+              <span class="badge" style="font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 9999px;
+                {% if log.email_type == 'ENROLLMENT_CONFIRMATION' %}background: #e0e7ff; color: #4338ca;
+                {% elif log.email_type == 'PAYMENT_CONFIRMATION' %}background: #d1fae5; color: #065f46;
+                {% elif log.email_type == 'DUE_REMINDER' %}background: #fef3c7; color: #92400e;
+                {% elif log.email_type == 'OVERDUE_REMINDER' %}background: #fee2e2; color: #991b1b;
+                {% else %}background: #f1f5f9; color: #475569;{% endif %}">
+                {{ log.get_email_type_display }}
+              </span>
+            </div>
+          </td>
+
+          <td style="padding: 14px 16px; vertical-align: middle;">
+            <div style="font-weight: 600; font-size: 0.88rem; color: var(--tp-text-primary, #0f172a);">
+              {{ log.recipient_name|default:log.enrollment.student_name }}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--tp-text-muted, #64748b);">
+              <a href="mailto:{{ log.recipient_email }}" style="color: var(--tp-primary-600, #2563eb); text-decoration: none;">
+                {{ log.recipient_email }}
+              </a>
+            </div>
+          </td>
+
+          <td style="padding: 14px 16px; vertical-align: middle;">
+            <div style="font-family: monospace; font-size: 0.82rem; font-weight: 600; color: var(--tp-text-primary, #0f172a);">
+              #{{ log.enrollment.enrollment_number }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--tp-text-muted, #64748b);">
+              {{ log.enrollment.product.name|default:"Course Program" }}
+            </div>
+          </td>
+
+          <td style="padding: 14px 16px; vertical-align: middle;">
+            {% if log.status == 'SENT' %}
+            <span class="badge" style="background: #10b981; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Sent</span>
+            </span>
+            {% elif log.status == 'FAILED' %}
+            <span class="badge" style="background: #ef4444; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="{{ log.error_message }}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              <span>Failed</span>
+            </span>
+            {% if log.error_message %}
+            <div style="font-size: 0.7rem; color: #dc2626; margin-top: 4px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ log.error_message }}">
+              {{ log.error_message }}
+            </div>
+            {% endif %}
+            {% else %}
+            <span class="badge" style="background: #f59e0b; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+              Pending Retry
+            </span>
+            {% endif %}
+          </td>
+
+          <td style="padding: 14px 16px; vertical-align: middle; font-size: 0.82rem; color: var(--tp-text-muted, #64748b);">
+            {% if log.sent_at %}
+              {{ log.sent_at|date:"M d, Y" }}<br/>
+              <span style="font-size: 0.72rem; color: var(--tp-text-muted, #94a3b8);">{{ log.sent_at|date:"h:i A" }}</span>
+            {% else %}
+              <span style="font-size: 0.78rem; color: var(--tp-text-muted, #94a3b8);">Not sent yet</span>
+            {% endif %}
+          </td>
+
+          <td style="padding: 14px 16px; vertical-align: middle; text-align: right;">
+            {% if log.status == 'FAILED' or log.status == 'PENDING' %}
+            <form method="post" action="{% url 'admin_email_log_retry' log.id %}" style="display: inline-block; margin: 0;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-primary" style="padding: 4px 10px; font-size: 0.75rem; font-weight: 600; border-radius: 6px;" title="Retry delivery now">
+                🔄 Retry
+              </button>
+            </form>
+            {% else %}
+            <span style="font-size: 0.78rem; color: #10b981; font-weight: 600;">✓ Completed</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="padding: 40px; text-align: center; color: var(--tp-text-muted, #64748b);">
+            <div style="font-size: 1.8rem; margin-bottom: 8px;">📬</div>
+            <div style="font-weight: 600; font-size: 1rem; color: var(--tp-text-primary, #0f172a);">No Email Logs Found</div>
+            <div style="font-size: 0.82rem; margin-top: 4px;">Automated confirmation emails and reminders will be audited here upon generation.</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-top: 1px solid var(--tp-border, #e2e8f0); background: var(--tp-bg-surface, #ffffff);">
+    <div style="font-size: 0.82rem; color: var(--tp-text-muted, #64748b);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ total_logs }} records)
+    </div>
+    <div style="display: flex; gap: 6px;">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-secondary" style="padding: 4px 10px; font-size: 0.78rem;">
+        Previous
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="btn btn-sm btn-outline-secondary" style="padding: 4px 10px; font-size: 0.78rem;">
+        Next
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

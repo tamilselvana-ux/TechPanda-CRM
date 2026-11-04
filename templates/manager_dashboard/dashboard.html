@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load kpi_tags %}
+{% block title %}Sales Head Dashboard - iTechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+  <div class="page-title-group">
+    <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--tp-text-primary); margin: 0 0 6px 0;">Sales Head Workspace</h1>
+    <p style="font-size: 0.9rem; color: var(--tp-text-muted); margin: 0;">Real-time analytics and team performance for <strong>{{ user.get_full_name|default:user.username }}</strong></p>
+  </div>
+  <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="{% url 'manager_telecallers_list' %}" class="btn btn-secondary tp-btn-secondary">My Telecallers</a>
+    <a href="{% url 'manager_leads_list' %}" class="btn btn-primary tp-btn-primary">Team Leads</a>
+  </div>
+</div>
+
+<!-- My Branches (Interactive & Clickable Filter Pills) -->
+<div class="crm-card tp-card" style="margin-bottom: 24px;">
+  <div class="crm-card-header tp-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--tp-text-primary); margin: 0 0 2px 0;">Assigned Branches</h3>
+      <span style="font-size: 0.8rem; color: var(--tp-text-muted);">
+        {% if selected_branch %}
+          Filtering dashboard KPI metrics for <strong>{{ selected_branch.name }}</strong> &bull; <a href="?{% if period and period != 'all' %}period={{ period }}&{% endif %}{% if start_date and end_date %}period=custom&start_date={{ start_date }}&end_date={{ end_date }}&{% endif %}" style="color: var(--tp-primary-600); text-decoration: underline; font-weight: 600;">Reset to All Branches</a>
+        {% else %}
+          Click any branch to filter dashboard KPI card counts for that branch
+        {% endif %}
+      </span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <a href="{% url 'sales_head_branch_heads_list' %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">Branch Heads</a>
+    </div>
+  </div>
+  <div class="crm-card-body tp-card-body" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+    <!-- All Branches Pill -->
+    <a href="?{% if period and period != 'all' %}period={{ period }}&{% endif %}{% if start_date and end_date %}period=custom&start_date={{ start_date }}&end_date={{ end_date }}&{% endif %}" 
+       class="badge tp-badge tp-branch-pill {% if not selected_branch_id %}active{% endif %}" 
+       title="View metrics across all assigned branches">
+      <span class="tp-branch-dot"></span> All Branches
+    </a>
+
+    <!-- Individual Branch Pills -->
+    {% for b in my_branches %}
+      {% if selected_branch_id == b.id %}
+        <!-- Active branch: clicking toggles back to All Branches -->
+        <a href="?{% if period and period != 'all' %}period={{ period }}&{% endif %}{% if start_date and end_date %}period=custom&start_date={{ start_date }}&end_date={{ end_date }}&{% endif %}" 
+           class="badge tp-badge tp-branch-pill active" 
+           title="Active: {{ b.name }} (Click to show all branches)">
+          <span class="tp-branch-dot"></span> {{ b.name }}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-left: 2px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </a>
+      {% else %}
+        <!-- Inactive branch: clicking filters dashboard by this branch -->
+        <a href="?branch={{ b.id }}{% if period and period != 'all' %}&period={{ period }}{% endif %}{% if start_date and end_date %}&period=custom&start_date={{ start_date }}&end_date={{ end_date }}{% endif %}" 
+           class="badge tp-badge tp-branch-pill" 
+           title="Click to filter dashboard KPIs for {{ b.name }}">
+          <span class="tp-branch-dot"></span> {{ b.name }}
+        </a>
+      {% endif %}
+    {% empty %}
+      <span style="color: var(--tp-text-muted); font-size: 0.875rem;">No branches assigned yet.</span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- PERIOD & DATE FILTER BAR -->
+<div class="filter-card tp-card" style="padding: 14px 18px; margin-bottom: 24px;">
+  <form method="get" class="filter-form" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    {% if selected_branch_id %}
+    <input type="hidden" name="branch" value="{{ selected_branch_id }}">
+    {% endif %}
+
+    <!-- Preset Period Buttons -->
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-right: 4px;">Period:</span>
+      <a href="?period=all{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" class="btn {% if period == 'all' or not period %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">All Time</a>
+      <a href="?period=today{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" class="btn {% if period == 'today' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">Today</a>
+      <a href="?period=week{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" class="btn {% if period == 'week' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">This Week</a>
+      <a href="?period=month{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}" class="btn {% if period == 'month' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">This Month</a>
+    </div>
+
+    {% include "partials/date_range_picker.html" with from_name="start_date" to_name="end_date" from_val=start_date to_val=end_date period_name="period" period_val="custom" %}
+  </form>
+</div>
+
+<!-- Sales Head KPI Grid (Clickable Cards with Branch Scope) -->
+<div class="kpi-grid tp-kpi-grid-6 tp-stagger-container" style="gap: 12px; margin-bottom: 20px;">
+  <a href="{% build_kpi_url 'manager_leads_list' kpi_label='Team Leads' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view team leads in active period">
+    <div class="kpi-info">
+      <h4>My Team Leads</h4>
+      <div class="kpi-value" style="color: var(--tp-primary-600);">{{ my_leads_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap blue">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'manager_telecallers_list' kpi_label='My Telecallers' %}" class="kpi-card tp-kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view telecallers">
+    <div class="kpi-info">
+      <h4>My Telecallers</h4>
+      <div class="kpi-value" style="color: #10b981;">{{ my_telecallers_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap green">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'manager_calls_list' kpi_label='Calls Made' %}" class="kpi-card tp-kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view calls in active period">
+    <div class="kpi-info">
+      <h4>Today's Calls</h4>
+      <div class="kpi-value" style="color: #0284c7;">{{ todays_calls_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap amber">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'manager_calls_list' 'status' 'Completed' kpi_label='Completed Calls' %}" class="kpi-card tp-kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view completed calls in active period">
+    <div class="kpi-info">
+      <h4>Completed Calls</h4>
+      <div class="kpi-value" style="color: #10b981;">{{ completed_calls_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap green">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'manager_followups_list' 'status' 'Pending' kpi_label='Pending Follow-ups' %}" class="kpi-card tp-kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view pending follow-ups in active period">
+    <div class="kpi-info">
+      <h4>Pending Follow-ups</h4>
+      <div class="kpi-value" style="color: #f59e0b;">{{ pending_followups_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap rose">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'manager_followups_list' 'status' 'overdue' kpi_label='Overdue Follow-ups' %}" class="kpi-card tp-kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view overdue follow-ups">
+    <div class="kpi-info">
+      <h4>Overdue Follow-ups</h4>
+      <div class="kpi-value" style="color: #ef4444; font-weight: 800;">{{ overdue_followups_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap rose">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    </div>
+  </a>
+</div>
+
+<!-- Telecaller Performance Table -->
+<div class="crm-card tp-card" style="margin-bottom: 24px;">
+  <div class="crm-card-header tp-card-header">
+    <h3>Telecaller Performance Overview</h3>
+    <a href="{% url 'manager_telecallers_list' %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">View All</a>
+  </div>
+  <div class="table-responsive">
+    <table class="crm-table">
+      <thead>
+        <tr>
+          <th>Telecaller</th>
+          <th>Total Leads</th>
+          <th>Total Calls</th>
+          <th>Completed Calls</th>
+          <th>Pending Follow-ups</th>
+          <th>Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in telecaller_perf %}
+        <tr>
+          <td>
+            <strong>{{ t.get_full_name|default:t.username }}</strong>
+            <div style="font-size: 0.75rem; color: var(--tp-text-muted);">@{{ t.username }}</div>
+          </td>
+          <td><span class="badge tp-badge" style="background: var(--tp-primary-50); color: var(--tp-primary-700); font-weight: 600;">{{ t.lead_count }}</span></td>
+          <td>{{ t.call_count }}</td>
+          <td><span class="badge badge-completed">{{ t.completed_calls }}</span></td>
+          <td><span class="badge badge-pending">{{ t.followup_count }}</span></td>
+          <td>
+            {% if t.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-inactive">Inactive</span>{% endif %}
+          </td>
+          <td style="text-align: right;">
+            <a href="{% url 'manager_telecaller_detail' t.pk %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">Monitor</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <p>No telecallers currently assigned to your team.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Lead Distribution Chart & Recent Calls -->
+<div class="tp-grid-2col" style="gap: 24px; margin-bottom: 24px;">
+  <!-- Chart.js Lead Pipeline -->
+  <div class="tp-chart-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--tp-text-primary); margin: 0;">Team Lead Pipeline</h3>
+    </div>
+    <div style="height: 270px; position: relative;">
+      <canvas id="managerLeadStatusChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent Calls -->
+  <div class="crm-card tp-card">
+    <div class="crm-card-header tp-card-header">
+      <h3>Recent Team Calls</h3>
+      <a href="{% url 'manager_calls_list' %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">View All</a>
+    </div>
+    <div class="table-responsive">
+      <table class="crm-table">
+        <thead>
+          <tr>
+            <th>Lead</th>
+            <th>Caller</th>
+            <th>Duration</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in recent_calls %}
+          <tr>
+            <td><strong>{{ c.lead.name }}</strong></td>
+            <td>{{ c.caller.username }}</td>
+            <td>{{ c.formatted_duration }}</td>
+            <td><span class="badge badge-telecaller">{{ c.call_outcome }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="text-align: center; color: var(--tp-text-muted); padding: 20px;">No calls logged today.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('managerLeadStatusChart');
+  if (ctx) {
+    const rawData = {{ status_dict|safe }};
+    const labels = Object.keys(rawData);
+    const data = Object.values(rawData);
+
+    if (window.TPCharts) {
+      window.TPCharts.createDoughnut(ctx, {
+        labels: labels,
+        data: data,
+        centerLabel: 'TEAM LEADS',
+        cutout: '74%',
+        legendPosition: 'bottom'
+      });
+    } else {
+      if (typeof Chart.getChart === 'function') { var _ex = Chart.getChart(ctx); if (_ex) _ex.destroy(); }
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels.length ? labels : ['No Leads Yet'],
+          datasets: [{
+            data: data.length ? data : [0],
+            backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#64748b']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+  }
+});
+</script>
+{% endblock %}

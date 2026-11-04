@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Invoice {{ invoice_number }} — Official Student Fee Receipt — iTechPanda</title>
+  {% load static %}
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #F1F5F9;
+      color: #2D3748;
+      line-height: 1.45;
+      padding: 30px 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Action bar */
+    .top-action-bar {
+      max-width: 840px;
+      margin: 0 auto 20px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background-color: #2563EB;
+      color: #FFFFFF;
+    }
+    .btn-primary:hover {
+      background-color: #1D4ED8;
+    }
+
+    .btn-secondary {
+      background-color: #FFFFFF;
+      color: #475569;
+      border: 1px solid #CBD5E1;
+    }
+    .btn-secondary:hover {
+      background-color: #F8FAFC;
+      color: #1E293B;
+    }
+
+    /* Invoice Paper Card */
+    .invoice-card {
+      max-width: 840px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #E2E8F0;
+      padding: 36px 42px;
+    }
+
+    /* Header */
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .company-logo {
+      height: 44px;
+      margin-bottom: 8px;
+    }
+
+    .company-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1A202C;
+    }
+
+    .company-info {
+      font-size: 12px;
+      color: #4A5568;
+      line-height: 1.45;
+      margin-top: 4px;
+    }
+
+    .header-badges {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .badge-pill {
+      border: 1px solid #4A5568;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #2D3748;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: inline-block;
+    }
+
+    /* Full-width grey invoice bar */
+    .invoice-bar {
+      background-color: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      border-radius: 4px;
+      padding: 9px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .invoice-bar-item {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1A202C;
+    }
+
+    /* BILL TO */
+    .bill-to-section {
+      margin-bottom: 24px;
+    }
+
+    .bill-to-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .customer-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1A202C;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    .customer-details {
+      font-size: 12.5px;
+      color: #4A5568;
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    /* Services Table */
+    .services-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+
+    .services-table th {
+      border-bottom: 2px solid #000000;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #1A202C;
+      padding: 8px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .services-table td {
+      padding: 12px 6px;
+      font-size: 13px;
+      border-bottom: 1px solid #EDF2F7;
+    }
+
+    .services-table tr.subtotal-row td {
+      border-top: 2px solid #000000;
+      border-bottom: 2px solid #000000;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 9px 6px;
+      color: #1A202C;
+    }
+
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+
+    /* Bottom Split Section */
+    .bottom-section {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 36px;
+      margin-top: 10px;
+    }
+
+    .section-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #1A202C;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+
+    .bank-info {
+      font-size: 12px;
+      color: #2D3748;
+      line-height: 1.5;
+    }
+
+    .terms-text {
+      font-size: 11.5px;
+      color: #4A5568;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Financial Summary */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .summary-table td {
+      padding: 4px 0;
+      font-size: 13px;
+    }
+
+    .summary-table tr.total-row td {
+      border-top: 1px solid #CBD5E0;
+      border-bottom: 1px solid #CBD5E0;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 7px 0;
+      color: #1A202C;
+    }
+
+    .words-box {
+      margin-top: 14px;
+      font-size: 11.5px;
+      color: #4A5568;
+    }
+
+    .words-value {
+      font-style: italic;
+      color: #1A202C;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Signatory */
+    .signatory-box {
+      margin-top: 32px;
+      text-align: right;
+    }
+
+    .signatory-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2D3748;
+      border-top: 1px solid #718096;
+      padding-top: 5px;
+      display: inline-block;
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        background-color: #FFFFFF;
+        padding: 0;
+      }
+      .top-action-bar {
+        display: none !important;
+      }
+      .invoice-card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Action Bar (hidden on print) -->
+  <div class="top-action-bar">
+    <div>
+      <a href="javascript:history.back()" class="btn-action btn-secondary">
+        &larr; Back
+      </a>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="window.print()" class="btn-action btn-secondary">
+        &#128424; Print Invoice
+      </button>
+      <a href="?download=pdf" class="btn-action btn-primary">
+        &#128190; Download PDF
+      </a>
+    </div>
+  </div>
+
+  <!-- Invoice Container -->
+  <div class="invoice-card">
+    
+    <!-- Header -->
+    <div class="invoice-header">
+      <div>
+        <img src="{% static 'images/itechpanda_logo.png' %}" alt="iTechPanda" class="company-logo" onerror="this.onerror=null; this.src='/static/images/itechpanda_logo.png';" />
+        <div class="company-title">{{ invoice_config.company_name }}</div>
+        <div class="company-info">
+          {{ invoice_config.address_lines.0 }}<br/>
+          {{ invoice_config.address_lines.1 }}<br/>
+          Mobile: {{ invoice_config.mobile }}<br/>
+          GSTIN: {{ invoice_config.gstin }}<br/>
+          Email: {{ invoice_config.email }}<br/>
+          Website: {{ invoice_config.website }}
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge-pill">{% if is_without_gst %}FEE RECEIPT{% else %}TAX INVOICE{% endif %}</span>
+        <span class="badge-pill">ORIGINAL FOR RECIPIENT</span>
+      </div>
+    </div>
+
+    <!-- Invoice Number & Date Bar -->
+    <div class="invoice-bar">
+      <div class="invoice-bar-item">Invoice No.: {{ invoice_number }}</div>
+      <div class="invoice-bar-item">Invoice Date: {{ invoice_date }}</div>
+    </div>
+
+    <!-- Customer Billing Information -->
+    <div class="bill-to-section">
+      <div class="bill-to-label">BILL TO</div>
+      <div class="customer-name">{{ customer_name }}</div>
+      <span style="display:none;">{{ enrollment.student_name }}</span>
+      <div class="customer-details">
+        {% if customer_mobile %}Mobile: {{ customer_mobile }}<br/>{% endif %}
+        {% if customer_address %}{{ customer_address }}<br/>{% endif %}
+        Place of Supply: {{ place_of_supply }}
+      </div>
+    </div>
+
+    <!-- Line Item Table -->
+    <table class="services-table">
+      <thead>
+        <tr>
+          <th class="text-left" style="width: 46%;">SERVICES</th>
+          <th class="text-right" style="width: 18%;">FEES</th>
+          <th class="text-right" style="width: 18%;">TAX</th>
+          <th class="text-right" style="width: 18%;">AMOUNT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="text-left" style="font-weight: 600;">{{ course_name }}</td>
+          <td class="text-right">₹ {{ taxable_rate|floatformat:2 }}</td>
+          <td class="text-right">₹ {{ tax_amount|floatformat:2 }} ({{ tax_rate|floatformat:0 }}%)</td>
+          <td class="text-right" style="font-weight: 700;">₹ {{ total_line_amount|floatformat:2 }}</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td class="text-left">SUBTOTAL</td>
+          <td></td>
+          <td class="text-right">₹ {{ tax_amount|floatformat:2 }}</td>
+          <td class="text-right">₹ {{ total_line_amount|floatformat:2 }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Bottom Split Section -->
+    <div class="bottom-section">
+      <!-- Left Column: Bank Details & Terms -->
+      <div>
+        <div class="section-title">BANK DETAILS</div>
+        <div class="bank-info">
+          <strong>Name:</strong> {{ bank_details.name }}<br/>
+          <strong>IFSC:</strong> {{ bank_details.ifsc }}<br/>
+          <strong>Account No:</strong> {{ bank_details.account_number }}<br/>
+          <strong>Bank:</strong> {{ bank_details.bank_name }}
+        </div>
+
+        <div class="section-title" style="margin-top: 18px;">TERMS AND CONDITIONS</div>
+        {% for clause in terms_and_conditions %}
+        <div class="terms-text">
+          <strong>{{ forloop.counter }}.</strong> {{ clause }}
+        </div>
+        {% endfor %}
+
+        {% if verification_code %}
+        <div style="margin-top: 22px; font-size: 11px; color: #718096;">
+          <strong>Tamper-Evident Digital Verification:</strong> {{ verification_code }}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Right Column: Financial Summary -->
+      <div>
+        <table class="summary-table">
+          <tr>
+            <td style="color: #4A5568;">Taxable Amount</td>
+            <td class="text-right">₹ {{ taxable_amount|floatformat:2 }}</td>
+          </tr>
+          {% if is_interstate %}
+          <tr>
+            <td style="color: #4A5568;">IGST @{{ igst_rate|floatformat:0 }}%</td>
+            <td class="text-right">₹ {{ igst_amount|floatformat:2 }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td style="color: #4A5568;">CGST @{{ cgst_rate|floatformat:0 }}%</td>
+            <td class="text-right">₹ {{ cgst_amount|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <td style="color: #4A5568;">SGST @{{ sgst_rate|floatformat:0 }}%</td>
+            <td class="text-right">₹ {{ sgst_amount|floatformat:2 }}</td>
+          </tr>
+          {% endif %}
+          <tr class="total-row">
+            <td>Total Amount</td>
+            <td class="text-right">₹ {{ total_invoice_amount|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <td style="color: #4A5568; padding-top: 8px;">Received Amount</td>
+            <td class="text-right" style="padding-top: 8px; color: #2D3748;">₹ {{ received_amount|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 700; color: #1A202C;">Balance</td>
+            <td class="text-right" style="font-weight: 700; color: #1A202C;">₹ {{ balance_amount|floatformat:2 }}</td>
+          </tr>
+        </table>
+
+        <!-- Amount in Words -->
+        <div class="words-box">
+          <div><strong>Total Amount (in words)</strong></div>
+          <div class="words-value">{{ total_amount_in_words }}</div>
+        </div>
+
+        <!-- Signatory -->
+        <div class="signatory-box">
+          {% if signature_path or is_authorized %}
+          <div style="margin-bottom: -8px; margin-top: 0;">
+            <img src="{% static 'images/shashi_sign.png' %}" style="height: 42px; width: auto; max-width: 170px; object-fit: contain; display: inline-block;" alt="Authorized Signatory" />
+          </div>
+          {% else %}
+          <div style="height: 42px;"></div>
+          {% endif %}
+          <div class="signatory-label">{{ signatory_label }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

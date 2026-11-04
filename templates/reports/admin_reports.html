@@ -1,0 +1,457 @@
+{% extends 'base.html' %}
+{% block title %}Analytics & Reports - iTechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="tp-page-header">
+  <div class="tp-page-title-group">
+    <h1 class="tp-page-title">Executive Reports &amp; Analytics</h1>
+    <p class="tp-page-subtitle">Comprehensive aggregation and business intelligence across marketing channels, branch sales, and telecaller performance</p>
+  </div>
+</div>
+
+<!-- Aggregated KPI Metrics -->
+<div class="tp-kpi-grid" style="margin-bottom: var(--tp-space-6, 24px);">
+  <a href="{% url 'admin_leads_list' %}" class="tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit;" title="View all leads">
+    <div class="tp-kpi-info">
+      <h4>Total Leads</h4>
+      <div class="tp-kpi-value">{{ total_leads }}</div>
+    </div>
+    <div class="tp-kpi-icon-wrap blue">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+    </div>
+  </a>
+
+  <a href="{% url 'admin_leads_list' %}?status=Converted" class="tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit;" title="View converted leads">
+    <div class="tp-kpi-info">
+      <h4>Converted Leads</h4>
+      <div class="tp-kpi-value" style="color: var(--tp-success-600, #10b981);">{{ converted_leads }}</div>
+    </div>
+    <div class="tp-kpi-icon-wrap green">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+  </a>
+
+  <a href="{% url 'admin_leads_list' %}" class="tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit;" title="View leads list">
+    <div class="tp-kpi-info">
+      <h4>Conversion Rate</h4>
+      <div class="tp-kpi-value" style="color: var(--tp-primary-600, #4f46e5);">{{ conversion_rate }}%</div>
+    </div>
+    <div class="tp-kpi-icon-wrap purple">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+    </div>
+  </a>
+
+  <a href="{% url 'admin_calls_list' %}" class="tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit;" title="View all calls">
+    <div class="tp-kpi-info">
+      <h4>Total Calls Placed</h4>
+      <div class="tp-kpi-value">{{ total_calls }}</div>
+    </div>
+    <div class="tp-kpi-icon-wrap amber">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+    </div>
+  </a>
+
+  <a href="{% url 'admin_followups_list' %}" class="tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit;" title="View all follow-ups">
+    <div class="tp-kpi-info">
+      <h4>Follow-up Tasks</h4>
+      <div class="tp-kpi-value">{{ total_followups }}</div>
+    </div>
+    <div class="tp-kpi-icon-wrap rose">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+    </div>
+  </a>
+</div>
+
+<!-- Filter Form (Date Range, Branch, Sales Head, Branch Head, Counselor, Telecaller, Channel, Status) -->
+<div class="tp-card" style="margin-bottom: var(--tp-space-6, 24px); padding: var(--tp-space-5, 20px);">
+  <form method="GET" class="filter-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: flex-end;">
+    <div class="filter-col" style="min-width: 180px;">
+      <label class="tp-label">Date Range</label>
+      {% include "partials/date_range_picker.html" with from_name="date_from" to_name="date_to" from_val=date_from to_val=date_to %}
+    </div>
+
+    <div class="filter-col">
+      <label class="tp-label">Branch</label>
+      <select name="branch" class="tp-select">
+        <option value="">All Branches</option>
+        {% for b in branches %}
+        <option value="{{ b.id }}" {% if branch_filter == b.id|stringformat:"i" %}selected{% endif %}>{{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col">
+      <label class="tp-label">Sales Head</label>
+      <select name="sales_head" class="tp-select">
+        <option value="">All Sales Heads</option>
+        {% for s in sales_heads %}
+        <option value="{{ s.id }}" {% if sales_head_filter == s.id|stringformat:"i" %}selected{% endif %}>{{ s.get_full_name|default:s.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col">
+      <label class="tp-label">Branch Head</label>
+      <select name="branch_head" class="tp-select">
+        <option value="">All Branch Heads</option>
+        {% for bh in branch_heads %}
+        <option value="{{ bh.id }}" {% if branch_head_filter == bh.id|stringformat:"i" %}selected{% endif %}>{{ bh.get_full_name|default:bh.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col">
+      <label class="tp-label">Counselor</label>
+      <select name="counselor" class="tp-select">
+        <option value="">All Counselors</option>
+        {% for c in counselors %}
+        <option value="{{ c.id }}" {% if counselor_filter == c.id|stringformat:"i" %}selected{% endif %}>{{ c.get_full_name|default:c.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col">
+      <label class="tp-label">Telecaller</label>
+      <select name="telecaller" class="tp-select">
+        <option value="">All Telecallers</option>
+        {% for t in telecallers %}
+        <option value="{{ t.id }}" {% if telecaller_filter == t.id|stringformat:"i" %}selected{% endif %}>{{ t.get_full_name|default:t.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col">
+      <label class="tp-label">Channel / Source</label>
+      <select name="channel" class="tp-select">
+        <option value="">All Channels</option>
+        {% for ch in channels %}
+        <option value="{{ ch.id }}" {% if channel_filter == ch.id|stringformat:"i" %}selected{% endif %}>{{ ch.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col">
+      <label class="tp-label">Lead Status</label>
+      <select name="status" class="tp-select">
+        <option value="">All Statuses</option>
+        {% for code, label in statuses %}
+        <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button type="submit" class="tp-btn-primary" style="flex: 1; justify-content: center;">Apply</button>
+      <a href="{% url 'admin_reports' %}" class="tp-btn-secondary" style="flex: 1; justify-content: center; text-decoration: none;">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 10 REAL DATA CHARTS GRID (2 columns) -->
+<!-- ========================================================================= -->
+
+<!-- Row 1: Pipeline Status & Acquisition Channels -->
+<div class="tp-grid-2col" style="margin-bottom: var(--tp-space-5, 20px);">
+  <!-- Chart 1: Pipeline Status -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">1. Lead Pipeline Funnel &amp; Status</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart1_status"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 2: Acquisition Channels -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">2. Acquisition Channels &amp; Sources</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart2_channel"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 2: Branch Distribution & Lead Creation Trend -->
+<div class="tp-grid-2col" style="margin-bottom: var(--tp-space-5, 20px);">
+  <!-- Chart 3: Branch Lead Distribution -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">3. Branch Lead Distribution</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart3_branch"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 4: Lead Creation Trend -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">4. Lead Influx Trend Over Time</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart4_trend"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 3: Counselor Performance & Telecaller Performance -->
+<div class="tp-grid-2col" style="margin-bottom: var(--tp-space-5, 20px);">
+  <!-- Chart 5: Counselor Performance -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">5. Counselor Performance (Leads Managed)</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart5_counselor"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 6: Telecaller Allocation/Performance -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">6. Telecaller Allocation &amp; Volume</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart6_telecaller"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 4: Call Outcomes & Follow-up Status -->
+<div class="tp-grid-2col" style="margin-bottom: var(--tp-space-5, 20px);">
+  <!-- Chart 7: Call Outcomes -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">7. Call Outcomes &amp; Dispositions</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart7_calls"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 8: Follow-up Status Distribution -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">8. Follow-up Task Completion Status</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart8_followups"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 5: Product Demand & Branch Conversion Rates -->
+<div class="tp-grid-2col" style="margin-bottom: var(--tp-space-5, 20px);">
+  <!-- Chart 9: Product Demand -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">9. Product &amp; Course Demand</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart9_products"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 10: Conversion Rate by Branch -->
+  <div class="tp-card" style="overflow: hidden;">
+    <div class="tp-card-header" style="padding: var(--tp-space-4, 16px) var(--tp-space-5, 20px); border-bottom: 1px solid var(--tp-border-subtle, #e2e8f0);">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--tp-text-primary, #0f172a);">10. Conversion Rate by Branch (%)</h3>
+    </div>
+    <div class="tp-card-body" style="padding: var(--tp-space-5, 20px);">
+      <div style="height: 260px; position: relative;">
+        <canvas id="chart10_conversion"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN inclusion fallback if not already loaded in base.html -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+  const doughnutBorder = isDark ? '#131b2e' : '#ffffff';
+
+  if (window.Chart) {
+    Chart.defaults.color = textColor;
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    Chart.defaults.borderColor = gridColor;
+  }
+
+  const chartColors = [
+    '#4f46e5', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4',
+    '#ec4899', '#64748b', '#f97316', '#14b8a6', '#6366f1'
+  ];
+
+  // Helper function to build modern doughnut charts
+  function createDoughnut(canvasId, labels, data) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    if (window.TPCharts) {
+      window.TPCharts.createDoughnut(el, {
+        labels: labels,
+        data: data,
+        centerLabel: 'LEADS',
+        cutout: '74%',
+        legendPosition: 'bottom'
+      });
+    } else {
+      new Chart(el, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: chartColors.slice(0, labels.length),
+            borderWidth: 2,
+            borderColor: doughnutBorder
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, color: textColor } }
+          }
+        }
+      });
+    }
+  }
+
+  // Helper function to build modern bar charts with rounded geometry
+  function createBar(canvasId, labels, data, labelName, barColor) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    if (window.TPCharts) {
+      window.TPCharts.createBar(el, {
+        labels: labels,
+        datasets: [{
+          label: labelName,
+          data: data,
+          backgroundColor: barColor || '#4f46e5',
+          borderRadius: 8
+        }],
+        legend: { display: false }
+      });
+    } else {
+      new Chart(el, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: labelName,
+            data: data,
+            backgroundColor: barColor || '#4f46e5',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: { size: 10 }, color: textColor } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: textColor } }
+          }
+        }
+      });
+    }
+  }
+
+  // Helper function to build modern line charts with glossy fill
+  function createLine(canvasId, labels, data, labelName) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const tooltipOpts = window.TPCharts ? window.TPCharts.getGlossyTooltipOptions() : {};
+    new Chart(el, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: labelName,
+          data: data,
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(79, 70, 229, 0.14)',
+          fill: true,
+          tension: 0.38,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#4f46e5',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: tooltipOpts
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: gridColor }, ticks: { font: { size: 10 }, color: textColor } },
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, color: textColor } }
+        }
+      }
+    });
+  }
+
+  // 1. Pipeline Status (Doughnut)
+  createDoughnut('chart1_status', {{ chart1_labels_json|safe }}, {{ chart1_data_json|safe }});
+
+  // 2. Acquisition Channels (Bar)
+  createBar('chart2_channel', {{ chart2_labels_json|safe }}, {{ chart2_data_json|safe }}, 'Leads', '#06b6d4');
+
+  // 3. Branch Distribution (Bar)
+  createBar('chart3_branch', {{ chart3_labels_json|safe }}, {{ chart3_data_json|safe }}, 'Leads', '#8b5cf6');
+
+  // 4. Lead Influx Trend (Line)
+  createLine('chart4_trend', {{ chart4_labels_json|safe }}, {{ chart4_data_json|safe }}, 'Leads Created');
+
+  // 5. Counselor Performance (Bar)
+  createBar('chart5_counselor', {{ chart5_labels_json|safe }}, {{ chart5_data_json|safe }}, 'Leads Managed', '#10b981');
+
+  // 6. Telecaller Allocation (Bar)
+  createBar('chart6_telecaller', {{ chart6_labels_json|safe }}, {{ chart6_data_json|safe }}, 'Leads Assigned', '#f59e0b');
+
+  // 7. Call Outcomes (Doughnut)
+  createDoughnut('chart7_calls', {{ chart7_labels_json|safe }}, {{ chart7_data_json|safe }});
+
+  // 8. Follow-up Status (Doughnut)
+  createDoughnut('chart8_followups', {{ chart8_labels_json|safe }}, {{ chart8_data_json|safe }});
+
+  // 9. Product & Course Demand (Bar)
+  createBar('chart9_products', {{ chart9_labels_json|safe }}, {{ chart9_data_json|safe }}, 'Leads Interested', '#ec4899');
+
+  // 10. Conversion Rate by Branch (Bar)
+  createBar('chart10_conversion', {{ chart10_labels_json|safe }}, {{ chart10_data_json|safe }}, 'Conversion %', '#10b981');
+});
+</script>
+{% endblock %}

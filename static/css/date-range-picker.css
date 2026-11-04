@@ -1,0 +1,261 @@
+/* Compact Date Range Picker: iTechPanda CRM
+   One small calendar · first click = From, second click = To · auto-apply.
+   Theme: Mapped to iTechPanda CRM Design System variables. */
+.drp-root {
+  --drp-bg: var(--tp-surface-card, #ffffff);
+  --drp-fg: var(--tp-text-primary, #0f172a);
+  --drp-muted: var(--tp-text-muted, #64748b);
+  --drp-border: var(--tp-surface-border, #e2e8f0);
+  --drp-hover: var(--tp-surface-card-hover, #f1f5f9);
+  --drp-accent: var(--tp-primary-600, #4f46e5);
+  --drp-accent-fg: #ffffff;
+  --drp-range: color-mix(in srgb, var(--drp-accent) 20%, transparent);
+  --drp-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  position: relative;
+  display: inline-block;
+  font: inherit;
+}
+
+:root[data-theme="light"] .drp-root, html[data-theme="light"] .drp-root, body.light-mode .drp-root {
+  --drp-bg: var(--tp-surface-card, #ffffff);
+  --drp-fg: var(--tp-text-primary, #0f172a);
+  --drp-muted: var(--tp-text-muted, #64748b);
+  --drp-border: var(--tp-surface-border, #e2e8f0);
+  --drp-hover: var(--tp-surface-card-hover, #f1f5f9);
+  --drp-accent: var(--tp-primary-600, #4f46e5);
+  --drp-accent-fg: #ffffff;
+  --drp-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme="dark"] .drp-root, html[data-theme="dark"] .drp-root, [data-theme="dark"] .drp-root, body.dark-theme .drp-root {
+  --drp-bg: #1e293b;
+  --drp-fg: #f8fafc;
+  --drp-muted: #94a3b8;
+  --drp-border: rgba(255, 255, 255, 0.14);
+  --drp-hover: #334155;
+  --drp-accent: #6366f1;
+  --drp-accent-fg: #ffffff;
+  --drp-range: color-mix(in srgb, var(--drp-accent) 28%, transparent);
+  --drp-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.drp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  max-width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  background: var(--drp-bg);
+  color: var(--drp-fg);
+  border: 1px solid var(--drp-border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.drp-trigger:hover {
+  border-color: var(--drp-accent);
+}
+.drp-trigger:focus-visible {
+  outline: 2px solid var(--drp-accent);
+  outline-offset: 2px;
+}
+.drp-trigger svg {
+  flex: none;
+  opacity: 0.85;
+  color: var(--drp-accent);
+}
+.drp-trigger .drp-placeholder {
+  color: var(--drp-muted);
+}
+
+.drp-pop {
+  position: absolute;
+  z-index: 9999 !important;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  background: var(--drp-bg);
+  color: var(--drp-fg);
+  border: 1px solid var(--drp-border);
+  border-radius: 12px;
+  box-shadow: var(--drp-shadow);
+  padding: 10px;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity .14s ease, transform .14s ease;
+  pointer-events: none;
+}
+.drp-pop.drp-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.drp-pop.drp-open {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.drp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.drp-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.drp-nav {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--drp-border);
+  background: transparent;
+  color: var(--drp-fg);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+.drp-nav:hover {
+  background: var(--drp-hover);
+}
+.drp-nav:focus-visible, .drp-day:focus-visible, .drp-clear:focus-visible {
+  outline: 2px solid var(--drp-accent);
+  outline-offset: 1px;
+}
+
+.drp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 2px;
+}
+.drp-wd {
+  font-size: 11px;
+  text-align: center;
+  color: var(--drp-muted);
+  padding: 4px 0;
+  font-weight: 600;
+}
+.drp-day {
+  position: relative;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  color: var(--drp-fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+.drp-day span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: auto;
+  border-radius: 8px;
+  position: relative;
+  z-index: 1;
+}
+.drp-day:hover span {
+  background: var(--drp-hover);
+}
+.drp-day.drp-out {
+  color: var(--drp-muted);
+  opacity: .55;
+}
+.drp-day.drp-today span {
+  box-shadow: inset 0 0 0 1px var(--drp-accent);
+}
+.drp-day.drp-in::before {
+  content: "";
+  position: absolute;
+  inset: 2px 0;
+  background: var(--drp-range);
+}
+.drp-day.drp-start::before {
+  left: 50%;
+}
+.drp-day.drp-end::before {
+  right: 50%;
+}
+.drp-day.drp-start.drp-end::before {
+  display: none;
+}
+.drp-day.drp-start span, .drp-day.drp-end span {
+  background: var(--drp-accent);
+  color: var(--drp-accent-fg);
+  font-weight: 600;
+}
+.drp-day:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+.drp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--drp-muted);
+  min-height: 24px;
+}
+.drp-clear {
+  background: none;
+  border: 0;
+  color: var(--drp-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.drp-clear:hover {
+  text-decoration: underline;
+}
+.drp-clear[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drp-pop { transition: none; }
+}
+@media (max-width: 420px) {
+  .drp-trigger { min-width: 0; width: 100%; }
+  .drp-root { display: block; }
+}
+
+
+/* Grid and form container integration */
+.drp-root.w-100, .tp-filter-field .drp-root, .filter-col .drp-root {
+  width: 100%;
+}
+.drp-root.w-100 .drp-trigger, .tp-filter-field .drp-trigger, .filter-col .drp-trigger {
+  width: 100%;
+}
+
+/* Prevent parent containers from clipping the date range calendar popover */
+.tp-filter-bar,
+.filter-card,
+.tp-filter-bar.tp-card,
+.tp-card:has(.drp-root),
+.card:has(.drp-root),
+.tp-compact-filter-grid,
+.tp-filter-field,
+.filter-col,
+.filters-row,
+.filter-form {
+  overflow: visible !important;
+}

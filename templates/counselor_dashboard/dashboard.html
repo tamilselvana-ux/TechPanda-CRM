@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load kpi_tags %}
+{% block title %}Counselor Dashboard - iTechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+  <div class="page-title-group">
+    <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--tp-text-primary); margin: 0 0 6px 0;">Counselor Workspace</h1>
+    <p style="font-size: 0.9rem; color: var(--tp-text-muted); margin: 0;">Review handed-off leads, scheduled visits, and student admissions pipeline</p>
+  </div>
+  <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="{% url 'counselor_leads_list' %}" class="btn btn-primary tp-btn-primary">My Leads</a>
+    <a href="{% url 'counselor_enrolled_students' %}" class="btn btn-secondary tp-btn-secondary">🎓 Enrolled Students</a>
+    <a href="{% url 'leads_kanban' %}" class="btn btn-secondary tp-btn-secondary">Pipeline Kanban</a>
+  </div>
+</div>
+
+<!-- PERIOD & DATE FILTER BAR -->
+<div class="filter-card tp-card" style="padding: 14px 18px; margin-bottom: 24px;">
+  <form method="get" class="filter-form" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <!-- Preset Period Buttons -->
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-right: 4px;">Period:</span>
+      <a href="?period=all" class="btn {% if period == 'all' or not period %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">All Time</a>
+      <a href="?period=today" class="btn {% if period == 'today' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">Today</a>
+      <a href="?period=week" class="btn {% if period == 'week' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">This Week</a>
+      <a href="?period=month" class="btn {% if period == 'month' %}btn-primary tp-btn-primary{% else %}btn-secondary tp-btn-secondary{% endif %}" style="font-size: 0.8rem; padding: 5px 12px;">This Month</a>
+    </div>
+
+    {% include "partials/date_range_picker.html" with from_name="start_date" to_name="end_date" from_val=start_date to_val=end_date period_name="period" period_val="custom" %}
+  </form>
+</div>
+
+<!-- REJECTED PAYMENTS AWAITING CORRECTION (Submitting Counselor Queue) -->
+{% if rejected_payments %}
+<div class="tp-card" style="background: #fff5f5; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.08);">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #dc2626; color: #fff;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </span>
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #991b1b;">
+          Action Required: {{ rejected_payments_count }} Payment{{ rejected_payments_count|pluralize }} Returned for Correction
+        </h3>
+      </div>
+      <p style="margin: 4px 0 0 36px; font-size: 0.85rem; color: #7f1d1d;">
+        The Accountant has reviewed and returned the following payment submission{{ rejected_payments_count|pluralize }} recorded by you. Please review the accountant's feedback, correct any errors or upload new proof, and resubmit for verification.
+      </p>
+    </div>
+    <span class="badge" style="background: #dc2626; color: #fff; font-size: 0.78rem; font-weight: 700; padding: 5px 12px; border-radius: 9999px;">
+      {{ rejected_payments_count }} Rejected Submission{{ rejected_payments_count|pluralize }}
+    </span>
+  </div>
+
+  <div class="table-responsive" style="background: #ffffff; border-radius: 8px; border: 1px solid #fee2e2; overflow-x: auto;">
+    <table class="crm-table tp-table" style="width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; font-size: 0.85rem;">
+      <thead>
+        <tr style="background: #fef2f2; text-align: left; color: #991b1b; font-size: 0.74rem; text-transform: uppercase;">
+          <th style="padding: 10px 14px;">Receipt #</th>
+          <th style="padding: 10px 14px;">Student Name</th>
+          <th style="padding: 10px 14px;">Course / Program</th>
+          <th style="padding: 10px 14px;">Amount & Method</th>
+          <th style="padding: 10px 14px;">Accountant Rejection Reason</th>
+          <th style="padding: 10px 14px; text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in rejected_payments %}
+        <tr style="border-bottom: 1px solid #fee2e2;">
+          <td style="padding: 12px 14px; font-weight: 700; color: #0284c7; font-family: monospace;">
+            {{ p.receipt_number }}
+            {% if p.resubmission_count > 0 %}
+            <div style="font-size: 0.7rem; color: #6d28d9; font-weight: 600;">Resubmitted {{ p.resubmission_count }}x</div>
+            {% endif %}
+          </td>
+          <td style="padding: 12px 14px;">
+            <div style="font-weight: 700; color: #1e293b;">{{ p.enrollment.student_name }}</div>
+            <div style="font-size: 0.74rem; color: #64748b;">{{ p.enrollment.student_phone }}</div>
+          </td>
+          <td style="padding: 12px 14px;">
+            <div style="font-weight: 600;">{{ p.enrollment.product.name|default:"General Course" }}</div>
+            <div style="font-size: 0.72rem; color: #64748b;">🏢 {{ p.enrollment.branch.name|default:"Main Campus" }}</div>
+          </td>
+          <td style="padding: 12px 14px;">
+            <div style="font-weight: 800; color: #991b1b; font-size: 0.95rem;">₹{{ p.amount }}</div>
+            <div style="font-size: 0.72rem; color: #64748b;">Via {{ p.payment_method }}</div>
+          </td>
+          <td style="padding: 12px 14px;">
+            <div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; padding: 6px 10px; color: #9f1239; font-size: 0.8rem; line-height: 1.35; max-width: 320px;">
+              <strong>Accountant Note:</strong> {{ p.rejection_comment|default:"No specific reason provided." }}
+              {% if p.reviewed_by %}
+              <div style="font-size: 0.7rem; color: #be123c; margin-top: 2px;">
+                — {{ p.reviewed_by.get_full_name|default:p.reviewed_by.username }} ({{ p.reviewed_at|date:"d M, H:i" }})
+              </div>
+              {% endif %}
+            </div>
+          </td>
+          <td style="padding: 12px 14px; text-align: right; vertical-align: middle; white-space: nowrap;">
+            <button type="button" class="btn btn-sm btn-danger tp-btn-danger" style="padding: 5px 12px; font-size: 0.78rem; font-weight: 700; background: #dc2626; border-color: #dc2626; color: #fff; border-radius: 6px;"
+                    onclick="openResubmitModal({{ p.id }}, '{{ p.amount }}', '{{ p.payment_method }}', '{{ p.transaction_reference|default:''|escapejs }}', '{{ p.rejection_comment|default:''|escapejs }}', '{{ p.enrollment.student_name|escapejs }}', '{{ p.receipt_number|escapejs }}')">
+              Correct & Resubmit &rarr;
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- CLICKABLE KPI CARDS -->
+<div class="kpi-grid tp-stagger-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <a href="{% build_kpi_url 'counselor_leads_list' kpi_label='My Leads' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view all my leads in active period">
+    <div class="kpi-info">
+      <h4>My Leads</h4>
+      <div class="kpi-value" style="color: var(--tp-primary-600);">{{ my_leads_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap blue">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'counselor_leads_list' 'status' 'Visited' kpi_label='Center Visits' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view visited leads in active period">
+    <div class="kpi-info">
+      <h4>Visits</h4>
+      <div class="kpi-value" style="color: #7c3aed;">{{ visits_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap purple">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'counselor_leads_list' 'status' 'Counseling' kpi_label='Counseling in Progress' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view counseling in progress">
+    <div class="kpi-info">
+      <h4>Counseling</h4>
+      <div class="kpi-value" style="color: #0284c7;">{{ counseling_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap blue">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'counselor_followups_list' 'status' 'Pending' kpi_label='Pending Follow-ups' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view pending follow-ups in active period">
+    <div class="kpi-info">
+      <h4>Pending Follow-ups</h4>
+      <div class="kpi-value" style="color: #f59e0b;">{{ pending_followups_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap amber">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+    </div>
+  </a>
+
+  <a href="{% build_kpi_url 'counselor_leads_list' 'status' 'Enrolled' kpi_label='Enrolled Students' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view enrolled students in active period">
+    <div class="kpi-info">
+      <h4>Enrolled</h4>
+      <div class="kpi-value" style="color: #10b981;">{{ joined_count }}</div>
+    </div>
+    <div class="kpi-icon-wrap green">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+  </a>
+</div>
+
+<div class="tp-grid-2col" style="gap: 24px; margin-bottom: 24px;">
+  <div class="tp-chart-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--tp-text-primary);">My Lead Pipeline</h3>
+    </div>
+    <div style="height: 270px; position: relative;">
+      <canvas id="counselorLeadStatusChart"></canvas>
+    </div>
+  </div>
+  <div class="crm-card tp-card">
+    <div class="crm-card-header tp-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3>Recent Leads</h3>
+      <a href="{% url 'counselor_leads_list' %}" class="btn btn-secondary btn-sm tp-btn-secondary tp-btn-sm">View All</a>
+    </div>
+    <div class="table-responsive">
+      <table class="crm-table">
+        <thead><tr><th>Lead</th><th>Status</th><th>Updated</th></tr></thead>
+        <tbody>
+          {% for ld in recent_leads %}
+          <tr>
+            <td><strong><a href="{% url 'counselor_lead_detail' ld.pk %}" style="text-decoration: none; color: var(--tp-primary-600);">{{ ld.name }}</a></strong></td>
+            <td><span class="badge badge-{{ ld.status|lower|slugify }}">{{ ld.status }}</span></td>
+            <td>{{ ld.updated_at|date:"M d, H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align: center; color: var(--tp-text-muted); padding: 20px;">No leads handed off to you yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Resubmit Rejected Payment Modal -->
+<div id="resubmitModal" role="dialog" aria-modal="true" aria-labelledby="resubmitModalTitle" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+  <div style="background: #ffffff; border-radius: 14px; width: 100%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); overflow: hidden; margin: 16px; border: 1px solid #fee2e2;">
+    <div style="padding: 16px 20px; background: #dc2626; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+      <h3 id="resubmitModalTitle" style="margin: 0; font-size: 1.1rem; color: #ffffff; font-weight: 700;">Resubmit Rejected Payment</h3>
+      <button type="button" onclick="closeResubmitModal()" style="background: none; border: none; color: #ffffff; font-size: 1.4rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+    <form id="resubmitPaymentForm" method="post" action="" enctype="multipart/form-data" style="padding: 20px;">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'counselor_dashboard' %}">
+      
+      <div id="resubmitReceiptInfo" style="margin-bottom: 12px; font-weight: 700; color: #1e293b; font-size: 0.9rem;"></div>
+      
+      <div id="resubmitReasonBox" style="margin-bottom: 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; color: #991b1b; font-size: 0.85rem; line-height: 1.4;">
+        <strong style="display: block; margin-bottom: 4px;">Accountant Rejection Reason:</strong>
+        <span id="resubmitReasonText"></span>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">Corrected Amount (₹) *</label>
+        <input type="number" step="0.01" name="amount" id="resubmitAmountInput" required class="form-control tp-input" style="width: 100%; font-size: 1rem; font-weight: 700;">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">Payment Method *</label>
+        <select name="payment_method" id="resubmitMethodSelect" required class="form-select tp-select" style="width: 100%;">
+          <option value="UPI">UPI / QR Code</option>
+          <option value="Bank Transfer">Bank Transfer / NEFT</option>
+          <option value="Cash">Cash</option>
+          <option value="Card">Credit / Debit Card</option>
+          <option value="Online">Online Payment Gateway</option>
+          <option value="Cheque">Cheque / Demand Draft</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">Transaction Reference / UTR #</label>
+        <input type="text" name="transaction_reference" id="resubmitRefInput" class="form-control tp-input" placeholder="e.g. UPI Ref, NEFT UTR, Cheque No" style="width: 100%;">
+      </div>
+
+      <div style="margin-bottom: 14px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px;">
+        <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">
+          <span>New Payment Proof Screenshot</span>
+          <span style="font-size: 0.72rem; color: #64748b; font-weight: 400;">JPG, PNG, WEBP (Max 5MB)</span>
+        </label>
+        <input type="file" name="payment_proof" id="resubmitProofInput" accept=".jpg,.jpeg,.png,.webp" class="form-control" style="width: 100%; font-size: 0.85rem; padding: 6px;">
+        <small style="display: block; color: #475569; font-size: 0.74rem; margin-top: 5px;">
+          Attach a clear screenshot or receipt to replace the previously rejected proof.
+        </small>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">Resubmission Clarification Note</label>
+        <textarea name="resubmission_notes" rows="2" class="form-control tp-input" placeholder="Explain the corrections made for the Accountant review" style="width: 100%; font-size: 0.85rem;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn btn-secondary tp-btn-secondary" onclick="closeResubmitModal()">Cancel</button>
+        <button type="submit" class="btn btn-danger tp-btn-danger" style="background: #dc2626; border-color: #dc2626; color: #fff; font-weight: 700;">Resubmit for Verification</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openResubmitModal(paymentId, amount, method, ref, reason, studentName, receiptNo) {
+  document.getElementById('resubmitPaymentForm').action = '/enrollments/payments/' + paymentId + '/resubmit/';
+  document.getElementById('resubmitReceiptInfo').textContent = 'Receipt #' + receiptNo + ' (' + studentName + ')';
+  document.getElementById('resubmitAmountInput').value = amount;
+  document.getElementById('resubmitMethodSelect').value = method;
+  document.getElementById('resubmitRefInput').value = ref || '';
+  document.getElementById('resubmitReasonText').textContent = reason || 'No specific feedback provided by accountant.';
+  document.getElementById('resubmitModal').style.display = 'flex';
+}
+
+function closeResubmitModal() {
+  document.getElementById('resubmitModal').style.display = 'none';
+}
+
+(function() {
+  const m = document.getElementById('resubmitModal');
+  if (m) {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) closeResubmitModal();
+    });
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && m && m.style.display === 'flex') {
+      closeResubmitModal();
+    }
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('counselorLeadStatusChart');
+  if (ctx) {
+    const rawData = {{ status_dict|safe }};
+    const labels = Object.keys(rawData);
+    const data = Object.values(rawData);
+    if (window.TPCharts) {
+      window.TPCharts.createDoughnut(ctx, {
+        labels: labels,
+        data: data,
+        centerLabel: 'MY LEADS',
+        cutout: '74%',
+        legendPosition: 'bottom'
+      });
+    } else {
+      if (typeof Chart.getChart === 'function') { var _ex = Chart.getChart(ctx); if (_ex) _ex.destroy(); }
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels.length ? labels : ['No Leads Yet'],
+          datasets: [{
+            data: data.length ? data : [0],
+            backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#64748b']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+  }
+});
+</script>
+{% endblock %}
