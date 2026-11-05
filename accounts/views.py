@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -628,3 +629,20 @@ def admin_set_user_password(request, pk):
 
 
 
+
+@login_required
+@require_POST
+def toggle_duty_status(request):
+    """
+    1-Click toggle between 'On Duty' and 'Out of Office'.
+    Used by telecallers, counselors, and staff in the top navbar.
+    """
+    user = request.user
+    user.is_on_duty = not user.is_on_duty
+    user.save(update_fields=['is_on_duty'])
+    return JsonResponse({
+        'success': True,
+        'is_on_duty': user.is_on_duty,
+        'status_label': 'On Duty' if user.is_on_duty else 'Out of Office',
+        'message': f"Status updated: You are now {'On Duty' if user.is_on_duty else 'Out of Office'}."
+    })

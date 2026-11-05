@@ -144,7 +144,8 @@
       </div>
 
       <!-- INSTALLMENT SETTINGS (Revealed if Split Payment) -->
-      <div id="splitPaymentSettings" style="display: none; background: var(--tp-surface-bg); padding: 16px; border-radius: var(--tp-radius-md); border: 1px solid var(--tp-surface-border); margin-bottom: 20px;">
+      <div id="splitPaymentSettings"
+        <input type="hidden" name="installment_method" id="id_installment_method" value="MANUAL"> style="display: none; background: var(--tp-surface-bg); padding: 16px; border-radius: var(--tp-radius-md); border: 1px solid var(--tp-surface-border); margin-bottom: 20px;">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 14px; margin-bottom: 12px;">
           <div>
             <label class="tp-label">Number of Installments</label>
@@ -166,13 +167,18 @@
 
         <!-- LIVE INSTALLMENT SCHEDULE PREVIEW -->
         <div id="installmentSchedulePreview" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--tp-surface-border);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
             <span style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-primary); text-transform: uppercase;">
-              Projected Installment Schedule
+              Dynamic Installment Balancing Matrix
             </span>
-            <span style="font-size: 0.75rem; color: #10b981; font-weight: 600;">
-              Total Scheduled: <span id="previewScheduledTotal" style="font-variant-numeric: tabular-nums;">₹0.00</span>
-            </span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn btn-sm btn-secondary" onclick="equalizeAllInstallments()" style="padding: 3px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px;">
+                ⚡ Equalize Remaining
+              </button>
+              <span id="previewScheduledTotal" style="font-size: 0.75rem; font-weight: 600;">
+                Total Scheduled: ₹0.00
+              </span>
+            </div>
           </div>
           <div id="installmentCardsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
             <!-- Dynamically populated -->
@@ -249,6 +255,8 @@
   </div>
 </form>
 
+{% load static %}
+<script src="{% static 'js/installment-calculator.js' %}?v=20261105"></script>
 <script>
 function formatINR(val) {
   const num = Number(val) || 0;
@@ -350,6 +358,9 @@ function recalculateGST() {
   document.getElementById('previewTaxable').textContent = formatINR(optimistic.taxable);
   document.getElementById('previewTax').textContent = formatINR(optimistic.tax);
   document.getElementById('previewTotal').textContent = formatINR(optimistic.total);
+  if (typeof initInstallmentEngine === 'function') {
+    initInstallmentEngine(optimistic.total, instCount, firstDate);
+  }
 
   const rowGst = document.getElementById('rowGstAmount');
   if (rowGst) {

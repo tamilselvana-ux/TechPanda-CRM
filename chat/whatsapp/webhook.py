@@ -227,6 +227,15 @@ def process_incoming_message(value: Dict[str, Any], default_business_account: Op
         except Exception as auto_exc:
             logger.error(f"Error in AutomationEngine for conv {conversation.id}: {auto_exc}", exc_info=True)
 
+        # -------------------------------------------------------------
+        # 24/7 AI WhatsApp Admissions Concierge Bot for Off-Hours Inquiries
+        # -------------------------------------------------------------
+        try:
+            from chat.whatsapp.ai_concierge import evaluate_and_respond_concierge
+            evaluate_and_respond_concierge(conversation, message, text_content)
+        except Exception as concierge_exc:
+            logger.error(f"Error in AI Admissions Concierge for conv {conversation.id}: {concierge_exc}", exc_info=True)
+
 
 def process_message_status(status_item: Dict[str, Any]) -> None:
     """

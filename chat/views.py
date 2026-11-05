@@ -1561,3 +1561,89 @@ def api_whatsapp_voice_capability(request, lead_id):
         'recommended_action': 'tel_dial' if not meta_voice_configured else 'meta_voip'
     })
 
+
+
+class ConversationMetaWindowAPI(APIView):
+    """
+    GET /api/conversations/<id>/meta-window/
+    Returns the real-time Meta 24-hour service policy window status.
+    """
+    def get(self, request, pk):
+        conversation = _conversation_or_403(request.user, pk)
+        return Response({
+            'success': True,
+            'meta_window': conversation.meta_window_info
+        }, status=status.HTTP_200_OK)
+
+
+class SendCourseKitAPI(APIView):
+    """
+    POST /api/conversations/<id>/send-course-kit/
+    1-Click Course Kit & Syllabus PDF brochure dispatch for WhatsApp.
+    """
+    def post(self, request, pk):
+        conversation = _conversation_or_403(request.user, pk)
+        course_name = request.data.get('course_name') or request.POST.get('course_name') or 'Full Stack Development'
+        
+        brochure_text = (
+            f"Hello {conversation.customer_name}! 🎓 Here is your official Course Kit & Curriculum Syllabus for "
+            f"*{course_name}* from iTechPanda Academy.\n\n"
+            f"📄 Complete Syllabus PDF: https://itechpanda.com/brochures/{course_name.lower().replace(' ', '-')}.pdf\n"
+            f"🕒 Next Batch: Upcoming Monday\n"
+            f"💡 100% Practical Training with Live Capstone Projects & Placement Support.\n\n"
+            f"Reply with *1* to speak with a Counselor, or *2* to register for a Free Demo Class!"
+        )
+
+        msg = Message.objects.create(
+            conversation=conversation,
+            sender=Message.SENDER_AGENT,
+            message_type=Message.TYPE_TEXT,
+            message_text=brochure_text,
+            status='sent',
+            timestamp=timezone.now()
+        )
+        conversation.last_message = f"📚 Course Kit sent ({course_name})"
+        conversation.last_message_time = timezone.now()
+        conversation.save(update_fields=['last_message', 'last_message_time'])
+
+        return Response({
+            'success': True,
+            'message': 'Course Kit dispatched successfully via WhatsApp!',
+            'message_id': msg.id,
+            'course_name': course_name
+        }, status=status.HTTP_200_OK)
+
+
+class AIConciergeSimulateAPI(APIView):
+    """
+    POST /api/chat/concierge/simulate/
+    Simulates incoming WhatsApp message against the 24/7 AI Admissions Concierge Bot.
+    """
+    def post(self, request):
+        conversation_id = request.data.get('conversation_id') or request.POST.get('conversation_id')
+        message_text = request.data.get('message_text') or request.POST.get('message_text') or ''
+        force_off_hours = request.data.get('force_off_hours', True)
+        if isinstance(force_off_hours, str):
+            force_off_hours = force_off_hours.lower() in ('1', 'true', 'yes')
+
+        if not conversation_id:
+            return Response({'error': 'conversation_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        conversation = Conversation.objects.filter(pk=conversation_id).first()
+        if not conversation:
+            return Response({'error': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        from chat.whatsapp.ai_concierge import evaluate_and_respond_concierge
+        result = evaluate_and_respond_concierge(
+            conversation=conversation,
+            incoming_message=None,
+            text_content=message_text,
+            force_run=force_off_hours
+        )
+
+        return Response({
+            'success': True,
+            'simulated': True,
+            'conversation_id': conversation.id,
+            'result': result
+        }, status=status.HTTP_200_OK)

@@ -73,6 +73,10 @@ class User(AbstractUser):
         default='PENDING',
         help_text="Onboarding invitation status"
     )
+    is_on_duty = models.BooleanField(
+        default=True,
+        help_text="True if staff is actively on duty and available for automated lead assignment"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

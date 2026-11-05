@@ -1,6 +1,6 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-10-31 15:15 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-05 16:50 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
 **Blockers:** 0 · **Warnings:** 109 · **Verdict:** ✅ no stubs found
 
@@ -48,7 +48,7 @@ Run: 2026-10-31 15:15 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | static\js\data-tables-enhanced.js | 255 | `alert('Please select a target status from the dropdown.');` |
 | alert() used for UX | static\js\data-tables-enhanced.js | 261 | `alert('No leads selected.');` |
 | alert() used for UX | templates\accountant\dashboard.html | 591 | `alert('Validation Error: From Date cannot be after To Date.');` |
-| alert() used for UX | templates\accountant\verification_list.html | 260 | `<button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" o` |
+| alert() used for UX | templates\accountant\verification_list.html | 270 | `<button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" o` |
 | alert() used for UX | templates\admin\leads_list.html | 425 | `alert('Please enter a name for this saved view.');` |
 | alert() used for UX | templates\admin\leads_list.html | 441 | `alert('View "' + name + '" saved successfully to your top views bar!');` |
 | alert() used for UX | templates\admin\leads_list.html | 1698 | `alert(data.error // 'Failed to load duplicate information.');` |
@@ -96,27 +96,27 @@ Run: 2026-10-31 15:15 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | templates\chat\campaigns\campaign_composer.html | 1133 | `alert('✓ ' + data.message);` |
 | alert() used for UX | templates\chat\campaigns\campaign_detail.html | 245 | `alert(data.error // 'Control action failed');` |
 | alert() used for UX | templates\chat\campaigns\campaign_detail.html | 248 | `.catch(err => alert('Communication error: ' + err));` |
-| alert() used for UX | templates\leads\enrollment_form.html | 501 | `alert('First payment amount must be greater than zero.');` |
-| alert() used for UX | templates\leads\enrollment_form.html | 510 | `alert(`First payment amount (₹${val.toFixed(2)}) cannot exceed the total payable fee (₹${totalPayable.toFixed(` |
-| alert() used for UX | templates\leads\enrollment_form.html | 518 | `alert(`Transaction / Reference number is required for payment mode '${mode}'.`);` |
+| alert() used for UX | templates\leads\enrollment_form.html | 512 | `alert('First payment amount must be greater than zero.');` |
+| alert() used for UX | templates\leads\enrollment_form.html | 521 | `alert(`First payment amount (₹${val.toFixed(2)}) cannot exceed the total payable fee (₹${totalPayable.toFixed(` |
+| alert() used for UX | templates\leads\enrollment_form.html | 529 | `alert(`Transaction / Reference number is required for payment mode '${mode}'.`);` |
 | alert() used for UX | templates\leads\partials\bulk_edit_modal.html | 383 | `alert('Please select at least one lead from the table to bulk edit.');` |
 | alert() used for UX | templates\leads\partials\bulk_edit_modal.html | 950 | `alert('Bulk operation error: ' + (res.error // 'Failed to apply changes.'));` |
 | alert() used for UX | templates\leads\partials\bulk_edit_modal.html | 961 | `alert(res.message);` |
 | alert() used for UX | templates\leads\partials\bulk_edit_modal.html | 972 | `alert('Communication error during execution: ' + err);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 667 | `alert("Please select at least one walk-in lead to assign.");` |
-| alert() used for UX | templates\receptionist\dashboard.html | 693 | `alert("Please select at least one walk-in lead.");` |
-| alert() used for UX | templates\receptionist\dashboard.html | 700 | `alert("Please select an eligible branch counselor.");` |
-| alert() used for UX | templates\receptionist\dashboard.html | 727 | `alert(`Success: ${data.assigned_count} walk-in lead(s) successfully assigned to Counselor ${data.counselor_nam` |
-| alert() used for UX | templates\receptionist\dashboard.html | 730 | `alert(`Error: ${data.error // 'Failed to assign leads.'}`);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 735 | `alert(`Error: ${err.message}`);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 946 | `alert("Please select an eligible active counselor.");` |
-| alert() used for UX | templates\receptionist\dashboard.html | 981 | `alert(`Student successfully assigned to Counselor ${data.counselor_name}!`);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 984 | `alert(`Error: ${data.error // 'Failed to assign counselor.'}`);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 989 | `alert(`Error: ${err.message}`);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 1083 | `alert(`Visitor Token #${data.token_number} generated! Student checked in successfully.`);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 1113 | `alert("Notice: Matching student record(s) already exist in the CRM. You can review history or assign the exist` |
-| alert() used for UX | templates\receptionist\dashboard.html | 1115 | `alert(`Error: ${data.error // 'Failed to check in student.'}`);` |
-| alert() used for UX | templates\receptionist\dashboard.html | 1120 | `alert(`Error: ${err.message}`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 692 | `alert("Please select at least one walk-in lead to assign.");` |
+| alert() used for UX | templates\receptionist\dashboard.html | 718 | `alert("Please select at least one walk-in lead.");` |
+| alert() used for UX | templates\receptionist\dashboard.html | 725 | `alert("Please select an eligible branch counselor.");` |
+| alert() used for UX | templates\receptionist\dashboard.html | 752 | `alert(`Success: ${data.assigned_count} walk-in lead(s) successfully assigned to Counselor ${data.counselor_nam` |
+| alert() used for UX | templates\receptionist\dashboard.html | 755 | `alert(`Error: ${data.error // 'Failed to assign leads.'}`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 760 | `alert(`Error: ${err.message}`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 971 | `alert("Please select an eligible active counselor.");` |
+| alert() used for UX | templates\receptionist\dashboard.html | 1006 | `alert(`Student successfully assigned to Counselor ${data.counselor_name}!`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 1009 | `alert(`Error: ${data.error // 'Failed to assign counselor.'}`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 1014 | `alert(`Error: ${err.message}`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 1147 | `alert(`Visitor Token #${data.token_number} generated! Student checked in successfully.`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 1177 | `alert("Notice: Matching student record(s) already exist in the CRM. You can review history or assign the exist` |
+| alert() used for UX | templates\receptionist\dashboard.html | 1179 | `alert(`Error: ${data.error // 'Failed to check in student.'}`);` |
+| alert() used for UX | templates\receptionist\dashboard.html | 1184 | `alert(`Error: ${err.message}`);` |
 | alert() used for UX | templates\receptionist\lead_history.html | 395 | `alert("Please select an active counselor.");` |
 | alert() used for UX | templates\receptionist\lead_history.html | 429 | `alert(`Student successfully assigned to Counselor ${data.counselor_name}!`);` |
 | alert() used for UX | templates\receptionist\lead_history.html | 432 | `alert(`Error: ${data.error // 'Failed to assign counselor.'}`);` |

@@ -7,6 +7,7 @@ urlpatterns = [
     path('calls/start/', views.start_call_record, name='start_call_record'),
     path('calls/lock-check/', views.check_call_lock, name='check_call_lock'),
     path('calls/device-status/', views.check_device_status, name='check_device_status'),
+    path('calls/device/heartbeat/', views.api_device_heartbeat, name='api_device_heartbeat'),
     path('calls/<int:pk>/end/', views.end_call_record, name='end_call_record'),
     path('calls/complete/', views.complete_call_record, name='complete_call_record'),
 
@@ -31,5 +32,8 @@ urlpatterns = [
     path('api/call-recordings/upload/', api_views.RecordingUploadView.as_view(), name='app_recording_upload'),
     path('api/calls/pending-dial/', api_views.PendingCallDialView.as_view(), name='app_pending_dial'),
     path('api/calls/report-state/', api_views.CallStateReportView.as_view(), name='api_call_report_state'),
+    # Real-Time AI Objection Coaching Bridge (Phase 5, Item 150)
+    path('calls/api/coaching/analyze/', views.api_coaching_analyze, name='api_coaching_analyze'),
+    path('calls/api/coaching/quick-cards/', views.api_coaching_quick_cards, name='api_coaching_quick_cards'),
 ]
 

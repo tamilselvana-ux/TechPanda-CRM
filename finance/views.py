@@ -1035,3 +1035,17 @@ def finance_audit_export(request):
         ])
 
     return response
+
+
+@login_required
+def finance_dunning_trigger(request):
+    """
+    Triggers automated overdue installment dunning cycle on demand.
+    Available to Admin, Finance Head, and Sales Head roles.
+    """
+    if not (request.user.is_admin_user or request.user.role in (UserRole.SALES_HEAD, UserRole.FINANCE_HEAD)):
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    from .dunning import run_dunning_cycle
+    summary = run_dunning_cycle()
+    return JsonResponse({'success': True, 'summary': summary})

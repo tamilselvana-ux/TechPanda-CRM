@@ -203,6 +203,8 @@ def check_device_status(request):
     return JsonResponse({
         'has_device': True,
         'is_online': is_online,
+        'battery_percent': device.battery_percent,
+        'is_charging': device.is_charging,
         'app_version': device.app_version or '',
         'last_seen_seconds_ago': int((now - device.last_seen_at).total_seconds()) if device.last_seen_at else None,
         'is_dispatched': is_dispatched,
@@ -212,6 +214,48 @@ def check_device_status(request):
         'call_ended_at': call_ended_at.isoformat() if call_ended_at else None,
         'duration': duration,
         'elapsed_seconds': elapsed_seconds,
+    })
+
+
+@login_required
+def api_device_heartbeat(request):
+    """
+    Heartbeat ping from CallSync companion app or simulated ping.
+    Updates last_seen_at, battery_percent, and is_charging.
+    """
+    import json
+    from .models import CallDevice
+    device, _ = CallDevice.objects.get_or_create(user=request.user)
+    device.last_seen_at = timezone.now()
+
+    try:
+        data = json.loads(request.body) if request.body else request.POST
+    except Exception:
+        data = request.POST
+
+    battery = data.get('battery_percent')
+    if battery is not None:
+        try:
+            device.battery_percent = int(battery)
+        except (ValueError, TypeError):
+            pass
+
+    charging = data.get('is_charging')
+    if charging is not None:
+        device.is_charging = str(charging).lower() in ('true', '1', 'yes')
+
+    app_ver = data.get('app_version')
+    if app_ver:
+        device.app_version = str(app_ver)[:20]
+
+    device.save(update_fields=['last_seen_at', 'battery_percent', 'is_charging', 'app_version'])
+
+    return JsonResponse({
+        'success': True,
+        'is_online': True,
+        'battery_percent': device.battery_percent,
+        'is_charging': device.is_charging,
+        'timestamp': timezone.now().isoformat()
     })
 
 
@@ -702,3 +746,45 @@ def mark_lead_called_back(request, lead_id):
                                                require_https=request.is_secure()):
         return redirect(nxt)
     return redirect(_lead_detail_url_name(request.user), pk=lead.pk)
+
+
+@login_required
+def api_coaching_analyze(request):
+    """
+    Sub-second Real-Time AI Objection Coaching Endpoint.
+    Analyzes live speech utterances or manual objection category triggers.
+    """
+    import json
+    from .ai_coaching import analyze_call_speech
+    
+    if request.method == 'POST':
+        try:
+            body = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            body = request.POST
+        
+        speech_text = body.get('speech_text', '')
+        category = body.get('category', '')
+        result = analyze_call_speech(speech_text=speech_text, manual_category=category)
+        return JsonResponse(result)
+    
+    return JsonResponse({'success': False, 'error': 'POST method required.'}, status=405)
+
+
+@login_required
+def api_coaching_quick_cards(request):
+    """
+    Returns full list of 1-click objection playbooks for telecaller screen.
+    """
+    from .ai_coaching import OBJECTION_PLAYBOOKS
+    cards = []
+    for code, p in OBJECTION_PLAYBOOKS.items():
+        cards.append({
+            'code': code,
+            'category': p['category'],
+            'icon': p['icon'],
+            'rebuttal': p['rebuttal'],
+            'talking_points': p['talking_points'],
+            'action_pitch': p['action_pitch']
+        })
+    return JsonResponse({'success': True, 'playbooks': cards})

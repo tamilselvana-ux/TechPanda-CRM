@@ -46,6 +46,7 @@ def assign_new_lead(lead, branch=None, source="Google Sheet", triggered_by=None,
             branch=target_branch,
             is_active=True,
             telecaller__is_active=True,
+            telecaller__is_on_duty=True,
             telecaller__role=UserRole.TELECALLER
         )
         if exclude_telecaller:
@@ -274,6 +275,7 @@ def apply_branch_lead_distribution(branch, user=None, source=None) -> tuple[int,
             is_active=True,
             assignment_percentage__gt=0,
             telecaller__is_active=True,
+            telecaller__is_on_duty=True,
             telecaller__role=UserRole.TELECALLER
         )
         if norm_source:
@@ -561,7 +563,8 @@ def run_lead_sla_escalation(stale_hours=24, untouched_days=7, triggered_by=None)
             branch=branch,
             is_active=True,
             assignment_percentage__gt=0,
-            telecaller__is_active=True
+            telecaller__is_active=True,
+            telecaller__is_on_duty=True
         ).exclude(telecaller=old_tc)
 
         if other_tcs.exists():
@@ -619,7 +622,8 @@ def run_lead_sla_escalation(stale_hours=24, untouched_days=7, triggered_by=None)
             branch=branch,
             is_active=True,
             assignment_percentage__gt=0,
-            telecaller__is_active=True
+            telecaller__is_active=True,
+            telecaller__is_on_duty=True
         ).exclude(telecaller=old_tc)
 
         if other_tcs.exists():

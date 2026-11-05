@@ -56,6 +56,10 @@ urlpatterns = [
     path('api/flows/generate-from-prompt/', views.AIFlowAssistantAPI.as_view(), name='api-flow-ai-generate'),
     path('api/conversations/', views.ConversationListAPI.as_view(), name='api-conversations'),
     path('api/conversations/<int:pk>/messages/', views.ConversationMessagesAPI.as_view(), name='api-conversation-messages'),
+    path('api/conversations/<int:pk>/meta-window/', views.ConversationMetaWindowAPI.as_view(), name='api-conversation-meta-window'),
+    path('api/conversations/<int:pk>/send-course-kit/', views.SendCourseKitAPI.as_view(), name='api-conversation-send-course-kit'),
+    path('api/chat/concierge/simulate/', views.AIConciergeSimulateAPI.as_view(), name='api-chat-concierge-simulate'),
+
     path('api/conversations/<int:pk>/resume-automation/', views.ResumeAutomationAPI.as_view(), name='api-resume-automation'),
     path('api/messages/send/', views.SendMessageAPI.as_view(), name='api-message-send'),
     path('api/search/', views.SearchAPI.as_view(), name='api-search'),

@@ -486,6 +486,9 @@
             }
             const messages = await response.json();
             renderMessages(messages);
+            if (typeof updateMetaWindowStatus === 'function') {
+                updateMetaWindowStatus(conversationId);
+            }
             scrollToBottom(false);
         } catch (err) {
             console.error('Error loading messages:', err);
@@ -1462,3 +1465,64 @@ window.onAudioEnded = function(audio) {
         if (pauseIcon) pauseIcon.style.display = 'none';
     }
 };
+
+
+// ==========================================
+// 24-HOUR META WINDOW & COURSE KIT HANDLERS
+// ==========================================
+async function updateMetaWindowStatus(conversationId) {
+    const badge = document.getElementById('metaWindowBadge');
+    const kitBtn = document.getElementById('btnSendCourseKit');
+    if (!badge) return;
+    try {
+        const res = await fetch(`/api/conversations/${conversationId}/meta-window/`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.meta_window) {
+            const w = data.meta_window;
+            badge.style.display = 'inline-flex';
+            badge.style.background = w.bg_color;
+            badge.style.color = w.badge_color;
+            badge.style.border = `1px solid ${w.border_color}`;
+            badge.textContent = w.text;
+            if (kitBtn) kitBtn.style.display = 'inline-flex';
+        }
+    } catch(e) {
+        console.warn("Failed to check meta window:", e);
+    }
+}
+
+async function sendCourseKitAction() {
+    if (!state.activeConversationId) return;
+    const kitBtn = document.getElementById('btnSendCourseKit');
+    if (kitBtn) {
+        kitBtn.disabled = true;
+        kitBtn.textContent = 'Sending Kit...';
+    }
+    try {
+        const res = await fetch(`/api/conversations/${state.activeConversationId}/send-course-kit/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.CRM_CONFIG ? window.CRM_CONFIG.csrfToken : ''
+            },
+            body: JSON.stringify({ course_name: 'Full Stack Development' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('📚 Course Kit & Syllabus dispatched to WhatsApp!');
+            if (typeof loadMessages === 'function') {
+                loadMessages(state.activeConversationId);
+            }
+        } else {
+            showToast(data.error || 'Failed to send Course Kit', 'error');
+        }
+    } catch(e) {
+        showToast('Error dispatching Course Kit', 'error');
+    } finally {
+        if (kitBtn) {
+            kitBtn.disabled = false;
+            kitBtn.innerHTML = '📚 Send Course Kit';
+        }
+    }
+}

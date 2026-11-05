@@ -96,6 +96,30 @@
   </a>
 </div>
 
+
+<!-- COUNSELOR LIVE DUTY STATUS BAR -->
+{% if counselors %}
+<div class="tp-card" style="padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+    <span style="font-size: 0.88rem; font-weight: 700; color: #1e293b;">Branch Counselors Live Status:</span>
+  </div>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+    {% for c in counselors %}
+      <span class="badge" style="font-size: 0.8rem; font-weight: 600; padding: 5px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px; {% if c.is_on_duty %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% else %}background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;{% endif %}">
+        {% if c.is_on_duty %}
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+          <strong>{{ c.get_full_name|default:c.username }}</strong> &bull; Free / On Duty
+        {% else %}
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
+          <strong>{{ c.get_full_name|default:c.username }}</strong> &bull; Out of Office
+        {% endif %}
+      </span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <!-- FILTERS CARD -->
 <div class="filter-card tp-card" style="padding: 16px 20px; margin-bottom: 24px;">
   <!-- Preset Period Buttons -->
@@ -420,7 +444,7 @@
         <select name="counselor_id" id="modalSelectCounselor" class="form-select" required>
           <option value="">-- Choose Active Counselor in {{ branch.name|default:"Branch" }} --</option>
           {% for c in counselors %}
-          <option value="{{ c.id }}">{{ c.get_full_name|default:c.username }} (Counselor)</option>
+          <option value="{{ c.id }}">{% if c.is_on_duty %}🟢 [On Duty]{% else %}🔴 [Out of Office]{% endif %} {{ c.get_full_name|default:c.username }} (Counselor)</option>
           {% endfor %}
         </select>
         {% else %}
@@ -475,7 +499,7 @@
         <select name="counselor_id" id="modalBulkSelectCounselor" class="form-select" required>
           <option value="">-- Choose Active Counselor in {{ branch.name|default:"Branch" }} --</option>
           {% for c in counselors %}
-          <option value="{{ c.id }}">{{ c.get_full_name|default:c.username }} (Counselor)</option>
+          <option value="{{ c.id }}">{% if c.is_on_duty %}🟢 [On Duty]{% else %}🔴 [Out of Office]{% endif %} {{ c.get_full_name|default:c.username }} (Counselor)</option>
           {% endfor %}
         </select>
         {% else %}
@@ -528,7 +552,8 @@
       </div>
 
       <!-- Real-time Duplicate Warning Box -->
-      <div id="duplicateWarningBox" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px; margin-bottom: 14px; font-size: 0.85rem; color: #92400e;">
+      <div id="autoFillSuccessBanner" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; border-left: 4px solid #10b981; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.85rem; color: #065f46;"></div>
+      <div id="duplicateWarningBox"  style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px; margin-bottom: 14px; font-size: 0.85rem; color: #92400e;">
         <div style="font-weight: 700; margin-bottom: 4px;">⚠️ Matching Student Record(s) Found in CRM:</div>
         <div id="duplicateMatchesList"></div>
       </div>
@@ -540,7 +565,7 @@
         </div>
         <div>
           <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Interested Course / Program</label>
-          <select name="product_id" class="form-select">
+          <select name="product_id" id="regCourseSelect" class="form-select">
             <option value="">-- Select Course (Optional) --</option>
             {% for prod in products %}
               <option value="{{ prod.id }}">{{ prod.name }}</option>
@@ -552,7 +577,7 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
         <div>
           <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Category Interest</label>
-          <select name="category" class="form-select">
+          <select name="category" id="regCategorySelect" class="form-select">
             <option value="Training">Training</option>
             <option value="Placement">Placement</option>
           </select>
@@ -565,11 +590,11 @@
 
       <div style="margin-bottom: 14px;">
         <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Assign Branch Counselor Immediately</label>
-        <select name="counselor_id" class="form-select" {% if not has_counselors %}disabled{% endif %}>
+        <select name="counselor_id" id="regCounselorSelect" class="form-select" {% if not has_counselors %}disabled{% endif %}>
           {% if has_counselors %}
             <option value="">-- Leave in Waiting Area (Assign Later) --</option>
             {% for c in counselors %}
-            <option value="{{ c.id }}">{{ c.get_full_name|default:c.username }} (Counselor)</option>
+            <option value="{{ c.id }}">{% if c.is_on_duty %}🟢 [On Duty]{% else %}🔴 [Out of Office]{% endif %} {{ c.get_full_name|default:c.username }} (Counselor)</option>
             {% endfor %}
           {% else %}
             <option value="">-- No active counselors in this branch --</option>
@@ -1005,6 +1030,35 @@ function closeRegisterStudentModal() {
 }
 
 let phoneCheckTimeout;
+let latestPreCheckMatches = [];
+
+function autoFillWalkin(matchId) {
+  const m = latestPreCheckMatches.find(x => x.id === matchId) || latestPreCheckMatches[0];
+  if (!m) return;
+  if (m.name) document.getElementById('regStudentName').value = m.name;
+  if (m.email) document.getElementById('regStudentEmail').value = m.email;
+  if (m.course_id) {
+    const courseSelect = document.getElementById('regCourseSelect');
+    if (courseSelect) courseSelect.value = m.course_id;
+  }
+  if (m.category) {
+    const catSelect = document.getElementById('regCategorySelect');
+    if (catSelect) catSelect.value = m.category;
+  }
+  if (m.assigned_counselor_id) {
+    const counSelect = document.getElementById('regCounselorSelect');
+    if (counSelect && counSelect.querySelector(`option[value="${m.assigned_counselor_id}"]`)) {
+      counSelect.value = m.assigned_counselor_id;
+    }
+  }
+  const autoBanner = document.getElementById('autoFillSuccessBanner');
+  if (autoBanner) {
+    autoBanner.style.display = 'block';
+    autoBanner.innerHTML = `⚡ <strong>1-Sec Pre-Fill Applied:</strong> Restored details for <em>${m.name}</em> (Course: ${m.course_name || 'N/A'}).`;
+    setTimeout(() => { autoBanner.style.display = 'none'; }, 5000);
+  }
+}
+
 function handlePhoneInput(phone) {
   clearTimeout(phoneCheckTimeout);
   if (phone.length < 8) {
@@ -1019,7 +1073,14 @@ function handlePhoneInput(phone) {
       const list = document.getElementById('duplicateMatchesList');
 
       if (data.success && data.has_matches) {
+        latestPreCheckMatches = data.matches;
         warnBox.style.display = 'block';
+        
+        // Instant pre-fill if single clear match and name is currently blank
+        const nameField = document.getElementById('regStudentName');
+        if (data.matches.length === 1 && (!nameField.value || nameField.value.trim() === '')) {
+          autoFillWalkin(data.matches[0].id);
+        }
         list.innerHTML = data.matches.map(m => `
           <div style="background: #fff; border: 1px solid #fde68a; border-radius: 4px; padding: 8px; margin-top: 6px; font-size: 0.8rem;">
             <div style="display: flex; justify-content: space-between; font-weight: 700; color: #1e293b;">
@@ -1027,7 +1088,10 @@ function handlePhoneInput(phone) {
               <span style="color: #b45309;">${m.status}</span>
             </div>
             <div style="color: #475569; margin-top: 2px;">Branch: ${m.branch} &bull; Counselor: ${m.assigned_counselor || 'Unassigned'}</div>
-            <div style="margin-top: 6px; display: flex; gap: 6px;">
+            <div style="margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-success" style="font-size: 0.725rem; padding: 2px 8px; background: #059669; color: #fff; font-weight: 700; border: none; border-radius: 4px;" onclick="autoFillWalkin(${m.id})">
+                ⚡ 1-Sec Instant Pre-fill
+              </button>
               <button type="button" class="btn btn-secondary" style="font-size: 0.725rem; padding: 2px 8px;" onclick="closeRegisterStudentModal(); openLeadHistoryModal(${m.id});">
                 View History
               </button>

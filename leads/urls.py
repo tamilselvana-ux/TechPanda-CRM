@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, api_google_sheets, views_enrollment, views_bulk, views_accountant, views_walkin, views_email_logs
+from . import views, api_google_sheets, views_enrollment, views_bulk, views_accountant, views_walkin, views_email_logs, views_360
 
 urlpatterns = [
     # Admin Lead routes
@@ -172,6 +172,8 @@ urlpatterns = [
     # Admin Email Logs Audit & Retry (CR-1)
     path('admin/email-logs/', views_email_logs.admin_email_logs_list, name='admin_email_logs'),
     path('admin/email-logs/<int:log_id>/retry/', views_email_logs.admin_email_log_retry, name='admin_email_log_retry'),
+    # Student 360° Unified Admissions Drawer
+    path('leads/<int:lead_id>/360-data/', views_360.lead_360_data, name='lead_360_data'),
 ]
 
 

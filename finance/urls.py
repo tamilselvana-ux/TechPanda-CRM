@@ -34,4 +34,6 @@ urlpatterns = [
     path('approvals/expense/<int:expense_id>/approve/', views.finance_approve_expense_action, name='finance_approve_expense_action'),
     path('approvals/expense/<int:expense_id>/reject/', views.finance_reject_expense_action, name='finance_reject_expense_action'),
     path('approvals/payroll/<int:payroll_id>/approve/', views.finance_approve_payroll_action, name='finance_approve_payroll_action'),
+    # Dunning Engine
+    path('dunning/trigger/', views.finance_dunning_trigger, name='finance_dunning_trigger'),
 ]

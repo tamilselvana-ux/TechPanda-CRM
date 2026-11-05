@@ -537,6 +537,30 @@
           </form>
           {% endif %}
 
+          <!-- On Duty / Out of Office Toggle (Phase 1, Item 140) -->
+          {% if user.is_authenticated and user.role in "TELECALLER COUNSELOR" %}
+          <button type="button" 
+                  id="tp-duty-toggle-btn" 
+                  class="tp-duty-toggle-btn {% if user.is_on_duty %}on-duty{% else %}out-of-office{% endif %}"
+                  title="Click to toggle your allocation availability: On Duty vs Out of Office"
+                  style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; border: 1px solid {% if user.is_on_duty %}rgba(16, 185, 129, 0.4){% else %}rgba(239, 68, 68, 0.4){% endif %}; background: {% if user.is_on_duty %}rgba(16, 185, 129, 0.12){% else %}rgba(239, 68, 68, 0.12){% endif %}; color: {% if user.is_on_duty %}#059669{% else %}#dc2626{% endif %}; margin-right: 6px;">
+            <span class="tp-duty-dot" style="width: 8px; height: 8px; border-radius: 50%; background: {% if user.is_on_duty %}#10b981{% else %}#ef4444{% endif %}; display: inline-block;"></span>
+            <span id="tp-duty-text">{% if user.is_on_duty %}On Duty{% else %}Out of Office{% endif %}</span>
+          </button>
+          {% endif %}
+
+          <!-- CallSync Phone Connectivity Pulse (Phase 1, Item 141) -->
+          {% if user.is_authenticated and user.role == "TELECALLER" %}
+          <div id="tp-callsync-status-pill"
+               class="tp-callsync-pill"
+               title="CallSync Phone Status: Checking..."
+               style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.73rem; font-weight: 700; background: rgba(100, 116, 139, 0.12); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.25); margin-right: 6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+            <span class="tp-callsync-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; display: inline-block;"></span>
+            <span id="tp-callsync-text">CallSync...</span>
+          </div>
+          {% endif %}
+
           <!-- 3D Isometric Theme Toggle Coin -->
           <button type="button" class="theme-toggle-btn tp-3d-theme-toggle" id="theme-toggle" aria-label="Switch Theme" title="Toggle Light / Dark theme">
             <div class="tp-3d-coin">
@@ -799,6 +823,65 @@
                 <input type="hidden" name="lead_id" id="call-form-lead-id" value="">
                 <input type="hidden" name="duration" id="call-form-duration" value="0">
 
+                <!-- 1-Click Speed-Dial Disposition Toolbar (Phase 2, Item 142) -->
+                                <!-- Real-Time AI Objection Coach Panel (Phase 5, Item 150) -->
+                <div class="ai-objection-coach-panel" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <span style="font-size: 0.78rem; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 6px;">
+                      <span>🤖 Live AI Objection Coach:</span>
+                    </span>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                      <button type="button" class="btn btn-sm" onclick="triggerObjectionCoach('FEE_HIGH')" style="padding: 2px 7px; font-size: 0.72rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 600; cursor: pointer;">💰 Fees</button>
+                      <button type="button" class="btn btn-sm" onclick="triggerObjectionCoach('PLACEMENT_DOUBT')" style="padding: 2px 7px; font-size: 0.72rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 600; cursor: pointer;">💼 Job/Placement</button>
+                      <button type="button" class="btn btn-sm" onclick="triggerObjectionCoach('TIMING_CLASH')" style="padding: 2px 7px; font-size: 0.72rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 600; cursor: pointer;">⏰ Timings</button>
+                      <button type="button" class="btn btn-sm" onclick="triggerObjectionCoach('COMPETITOR_COMPARISON')" style="padding: 2px 7px; font-size: 0.72rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 600; cursor: pointer;">🆚 Compare</button>
+                      <button type="button" class="btn btn-sm" onclick="triggerObjectionCoach('NOT_SURE')" style="padding: 2px 7px; font-size: 0.72rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 600; cursor: pointer;">🤷 Confused</button>
+                    </div>
+                  </div>
+
+                  <!-- Live Coach Response Card -->
+                  <div id="aiCoachCard" style="display: none; background: #ffffff; border: 1px solid #86efac; border-radius: 6px; padding: 10px 12px; margin-top: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                      <div id="aiCoachTitle" style="font-size: 0.82rem; font-weight: 700; color: #1e293b;"></div>
+                      <button type="button" id="btnInsertCoachNote" onclick="insertCoachingIntoNotes()" style="background: #059669; color: #fff; border: none; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; cursor: pointer;">
+                        📋 Paste to Notes
+                      </button>
+                    </div>
+                    <div id="aiCoachRebuttal" style="font-size: 0.8rem; color: #047857; margin-bottom: 6px; line-height: 1.4;"></div>
+                    <ul id="aiCoachPoints" style="margin: 0; padding-left: 18px; font-size: 0.75rem; color: #334155; line-height: 1.4;"></ul>
+                    <div id="aiCoachAction" style="font-size: 0.75rem; color: #1e40af; margin-top: 6px; font-weight: 600;"></div>
+                  </div>
+                </div>
+
+                <div class="tp-quick-disposition-wrap" style="margin-bottom: 14px;">
+                  <div style="font-size: 0.75rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>⚡ Quick Dispositions (Press Key 1-5)</span>
+                    <span style="font-size: 0.7rem; font-weight: 600; color: var(--tp-primary-600);">Auto-logs & Saves</span>
+                  </div>
+                  <div class="tp-quick-disposition-toolbar" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="tp-quick-btn" data-hotkey="1" style="background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700; border-radius: 6px; padding: 5px 9px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                      <kbd style="background: #dc2626; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.7rem; font-family: monospace;">1</kbd>
+                      <span>RNR (No Answer)</span>
+                    </button>
+                    <button type="button" class="tp-quick-btn" data-hotkey="2" style="background: rgba(245, 158, 11, 0.1); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.35); font-weight: 700; border-radius: 6px; padding: 5px 9px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                      <kbd style="background: #b45309; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.7rem; font-family: monospace;">2</kbd>
+                      <span>Busy</span>
+                    </button>
+                    <button type="button" class="tp-quick-btn" data-hotkey="3" style="background: rgba(59, 130, 246, 0.1); color: #1d4ed8; border: 1px solid rgba(59, 130, 246, 0.35); font-weight: 700; border-radius: 6px; padding: 5px 9px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                      <kbd style="background: #1d4ed8; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.7rem; font-family: monospace;">3</kbd>
+                      <span>Callback (2h)</span>
+                    </button>
+                    <button type="button" class="tp-quick-btn" data-hotkey="4" style="background: rgba(100, 116, 139, 0.1); color: #475569; border: 1px solid rgba(100, 116, 139, 0.35); font-weight: 700; border-radius: 6px; padding: 5px 9px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                      <kbd style="background: #475569; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.7rem; font-family: monospace;">4</kbd>
+                      <span>Not Interested</span>
+                    </button>
+                    <button type="button" class="tp-quick-btn" data-hotkey="5" style="background: rgba(16, 185, 129, 0.1); color: #047857; border: 1px solid rgba(16, 185, 129, 0.35); font-weight: 700; border-radius: 6px; padding: 5px 9px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+                      <kbd style="background: #047857; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.7rem; font-family: monospace;">5</kbd>
+                      <span>Interested 🔥</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div class="form-group" style="margin-bottom: 14px;">
                   <label class="form-label" style="font-weight: 600;">Call Notes <span class="required" style="color: #dc2626;">*</span></label>
                   <textarea name="notes" id="call-form-notes" rows="3" class="form-control" required placeholder="What was discussed during the call? (Mandatory for record completion)..."></textarea>
@@ -975,8 +1058,101 @@
     };
   </script>
   {% block extra_js %}{% endblock %}
+  <!-- Telecaller 1-Click Speed-Dial Dispositions -->
+  <script src="{% static 'js/telecaller-speeddial.js' %}"></script>
+  <!-- Real-Time AI Objection Coaching Engine -->
+  <script src="{% static 'js/telecaller-coaching.js' %}?v=20261105"></script>
   <!-- Compact Date Range Picker -->
   <script src="{% static 'js/date-range-picker.js' %}?v=20261030_compact"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var dutyBtn = document.getElementById('tp-duty-toggle-btn');
+      if (dutyBtn) {
+        dutyBtn.addEventListener('click', function() {
+          dutyBtn.disabled = true;
+          fetch("{% url 'toggle_duty_status' %}", {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': window.getCsrfToken(),
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            dutyBtn.disabled = false;
+            if (data.success) {
+              var textSpan = document.getElementById('tp-duty-text');
+              var dotSpan = dutyBtn.querySelector('.tp-duty-dot');
+              if (data.is_on_duty) {
+                dutyBtn.className = 'tp-duty-toggle-btn on-duty';
+                dutyBtn.style.background = 'rgba(16, 185, 129, 0.12)';
+                dutyBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                dutyBtn.style.color = '#059669';
+                if (dotSpan) dotSpan.style.background = '#10b981';
+                if (textSpan) textSpan.textContent = 'On Duty';
+              } else {
+                dutyBtn.className = 'tp-duty-toggle-btn out-of-office';
+                dutyBtn.style.background = 'rgba(239, 68, 68, 0.12)';
+                dutyBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                dutyBtn.style.color = '#dc2626';
+                if (dotSpan) dotSpan.style.background = '#ef4444';
+                if (textSpan) textSpan.textContent = 'Out of Office';
+              }
+            }
+          })
+          .catch(function(err) {
+            dutyBtn.disabled = false;
+            console.error('Failed to toggle duty status', err);
+          });
+        });
+      }
+    });
+  </script>
+  <script>
+    function updateCallSyncStatus() {
+      var pill = document.getElementById('tp-callsync-status-pill');
+      if (!pill) return;
+      fetch("{% url 'check_device_status' %}")
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var dot = pill.querySelector('.tp-callsync-dot');
+          var text = document.getElementById('tp-callsync-text');
+          if (!data.has_device) {
+            pill.style.background = 'rgba(239, 68, 68, 0.1)';
+            pill.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+            pill.style.color = '#ef4444';
+            pill.title = 'No CallSync phone paired. Please log into the Android app.';
+            if (dot) dot.style.background = '#ef4444';
+            if (text) text.textContent = 'Phone Unpaired';
+          } else if (data.is_online) {
+            pill.style.background = 'rgba(16, 185, 129, 0.12)';
+            pill.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+            pill.style.color = '#059669';
+            var batt = (data.battery_percent !== null && data.battery_percent !== undefined) ? ' (' + data.battery_percent + '%' + (data.is_charging ? '⚡' : '') + ')' : '';
+            pill.title = 'CallSync Android Phone Connected! Synced ' + (data.last_seen_seconds_ago || 0) + 's ago' + batt;
+            if (dot) dot.style.background = '#10b981';
+            if (text) text.textContent = 'Ready' + batt;
+          } else {
+            pill.style.background = 'rgba(245, 158, 11, 0.12)';
+            pill.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+            pill.style.color = '#d97706';
+            var minAgo = data.last_seen_seconds_ago ? Math.round(data.last_seen_seconds_ago / 60) + 'm ago' : 'never';
+            pill.title = 'Phone Offline! Last seen ' + minAgo + '. Please wake or open the CallSync app.';
+            if (dot) dot.style.background = '#f59e0b';
+            if (text) text.textContent = 'Phone Asleep';
+          }
+        })
+        .catch(function() {});
+    }
+    if (document.getElementById('tp-callsync-status-pill')) {
+      updateCallSyncStatus();
+      setInterval(updateCallSyncStatus, 20000);
+    }
+  </script>
+    <!-- Unified 360° Student Admissions Slide-over Drawer Component -->
+  {% include 'components/student_360_drawer.html' %}
+  <script src="{% static 'js/student-360-drawer.js' %}?v=20261105"></script>
+
   <!-- 3D Cinematic Interactive Micro-Engine -->
   <script src="{% static 'js/modern-3d-cinematic.js' %}?v=20261030_3d" defer></script>
 </body>

@@ -146,6 +146,7 @@ def admin_leads_list(request):
     channel_filter = request.GET.get('channel', '').strip()
 
     product_filter = request.GET.get('product', '').strip()
+    sla_filter = request.GET.get('sla', '').strip()
 
     branch_filter = request.GET.get('branch', '').strip()
 
@@ -361,6 +362,19 @@ def admin_leads_list(request):
 
         leads_qs = leads_qs.filter(product_id=product_filter)
 
+    if sla_filter:
+        now = timezone.now()
+        if sla_filter == 'breached':
+            two_hours_ago = now - timedelta(hours=2)
+            leads_qs = leads_qs.filter(status='New', created_at__lte=two_hours_ago)
+        elif sla_filter == 'warning':
+            two_hours_ago = now - timedelta(hours=2)
+            thirty_mins_ago = now - timedelta(minutes=30)
+            leads_qs = leads_qs.filter(status='New', created_at__gte=two_hours_ago, created_at__lte=thirty_mins_ago)
+        elif sla_filter == 'fresh':
+            thirty_mins_ago = now - timedelta(minutes=30)
+            leads_qs = leads_qs.filter(status='New', created_at__gt=thirty_mins_ago)
+
     
 
     selected_branch = get_admin_selected_branch(request)
@@ -556,6 +570,7 @@ def admin_leads_list(request):
         'channel_filter': channel_filter,
 
         'product_filter': product_filter,
+        'sla_filter': sla_filter,
 
         'branch_filter': branch_filter,
 
@@ -1260,6 +1275,8 @@ def manager_leads_list(request):
 
     branch_filter = request.GET.get('branch', '').strip()
 
+    sla_filter = request.GET.get('sla', '').strip()
+
     date_from = request.GET.get('date_from', '').strip()
 
     date_to = request.GET.get('date_to', '').strip()
@@ -1352,7 +1369,18 @@ def manager_leads_list(request):
 
         leads_qs = leads_qs.filter(product_id=product_filter)
 
-
+    if sla_filter:
+        now = timezone.now()
+        if sla_filter == 'breached':
+            two_hours_ago = now - timedelta(hours=2)
+            leads_qs = leads_qs.filter(status='New', created_at__lte=two_hours_ago)
+        elif sla_filter == 'warning':
+            two_hours_ago = now - timedelta(hours=2)
+            thirty_mins_ago = now - timedelta(minutes=30)
+            leads_qs = leads_qs.filter(status='New', created_at__gte=two_hours_ago, created_at__lte=thirty_mins_ago)
+        elif sla_filter == 'fresh':
+            thirty_mins_ago = now - timedelta(minutes=30)
+            leads_qs = leads_qs.filter(status='New', created_at__gt=thirty_mins_ago)
 
     leads_qs = leads_qs.order_by('-created_at', '-id')
 
@@ -1382,6 +1410,7 @@ def manager_leads_list(request):
         'telecaller_filter': telecaller_filter,
         'channel_filter': channel_filter,
         'product_filter': product_filter,
+        'sla_filter': sla_filter,
         'branch_filter': branch_filter,
     })
 
@@ -9979,6 +10008,10 @@ def receptionist_check_existing_lead(request):
             'source': m.source or (m.channel.name if m.channel else 'Direct'),
 
             'assigned_counselor': (m.assigned_counselor.get_full_name() or m.assigned_counselor.username) if m.assigned_counselor else None,
+            'assigned_counselor_id': m.assigned_counselor_id if m.assigned_counselor_id else None,
+            'course_id': getattr(m, 'product_id', None),
+            'course_name': m.product.name if getattr(m, 'product', None) else (getattr(m, 'course_name', '') or ''),
+            'category': getattr(m, 'category', '') or 'Training',
 
             'created_at': m.created_at.strftime('%Y-%m-%d %H:%M') if m.created_at else ''
 
@@ -11405,26 +11438,15 @@ def admin_pipeline_status_delete(request, pk):
     return redirect('admin_pipeline_statuses')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# ==========================================
+# MODULARIZED SUB-PACKAGE RE-EXPORTS (Phase 6 Architecture)
+# ==========================================
+from .views_desk import (
+    receptionist_dashboard, receptionist_lead_history, receptionist_check_existing_lead, admin_walkin_desk, admin_walkin_create, admin_walkin_assign_counselor, admin_walkin_bulk_assign_counselor, admin_walkin_update_status
+)
+from .views_export import (
+    export_leads_csv, admin_duplicate_leads_export, admin_duplicate_leads_view, admin_duplicate_lead_payload, admin_duplicate_lead_promote, admin_duplicate_leads_keep_single
+)
+from .views_allocation import (
+    admin_lead_queues, api_bulk_assign_leads, api_bulk_assign_preview, api_reassign_lead_to_counselor, api_resolve_lead_selection, api_bulk_action, admin_retry_pending_assignments
+)

@@ -42,6 +42,7 @@ urlpatterns = [
     path('users/<int:pk>/resend-invitation/', views.resend_user_invitation, name='resend_user_invitation'),
     path('accounts/api/username-preview/', views.api_username_preview, name='api_username_preview'),
     path('api/username-preview/', views.api_username_preview, name='api_username_preview_alt'),
+    path('toggle-duty-status/', views.toggle_duty_status, name='toggle_duty_status'),
 
     
     # Role-specific authentication routes

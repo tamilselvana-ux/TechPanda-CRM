@@ -19,7 +19,8 @@ def get_branch_channel_rules(branch_id, channel_id=None):
     qs = TelecallerLeadSetup.objects.filter(
         branch_id=branch_id,
         is_active=True,
-        telecaller__is_active=True
+        telecaller__is_active=True,
+        telecaller__is_on_duty=True
     ).select_related('telecaller', 'channel')
     if channel_id:
         channel_qs = qs.filter(channel_id=channel_id)
@@ -127,7 +128,8 @@ def allocate_lead_by_branch_and_channel(lead, assigned_by=None):
         branch=lead.branch,
         channel=channel,
         is_active=True,
-        telecaller__is_active=True
+        telecaller__is_active=True,
+        telecaller__is_on_duty=True
     ).select_related('telecaller'))
 
     # Fallback to general branch rules if no channel-specific rule exists
