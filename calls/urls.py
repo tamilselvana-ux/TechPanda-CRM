@@ -35,5 +35,6 @@ urlpatterns = [
     # Real-Time AI Objection Coaching Bridge (Phase 5, Item 150)
     path('calls/api/coaching/analyze/', views.api_coaching_analyze, name='api_coaching_analyze'),
     path('calls/api/coaching/quick-cards/', views.api_coaching_quick_cards, name='api_coaching_quick_cards'),
+    path('calls/device/<int:device_id>/update-sync-settings/', views.api_update_device_sync_settings, name='api_update_device_sync_settings'),
 ]
 

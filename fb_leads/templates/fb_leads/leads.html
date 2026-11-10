@@ -1,5 +1,130 @@
 {% extends 'base.html' %}
-{% block title %}Facebook Leads - DigiPanda CRM{% endblock %}
+{% block title %}Facebook Leads - DigiPanda CRM<!-- Sync Leads Date Filter Modal -->
+<div id="syncLeadsModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+  <div style="background: #ffffff; border-radius: 14px; width: 100%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); overflow: hidden; margin: 16px; border: 1px solid #e2e8f0;">
+    <div style="padding: 16px 20px; background: #0f172a; color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.2rem;">⚡</span>
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #ffffff;">Sync Facebook Leads</h3>
+      </div>
+      <button type="button" onclick="closeSyncModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <form method="post" action="{% url 'fb_leads:facebook_leads_sync' %}" id="syncLeadsForm" onsubmit="handleSyncSubmit(event)" style="padding: 20px;">
+      {% csrf_token %}
+      <p style="font-size: 0.88rem; color: #475569; margin-top: 0; margin-bottom: 16px;">
+        Choose the timeframe for lead synchronization. Filtering by date prevents re-importing old or deleted historical records.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
+        <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
+          <input type="radio" name="sync_mode" value="today" checked onchange="toggleCustomDates(this.value)">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #0f172a;">Today Only</div>
+            <div style="font-size: 0.78rem; color: #64748b;">Sync leads submitted today (from 00:00:00 to now)</div>
+          </div>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
+          <input type="radio" name="sync_mode" value="yesterday" onchange="toggleCustomDates(this.value)">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #0f172a;">Yesterday & Today</div>
+            <div style="font-size: 0.78rem; color: #64748b;">Last 48 hours of lead ad submissions</div>
+          </div>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
+          <input type="radio" name="sync_mode" value="7days" onchange="toggleCustomDates(this.value)">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #0f172a;">Last 7 Days</div>
+            <div style="font-size: 0.78rem; color: #64748b;">All submissions from the past week</div>
+          </div>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #f8fafc; transition: all 0.2s;">
+          <input type="radio" name="sync_mode" value="custom" onchange="toggleCustomDates(this.value)">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #0f172a;">Custom Date Range</div>
+            <div style="font-size: 0.78rem; color: #64748b;">Specify exact start and end dates</div>
+          </div>
+        </label>
+
+        <div id="customDateContainer" style="display: none; padding: 12px; background: #f1f5f9; border-radius: 8px; margin-top: 4px;">
+          <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Start Date</label>
+              <input type="date" name="start_date" id="syncStartDate" class="form-control" style="width: 100%; font-size: 0.85rem; padding: 6px 10px;">
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">End Date</label>
+              <input type="date" name="end_date" id="syncEndDate" class="form-control" style="width: 100%; font-size: 0.85rem; padding: 6px 10px;">
+            </div>
+          </div>
+        </div>
+
+        <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #fed7aa; border-radius: 8px; cursor: pointer; background: #fff7ed; transition: all 0.2s;">
+          <input type="radio" name="sync_mode" value="all" onchange="toggleCustomDates(this.value)">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #c2410c;">All Time (Full Historical Sync)</div>
+            <div style="font-size: 0.78rem; color: #9a3412;">Pulls every lead from the beginning of all ad forms</div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+        <button type="button" class="btn btn-secondary" onclick="closeSyncModal()">Cancel</button>
+        <button type="submit" id="submitSyncBtn" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+          <span id="syncBtnIcon">⟳</span>
+          <span id="syncBtnText">Start Lead Sync</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openSyncModal() {
+  const modal = document.getElementById('syncLeadsModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function closeSyncModal() {
+  const modal = document.getElementById('syncLeadsModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function toggleCustomDates(mode) {
+  const container = document.getElementById('customDateContainer');
+  if (container) {
+    if (mode === 'custom') {
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+    }
+  }
+}
+
+function handleSyncSubmit(e) {
+  const btn = document.getElementById('submitSyncBtn');
+  const text = document.getElementById('syncBtnText');
+  const icon = document.getElementById('syncBtnIcon');
+  if (btn && text) {
+    btn.disabled = true;
+    text.innerText = 'Synchronizing with Meta...';
+    if (icon) icon.innerText = '⏳';
+  }
+}
+
+// Close modal on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeSyncModal();
+});
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -9,10 +134,7 @@
   </div>
   <div style="display: flex; gap: 10px; align-items: center;">
     <a href="{% url 'fb_leads:fb_accounts' %}" class="btn btn-secondary">⚙ Manage Accounts & Pages</a>
-    <form method="post" action="{% url 'fb_leads:facebook_leads_sync' %}" style="margin: 0;">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-primary" {% if not configured %}disabled title="Add FB_PAGE_TOKEN and FB_PAGE_ID to .env first"{% endif %}>⟳ Sync All Leads</button>
-    </form>
+    <button type="button" class="btn btn-primary" onclick="openSyncModal()" {% if not configured %}disabled title="Add FB_PAGE_TOKEN and FB_PAGE_ID to .env first"{% endif %}>⟳ Sync Leads</button>
   </div>
 </div>
 
@@ -23,7 +145,7 @@
 {% endif %}
 
 <div class="kpi-grid" style="margin-bottom: 20px;">
-  <a href="?{% if selected_form %}form={{ selected_form|urlencode }}&{% endif %}{% if selected_ad %}ad={{ selected_ad|urlencode }}&{% endif %}{% if q %}q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if not crm_filter %}box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15); border-left: 4px solid #2563eb;{% endif %}" title="Click to view all Facebook leads (preserves active form/ad filters)">
+  <a href="?{% if selected_form %}form={{ selected_form|urlencode }}&{% endif %}{% if selected_ad %}ad={{ selected_ad|urlencode }}&{% endif %}{% if date_from %}&date_from={{ date_from }}&{% endif %}{% if date_to %}&date_to={{ date_to }}&{% endif %}{% if q %}q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if not crm_filter %}box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15); border-left: 4px solid #2563eb;{% endif %}" title="Click to view all Facebook leads (preserves active form/ad filters)">
     <div class="kpi-info">
       <h4>Facebook leads received</h4>
       <div class="kpi-value" style="color: #2563eb;">{{ total }}</div>
@@ -34,7 +156,7 @@
     </div>
   </a>
 
-  <a href="?crm=error{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if crm_filter == 'error' %}background: #fff5f5; border: 2px solid #ef4444; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);{% else %}border-left: 4px solid #ef4444;{% endif %}" title="Click to view leads with sync errors">
+  <a href="?crm=error{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if crm_filter == 'error' %}background: #fff5f5; border: 2px solid #ef4444; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);{% else %}border-left: 4px solid #ef4444;{% endif %}" title="Click to view leads with sync errors">
     <div class="kpi-info">
       <h4>Not added to CRM</h4>
       <div class="kpi-value" style="color: {% if errors %}#dc2626{% else %}#10b981{% endif %};">{{ errors }}</div>
@@ -73,6 +195,16 @@
       </select>
     </div>
 
+    <div class="filter-col" style="flex: 1.5; min-width: 140px;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">From Date</label>
+      <input type="date" name="date_from" id="filterDateFrom" value="{{ date_from }}" class="form-control" style="border-radius: 8px;">
+    </div>
+
+    <div class="filter-col" style="flex: 1.5; min-width: 140px;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">To Date</label>
+      <input type="date" name="date_to" id="filterDateTo" value="{{ date_to }}" class="form-control" style="border-radius: 8px;">
+    </div>
+
     {% if crm_filter == 'error' %}
     <input type="hidden" name="crm" value="error">
     {% endif %}
@@ -83,10 +215,25 @@
     </div>
   </form>
 
-  {% if selected_form or selected_ad or crm_filter == 'error' %}
+  <div style="display: flex; gap: 6px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+    <span style="font-size: 0.76rem; font-weight: 700; color: var(--tp-text-muted); margin-right: 4px;">Quick Dates:</span>
+    <button type="button" class="btn btn-sm" onclick="setLeadDatePreset('today')" style="background: #f1f5f9; color: #334155; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #cbd5e1;">Today</button>
+    <button type="button" class="btn btn-sm" onclick="setLeadDatePreset('yesterday')" style="background: #f1f5f9; color: #334155; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #cbd5e1;">Yesterday</button>
+    <button type="button" class="btn btn-sm" onclick="setLeadDatePreset('7days')" style="background: #f1f5f9; color: #334155; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #cbd5e1;">Last 7 Days</button>
+    <button type="button" class="btn btn-sm" onclick="setLeadDatePreset('this_month')" style="background: #f1f5f9; color: #334155; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #cbd5e1;">This Month</button>
+    <button type="button" class="btn btn-sm" onclick="setLeadDatePreset('clear')" style="background: #f8fafc; color: #64748b; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">Clear Dates</button>
+  </div>
+
+  {% if selected_form or selected_ad or date_from or date_to or crm_filter == 'error' %}
   <!-- Active Filter Pills -->
   <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--tp-surface-border, #e2e8f0); display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
     <span style="font-size: 0.78rem; font-weight: 700; color: var(--tp-text-muted);">Active Filters:</span>
+    {% if date_from or date_to %}
+    <span class="badge" style="background: #ecfdf5; color: #047857; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+      Date: {{ date_from|default:"Beginning" }} to {{ date_to|default:"Today" }}
+      <a href="?{% if selected_form %}form={{ selected_form|urlencode }}&{% endif %}{% if selected_ad %}ad={{ selected_ad|urlencode }}&{% endif %}{% if q %}q={{ q|urlencode }}&{% endif %}{% if crm_filter %}crm={{ crm_filter }}{% endif %}" style="color: #047857; text-decoration: none; font-weight: 800;">&times;</a>
+    </span>
+    {% endif %}
     {% if selected_form %}
     <span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
       Form: {{ selected_form }}
@@ -165,7 +312,7 @@
         {% if page.has_other_pages %}
     <div style="display: flex; gap: 8px; justify-content: center; padding: 14px 0; align-items: center;">
       {% if page.has_previous %}
-      <a class="btn btn-sm btn-secondary" href="?page={{ page.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
+      <a class="btn btn-sm btn-secondary" href="?page={{ page.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
         &larr; Previous
       </a>
       {% endif %}
@@ -173,7 +320,7 @@
         Page {{ page.number }} of {{ page.paginator.num_pages }} ({{ page.paginator.count }} leads)
       </span>
       {% if page.has_next %}
-      <a class="btn btn-sm btn-secondary" href="?page={{ page.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
+      <a class="btn btn-sm btn-secondary" href="?page={{ page.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
         Next &rarr;
       </a>
       {% endif %}
@@ -192,7 +339,7 @@
 (function() {
   // Safe local polling for incoming Facebook leads (Issue 2)
   // Polls ONLY local CRM database every 3 seconds - never calls external Graph API!
-  const pollUrl = "{% url 'fb_leads:facebook_leads_recent_api' %}?q={{ q|urlencode }}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}";
+  const pollUrl = "{% url 'fb_leads:facebook_leads_recent_api' %}?q={{ q|urlencode }}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}";
   let isPolling = false;
 
   function pollLocalLeads() {
@@ -284,3 +431,41 @@
 })();
 </script>
 {% endblock %}
+
+function setLeadDatePreset(preset) {
+  const dFrom = document.getElementById('filterDateFrom');
+  const dTo = document.getElementById('filterDateTo');
+  if (!dFrom || !dTo) return;
+  const now = new Date();
+  const format = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  if (preset === 'today') {
+    const todayStr = format(now);
+    dFrom.value = todayStr;
+    dTo.value = todayStr;
+  } else if (preset === 'yesterday') {
+    const yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    const yestStr = format(yest);
+    dFrom.value = yestStr;
+    dTo.value = yestStr;
+  } else if (preset === '7days') {
+    const past = new Date(now);
+    past.setDate(past.getDate() - 7);
+    dFrom.value = format(past);
+    dTo.value = format(now);
+  } else if (preset === 'this_month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    dFrom.value = format(firstDay);
+    dTo.value = format(now);
+  } else if (preset === 'clear') {
+    dFrom.value = '';
+    dTo.value = '';
+  }
+  dFrom.form.submit();
+}

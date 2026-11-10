@@ -1,8 +1,8 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-05 17:12 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-10 09:32 · Root: `d:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
-**Blockers:** 0 · **Warnings:** 109 · **Verdict:** ✅ no stubs found
+**Blockers:** 0 · **Warnings:** 116 · **Verdict:** ✅ no stubs found
 
 ## 🚫 Blockers (must fix before 'done')
 | Rule | File | Line | Code |
@@ -19,6 +19,8 @@ Run: 2026-11-05 17:12 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Hard-coded localhost URL | config\settings.py | 305 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 456 | `alert(data.error // "Failed to update cutoff date");` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 461 | `alert("Network error updating cutoff date");` |
 | alert() used for UX | scratch\apply_remediations.py | 31 | `2. **Stored XSS:** Creating a lead with name `"><script>alert(1)</script>` must render escaped characters (`&q` |
 | Hard-coded localhost URL | scratch\build_crawler_config.py | 7 | `"baseUrl": "http://127.0.0.1:8000",` |
 | Hard-coded localhost URL | scratch\capture_after_screenshots.py | 109 | `tabs = json.loads(urllib.request.urlopen('http://127.0.0.1:9223/json').read().decode('utf-8'))` |
@@ -28,10 +30,15 @@ Run: 2026-11-05 17:12 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | Hard-coded localhost URL | scratch\capture_all_baselines.py | 106 | `('admin_leads', 'http://127.0.0.1:8000/admin/leads/'),` |
 | Hard-coded localhost URL | scratch\capture_all_baselines.py | 107 | `('admin_dashboard', 'http://127.0.0.1:8000/admin/dashboard/'),` |
 | Hard-coded localhost URL | scratch\capture_all_baselines.py | 111 | `tabs = json.loads(urllib.request.urlopen('http://127.0.0.1:9222/json').read().decode('utf-8'))` |
+| Hard-coded localhost URL | scratch\capture_app_screenshots.py | 42 | `html = html.replace('href="/static/', 'href="http://127.0.0.1:8001/static/')` |
+| Hard-coded localhost URL | scratch\capture_app_screenshots.py | 43 | `html = html.replace('src="/static/', 'src="http://127.0.0.1:8001/static/')` |
+| Hard-coded localhost URL | scratch\capture_app_screenshots.py | 46 | `html = html.replace("<head>", '<head><base href="http://127.0.0.1:8001/">')` |
 | Hard-coded localhost URL | scratch\capture_baseline_cdp.py | 104 | `tabs = json.loads(urllib.request.urlopen('http://127.0.0.1:9222/json').read().decode('utf-8'))` |
 | Hard-coded localhost URL | scratch\capture_baseline_cdp.py | 121 | `mid = cdp.send("Page.navigate", {"url": "http://127.0.0.1:8000/accountant/dashboard/"})` |
 | Hard-coded localhost URL | scratch\check_calendar_render.py | 10 | `await page.goto('http://127.0.0.1:8000/accounts/login/')` |
 | Hard-coded localhost URL | scratch\check_calendar_render.py | 17 | `await page.goto('http://127.0.0.1:8000/admin/leads/?view=all_active&sort=-created_at')` |
+| alert() used for UX | scratch\patch_accounts_template.py | 73 | `alert(data.error // "Failed to update cutoff date");` |
+| alert() used for UX | scratch\patch_accounts_template.py | 78 | `alert("Network error updating cutoff date");` |
 | alert() used for UX | scratch\patch_dashboard_html_dates.py | 242 | `alert('Validation Error: From Date cannot be after To Date.');` |
 | alert() used for UX | scratch\patch_enrollment_form_html.py | 109 | `alert('First payment amount must be greater than zero.');` |
 | alert() used for UX | scratch\patch_enrollment_form_html.py | 118 | `alert(`First payment amount (₹${val.toFixed(2)}) cannot exceed the total payable fee (₹${totalPayable.toFixed(` |

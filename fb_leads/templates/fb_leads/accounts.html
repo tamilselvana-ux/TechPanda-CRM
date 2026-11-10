@@ -68,12 +68,13 @@
         <table class="crm-table" style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr style="border-bottom: 2px solid var(--border-color, #e2e8f0); text-align: left; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">
-              <th style="padding: 10px 12px; width: 22%;">Page Name & ID</th>
-              <th style="padding: 10px 12px; width: 18%;">Assigned Branch</th>
-              <th style="padding: 10px 12px; width: 24%;">Auto-Sync Engine</th>
-              <th style="padding: 10px 12px; width: 12%;">Webhook</th>
-              <th style="padding: 10px 12px; width: 14%;">Last Sync Status</th>
-              <th style="padding: 10px 12px; text-align: right; width: 10%;">Actions</th>
+              <th style="padding: 10px 12px; width: 20%;">Page Name & ID</th>
+              <th style="padding: 10px 12px; width: 15%;">Assigned Branch</th>
+              <th style="padding: 10px 12px; width: 18%;">Auto-Sync Engine</th>
+              <th style="padding: 10px 12px; width: 16%;">Sync Cutoff Date</th>
+              <th style="padding: 10px 12px; width: 10%;">Webhook</th>
+              <th style="padding: 10px 12px; width: 12%;">Last Sync Status</th>
+              <th style="padding: 10px 12px; text-align: right; width: 9%;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -124,6 +125,19 @@
                       <option value="60" {% if page.sync_interval_minutes == 60 %}selected{% endif %}>Every 1 Hour</option>
                     </select>
                   </div>
+                </div>
+              </td>
+
+              <!-- Sync Cutoff Date Shield -->
+              <td style="padding: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                  <input type="date" id="cutoffDate-{{ page.id }}" value="{{ page.sync_cutoff_date|date:'Y-m-d' }}" 
+                         class="form-control" style="font-size: 0.78rem; padding: 3px 6px; width: 100%; max-width: 140px;"
+                         onchange="updatePageCutoff({{ page.id }}, this.value)"
+                         title="Historical Cutoff: leads submitted before this date will never be synced">
+                  <span id="cutoffStatus-{{ page.id }}" style="font-size: 0.72rem; color: {% if page.sync_cutoff_date %}#059669{% else %}#94a3b8{% endif %}; font-weight: 500;">
+                    {% if page.sync_cutoff_date %}Shielded: from {{ page.sync_cutoff_date|date:"d M Y" }}{% else %}No cutoff (all leads){% endif %}
+                  </span>
                 </div>
               </td>
 
@@ -412,5 +426,40 @@ setInterval(() => {
 
 // Initial status check
 refreshAllPagesStatus();
+
+function updatePageCutoff(pageId, dateStr) {
+  const statusEl = document.getElementById(`cutoffStatus-${pageId}`);
+  if (statusEl) {
+    statusEl.innerText = "Saving...";
+    statusEl.style.color = "#2563eb";
+  }
+
+  const formData = new FormData();
+  formData.append("sync_cutoff_date", dateStr);
+
+  fetch(`/facebook-leads/pages/${pageId}/cutoff/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken"),
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: formData,
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        if (statusEl) {
+          statusEl.innerText = data.sync_cutoff_date ? `Shielded: from ${data.sync_cutoff_date}` : "No cutoff (all leads)";
+          statusEl.style.color = data.sync_cutoff_date ? "#059669" : "#94a3b8";
+        }
+      } else {
+        alert(data.error || "Failed to update cutoff date");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Network error updating cutoff date");
+    });
+}
 </script>
 {% endblock %}

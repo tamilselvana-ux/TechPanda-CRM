@@ -78,6 +78,11 @@ class FacebookPage(models.Model):
         db_index=True,
         help_text="Next scheduled auto-sync timestamp"
     )
+    sync_cutoff_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Historical cutoff date. Leads created before this date will never be synced."
+    )
     status = models.CharField(max_length=50, default='CONNECTED', db_index=True)
     last_sync_at = models.DateTimeField(null=True, blank=True)
     last_sync_status = models.CharField(max_length=50, default='Idle')

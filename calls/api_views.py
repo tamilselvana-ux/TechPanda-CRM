@@ -92,7 +92,12 @@ class CallIngestView(AppAPIView):
             return Response({"error": f"max {MAX_CALLS_PER_REQUEST} calls per request"},
                             status=status.HTTP_400_BAD_REQUEST)
         device = services.device_for_user(request.user, **_app_meta(request))
-        return Response(services.ingest_calls(device, calls))
+        manual_override = bool(
+            request.data.get("manual_override") or 
+            request.data.get("sync_all") or 
+            request.data.get("allow_historical")
+        )
+        return Response(services.ingest_calls(device, calls, manual_override=manual_override))
 
 
 class RecordingUploadView(AppAPIView):
@@ -102,8 +107,15 @@ class RecordingUploadView(AppAPIView):
 
     def post(self, request):
         device = services.device_for_user(request.user, **_app_meta(request))
+        manual_override = str(
+            request.data.get("manual_override") or 
+            request.data.get("sync_all") or 
+            request.data.get("allow_historical") or ""
+        ).strip().lower() in ("true", "1", "yes")
         try:
-            rec, created = services.save_recording(device, request.FILES.get("audio_file"), request.data)
+            rec, created = services.save_recording(
+                device, request.FILES.get("audio_file"), request.data, manual_override=manual_override
+            )
         except services.RecordingRejected as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(

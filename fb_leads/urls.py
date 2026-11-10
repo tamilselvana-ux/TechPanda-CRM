@@ -17,5 +17,6 @@ urlpatterns = [
     path("pages/<int:page_id>/toggle-autosync/", views.fb_page_toggle_autosync, name="fb_page_toggle_autosync"),
     path("pages/<int:page_id>/interval/", views.fb_page_update_interval, name="fb_page_update_interval"),
     path("pages/<int:page_id>/sync/", views.fb_page_sync, name="fb_page_sync"),
+    path("pages/<int:page_id>/cutoff/", views.fb_page_update_cutoff, name="fb_page_update_cutoff"),
     path("api/autosync-status/", views.api_autosync_status, name="fb_api_autosync_status"),
 ]

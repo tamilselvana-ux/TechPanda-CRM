@@ -45,8 +45,15 @@ DEFAULTS = {
     "ALLOWED_AUDIO_EXTENSIONS": (
         "mp3", "m4a", "aac", "amr", "awb", "wav", "ogg", "oga", "opus", "3gp", "3gpp", "mp4", "webm", "flac",
     ),
+    "CALL_SYNC_MAX_AGE_HOURS": 48,      # rolling auto-sync horizon: 48 hours for call logs
+    "RECORDING_MAX_AGE_HOURS": 48,      # rolling auto-sync horizon: 48 hours for recordings
+    "CALL_SYNC_MAX_AGE_DAYS": 2,        # backward-compatible days reference (48 hours)
+    "RECORDING_MAX_AGE_DAYS": 2,        # backward-compatible days reference (48 hours)
 }
 
 
-def get(key):
-    return {**DEFAULTS, **getattr(settings, "CALLS", {})}[key]
+def get(key, default=None):
+    merged = {**DEFAULTS, **getattr(settings, "CALLS", {})}
+    if default is not None:
+        return merged.get(key, default)
+    return merged[key]

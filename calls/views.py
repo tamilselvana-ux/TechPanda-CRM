@@ -788,3 +788,50 @@ def api_coaching_quick_cards(request):
             'action_pitch': p['action_pitch']
         })
     return JsonResponse({'success': True, 'playbooks': cards})
+
+
+@login_required
+def api_update_device_sync_settings(request, device_id):
+    """
+    Allows Admin or Sales Head to configure a CallDevice's sync settings:
+    - allow_historical_sync (bool)
+    - sync_cutoff_date (YYYY-MM-DD or null)
+    """
+    if not (request.user.is_admin_user or request.user.is_sales_head_user):
+        return JsonResponse({'success': False, 'error': 'Forbidden'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+    
+    from .models import CallDevice
+    from django.shortcuts import get_object_or_404
+    import json
+    device = get_object_or_404(CallDevice, pk=device_id)
+    
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        body = request.POST
+
+    if 'allow_historical_sync' in body:
+        val = body.get('allow_historical_sync')
+        device.allow_historical_sync = bool(val and str(val).lower() not in ('false', '0', 'off'))
+
+    if 'sync_cutoff_date' in body:
+        raw_date = str(body.get('sync_cutoff_date') or '').strip()
+        if raw_date:
+            from datetime import datetime
+            try:
+                device.sync_cutoff_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': 'Invalid date format (YYYY-MM-DD required)'}, status=400)
+        else:
+            device.sync_cutoff_date = None
+
+    device.save(update_fields=['allow_historical_sync', 'sync_cutoff_date'])
+    return JsonResponse({
+        'success': True,
+        'device_id': device.pk,
+        'allow_historical_sync': device.allow_historical_sync,
+        'sync_cutoff_date': device.sync_cutoff_date.strftime('%Y-%m-%d') if device.sync_cutoff_date else None,
+        'message': f"Updated sync settings for {device.user.get_full_name() or device.user.username}'s phone"
+    })

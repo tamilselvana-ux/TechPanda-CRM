@@ -4,6 +4,7 @@ Periodically fetches leads from Meta Graph API for all active Facebook Pages
 without blocking HTTP requests or requiring external broker dependencies.
 """
 
+import datetime
 import logging
 import threading
 import time
@@ -22,6 +23,8 @@ def run_auto_sync_cycle():
     """
     Checks all connected Facebook Pages where auto_sync_enabled=True.
     If next_sync_at is null or due (<= now), executes sync_page_leads.
+    Enforces a smart rolling 48-hour horizon and honors page.sync_cutoff_date
+    so deleted old leads are never re-imported from Facebook history.
     """
     from fb_leads.models import FacebookPage
     from fb_leads.facebook import sync_page_leads
@@ -53,8 +56,17 @@ def run_auto_sync_cycle():
             continue
 
         try:
-            logger.info("Auto-syncing Facebook leads for page %s (interval: %sm)", page.page_name, interval_mins)
-            new_leads = sync_page_leads(page.page_id)
+            # Smart rolling horizon: check past 48 hours for auto-sync, or cutoff date if later
+            auto_since = now - timedelta(hours=48)
+            if page.sync_cutoff_date:
+                cutoff_dt = timezone.make_aware(
+                    datetime.datetime.combine(page.sync_cutoff_date, datetime.time.min),
+                    timezone.get_current_timezone()
+                )
+                auto_since = max(auto_since, cutoff_dt)
+
+            logger.info("Auto-syncing Facebook leads for page %s (since: %s)", page.page_name, auto_since)
+            new_leads = sync_page_leads(page.page_id, since=auto_since)
             FacebookPage.objects.filter(id=page.id).update(
                 last_sync_at=timezone.now(),
                 next_sync_at=timezone.now() + timedelta(minutes=interval_mins),
@@ -69,7 +81,6 @@ def run_auto_sync_cycle():
             # Adaptive backoff for rate limits or auth errors
             err_lower = err_msg.lower()
             if "limit" in err_lower or "calls" in err_lower or "request limit" in err_lower:
-                # Meta rate limit backoff: pause 5 minutes
                 backoff_time = timezone.now() + timedelta(minutes=5)
                 status_desc = "Rate limit backoff (retry in 5m)"
             elif "token" in err_lower or "session" in err_lower or "permissions" in err_lower:
@@ -98,23 +109,18 @@ def _worker_loop():
         except Exception as e:
             logger.exception("Unexpected error in Facebook Auto-Sync loop: %s", e)
 
-        # Sleep in short increments to allow graceful shutdown
+        # Sleep in short increments to allow fast clean shutdown
         for _ in range(30):
             if _stop_event.is_set():
                 break
             time.sleep(1)
 
-    logger.info("Facebook Leads Auto-Sync background worker stopped.")
-
 
 def ensure_scheduler_running():
-    """
-    Idempotent call to start the background auto-sync worker thread if not running.
-    Safe to call on requests, views, or application readiness.
-    """
+    """Idempotently starts the auto-sync background thread if not already active."""
     global _worker_thread, _stop_event
     with _scheduler_lock:
-        if _worker_thread is not None and _worker_thread.is_alive():
+        if _worker_thread and _worker_thread.is_alive():
             return True
 
         _stop_event.clear()
@@ -138,9 +144,9 @@ def stop_auto_sync_background_worker():
             _worker_thread = None
 
 
-def trigger_immediate_page_sync(page_id: str) -> int:
+def trigger_immediate_page_sync(page_id: str, since=None, until=None) -> int:
     """
-    Manually triggers immediate synchronization for a FacebookPage,
+    Manually triggers immediate synchronization for a FacebookPage with optional date boundaries,
     resetting its next_sync_at schedule timer.
     """
     from fb_leads.models import FacebookPage
@@ -150,14 +156,18 @@ def trigger_immediate_page_sync(page_id: str) -> int:
     if not page:
         raise ValueError(f"FacebookPage with page_id {page_id} not found.")
 
-    new_count = sync_page_leads(page_id)
+    new_count = sync_page_leads(page_id, since=since, until=until)
     interval_mins = page.sync_interval_minutes or 3
     next_due = timezone.now() + timedelta(minutes=interval_mins)
+
+    status_note = f"Synced {new_count} new lead(s)"
+    if since:
+        status_note += f" (filtered)"
 
     FacebookPage.objects.filter(id=page.id).update(
         last_sync_at=timezone.now(),
         next_sync_at=next_due,
-        last_sync_status=f"Synced {new_count} new lead(s)",
+        last_sync_status=status_note,
         last_error=""
     )
     return new_count

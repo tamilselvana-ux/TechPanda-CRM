@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -85,6 +85,8 @@ def lead_list(request):
     selected_form = request.GET.get("form", "").strip()
     selected_ad = request.GET.get("ad", "").strip()
     crm_filter = request.GET.get("crm", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
 
     available_forms = list(
         FacebookLead.objects.exclude(form_name__isnull=True).exclude(form_name="")
@@ -108,6 +110,16 @@ def lead_list(request):
         leads = leads.filter(ad_q)
         base_qs = base_qs.filter(ad_q)
 
+    if date_from:
+        from_q = Q(created_on_facebook__date__gte=date_from) | Q(created_on_facebook__isnull=True, received_at__date__gte=date_from)
+        leads = leads.filter(from_q)
+        base_qs = base_qs.filter(from_q)
+
+    if date_to:
+        to_q = Q(created_on_facebook__date__lte=date_to) | Q(created_on_facebook__isnull=True, received_at__date__lte=date_to)
+        leads = leads.filter(to_q)
+        base_qs = base_qs.filter(to_q)
+
     if q:
         search_q = (
             Q(full_name__icontains=q) | Q(phone__icontains=q) | Q(email__icontains=q)
@@ -128,6 +140,8 @@ def lead_list(request):
         "q": q,
         "selected_form": selected_form,
         "selected_ad": selected_ad,
+        "date_from": date_from,
+        "date_to": date_to,
         "available_forms": available_forms,
         "available_ads": available_ads,
         "crm_filter": crm_filter,
@@ -158,10 +172,16 @@ def api_recent_leads(request):
         )
     selected_form = request.GET.get("form", "").strip()
     selected_ad = request.GET.get("ad", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
     if selected_form:
         leads_qs = leads_qs.filter(Q(form_name=selected_form) | Q(form_id=selected_form))
     if selected_ad:
         leads_qs = leads_qs.filter(Q(ad_name=selected_ad) | Q(ad_id=selected_ad))
+    if date_from:
+        leads_qs = leads_qs.filter(Q(created_on_facebook__date__gte=date_from) | Q(created_on_facebook__isnull=True, received_at__date__gte=date_from))
+    if date_to:
+        leads_qs = leads_qs.filter(Q(created_on_facebook__date__lte=date_to) | Q(created_on_facebook__isnull=True, received_at__date__lte=date_to))
     if request.GET.get("crm") == "error":
         leads_qs = leads_qs.filter(crm_result="error")
 
@@ -220,10 +240,53 @@ def api_recent_leads(request):
     })
 
 
+def _parse_sync_time_range(request):
+    """
+    Parses sync_mode, start_date, and end_date from request.POST or request.GET.
+    Returns (since_dt, until_dt, mode_label).
+    """
+    from django.utils import timezone
+    from datetime import timedelta, datetime, time
+    from django.utils.dateparse import parse_date
+
+    mode = request.POST.get("sync_mode") or request.GET.get("sync_mode") or "today"
+    start_str = request.POST.get("start_date") or request.GET.get("start_date") or ""
+    end_str = request.POST.get("end_date") or request.GET.get("end_date") or ""
+
+    now = timezone.now()
+    today_start = timezone.make_aware(datetime.combine(now.date(), time.min), timezone.get_current_timezone())
+
+    if mode == "today":
+        return today_start, None, "Today"
+    elif mode == "yesterday":
+        yest_start = today_start - timedelta(days=1)
+        return yest_start, None, "Yesterday & Today"
+    elif mode == "7days":
+        since_7d = now - timedelta(days=7)
+        return since_7d, None, "Last 7 Days"
+    elif mode == "custom":
+        since_dt = None
+        until_dt = None
+        if start_str:
+            d1 = parse_date(start_str.strip())
+            if d1:
+                since_dt = timezone.make_aware(datetime.combine(d1, time.min), timezone.get_current_timezone())
+        if end_str:
+            d2 = parse_date(end_str.strip())
+            if d2:
+                until_dt = timezone.make_aware(datetime.combine(d2, time.max), timezone.get_current_timezone())
+        label = f"{start_str or 'Start'} to {end_str or 'Now'}"
+        return since_dt, until_dt, label
+    elif mode == "all":
+        return None, None, "All Time"
+
+    return today_start, None, "Today"
+
+
 @login_required
 @require_POST
 def sync_leads(request):
-    """Button: link the Page for automatic leads, then pull all existing leads (each becomes a CRM lead)."""
+    """Button: link the Page for automatic leads, then pull leads with optional date range."""
     if not _can_manage(request.user):
         raise PermissionDenied("Only Admin and Sales Head can sync Facebook leads.")
     try:
@@ -231,11 +294,14 @@ def sync_leads(request):
             messages.success(request, "Page linked: new Facebook leads will now arrive automatically.")
     except Exception as exc:
         messages.error(request, f"{exc}")
+
+    since_dt, until_dt, mode_label = _parse_sync_time_range(request)
+
     try:
-        n = sync_all_leads()
-        messages.success(request, f"Sync done. {n} new Facebook lead(s) added to the CRM.")
+        n = sync_all_leads(since=since_dt, until=until_dt)
+        messages.success(request, f"Sync done ({mode_label}). {n} new Facebook lead(s) added to the CRM.")
         log_activity(user=request.user, action="Facebook Leads Synced",
-                     description=f"Facebook Lead Ads sync: {n} new lead(s).", object_type="FacebookLead",
+                     description=f"Facebook Lead Ads sync ({mode_label}): {n} new lead(s).", object_type="FacebookLead",
                      request=request)
     except Exception as exc:
         messages.error(request, f"Sync failed: {exc}")
@@ -402,7 +468,7 @@ def fb_page_toggle_webhook(request, page_id):
 @login_required
 @require_POST
 def fb_page_sync(request, page_id):
-    """Sync leads specifically for one Facebook Page (supports both HTTP form POST and AJAX)."""
+    """Sync leads specifically for one Facebook Page (supports date range, form POST and AJAX)."""
     if not _can_manage(request.user):
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"success": False, "error": "Permission denied"}, status=403)
@@ -417,6 +483,74 @@ def fb_page_sync(request, page_id):
             return JsonResponse({"success": False, "error": "Facebook Page not found"}, status=404)
         messages.error(request, "Facebook Page not found.")
         return redirect("fb_leads:fb_accounts")
+
+    since_dt, until_dt, mode_label = _parse_sync_time_range(request)
+
+    try:
+        n = trigger_immediate_page_sync(page.page_id, since=since_dt, until=until_dt)
+        page.refresh_from_db()
+        msg = f"Sync complete for '{page.page_name}' ({mode_label}): {n} new lead(s) imported."
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({
+                "success": True,
+                "message": msg,
+                "new_leads": n,
+                "last_sync_at": page.last_sync_at.strftime("%d %b, %H:%M") if page.last_sync_at else "Just now",
+                "last_sync_status": page.last_sync_status,
+                "next_sync_at": page.next_sync_at.strftime("%H:%M") if page.next_sync_at else "—",
+            })
+        messages.success(request, msg)
+    except Exception as exc:
+        err_msg = f"Sync failed for '{page.page_name}': {exc}"
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "error": err_msg}, status=500)
+        messages.error(request, err_msg)
+
+    return redirect("fb_leads:fb_accounts")
+
+
+@login_required
+@require_POST
+def fb_page_update_cutoff(request, page_id):
+    """Update historical lead sync cutoff date for a Facebook Page."""
+    if not _can_manage(request.user):
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "error": "Permission denied"}, status=403)
+        raise PermissionDenied("Only Admin and Sales Head can change cutoff date.")
+
+    from django.utils.dateparse import parse_date
+    from .models import FacebookPage
+
+    page = FacebookPage.objects.filter(id=page_id).first()
+    if not page:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "error": "Facebook Page not found"}, status=404)
+        messages.error(request, "Facebook Page not found.")
+        return redirect("fb_leads:fb_accounts")
+
+    cutoff_str = request.POST.get("sync_cutoff_date", "").strip()
+    if cutoff_str:
+        parsed_d = parse_date(cutoff_str)
+        if not parsed_d:
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"success": False, "error": "Invalid date format (use YYYY-MM-DD)"}, status=400)
+            messages.error(request, "Invalid date format.")
+            return redirect("fb_leads:fb_accounts")
+        page.sync_cutoff_date = parsed_d
+        msg = f"Set lead sync cutoff to {parsed_d.strftime('%d %b %Y')} for '{page.page_name}'."
+    else:
+        page.sync_cutoff_date = None
+        msg = f"Cleared sync cutoff date for '{page.page_name}'."
+
+    page.save(update_fields=["sync_cutoff_date"])
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "success": True,
+            "sync_cutoff_date": str(page.sync_cutoff_date) if page.sync_cutoff_date else "",
+            "message": msg,
+        })
+    messages.success(request, msg)
+    return redirect("fb_leads:fb_accounts")
 
     try:
         n = trigger_immediate_page_sync(page.page_id)

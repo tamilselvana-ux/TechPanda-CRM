@@ -284,20 +284,45 @@ def _google_ads_channel():
     return get_channel("Google Ads")
 
 
-def ingest_calls(device, calls):
+def ingest_calls(device, calls, manual_override=False):
     """Google Ads number calls from the phone's call log. Returns a summary dict for the app."""
-    result = {"created": 0, "duplicates": 0, "new_leads": 0, "errors": []}
+    result = {"created": 0, "duplicates": 0, "new_leads": 0, "skipped_stale": 0, "errors": []}
     on_missed = conf.get("ON_MISSED_CALL")
     on_missed = import_string(on_missed) if on_missed else None
     receiver = device.user
     author = display_name(receiver)
     source = conf.get("GOOGLE_CALL_SOURCE")
 
+    # Check if manual historical override is enabled (via parameter or device setting)
+    allow_historical = manual_override or getattr(device, "allow_historical_sync", False)
+
+    if allow_historical:
+        # In manual override mode: respect device.sync_cutoff_date if set, otherwise allow all history
+        if getattr(device, "sync_cutoff_date", None):
+            cutoff = timezone.make_aware(datetime.combine(device.sync_cutoff_date, datetime.min.time()), dt_timezone.utc)
+        else:
+            cutoff = None
+    else:
+        # Default rolling auto-sync horizon: last 48 hours (already-synced calls remain safe in CRM DB)
+        max_age_hours = conf.get("CALL_SYNC_MAX_AGE_HOURS", 48)
+        horizon_cutoff = timezone.now() - timedelta(hours=max_age_hours)
+        if getattr(device, "sync_cutoff_date", None):
+            device_cutoff = timezone.make_aware(datetime.combine(device.sync_cutoff_date, datetime.min.time()), dt_timezone.utc)
+            cutoff = max(horizon_cutoff, device_cutoff)
+        else:
+            cutoff = horizon_cutoff
+
     for i, item in enumerate(calls):
         try:
             data = _parse_call(item)
         except (KeyError, TypeError, ValueError) as e:
             result["errors"].append({"index": i, "error": str(e)})
+            continue
+
+        # Historical Cutoff Shield: Skip stale calls older than rolling 48-hour cutoff
+        # Prevents dialer history from resurrecting deleted leads or polluting CRM
+        if cutoff is not None and data["started_at"] < cutoff:
+            result["skipped_stale"] += 1
             continue
 
         if CallEvent.objects.filter(device=device, raw_number=data["raw_number"],
@@ -478,7 +503,7 @@ def _parse_started_at(value):
     return dt if timezone.is_aware(dt) else timezone.make_aware(dt, dt_timezone.utc)
 
 
-def save_recording(device, upload, data):
+def save_recording(device, upload, data, manual_override=False):
     """
     data = the app's form fields: device_file_id, phone_number, direction,
     duration_seconds, call_started_at. Returns (drive.CallRecording, created).
@@ -512,6 +537,29 @@ def save_recording(device, upload, data):
         duration = 0
     started_at = _parse_started_at(data.get("call_started_at"))
     user = device.user
+
+    # Historical Cutoff Shield: 48-hour rolling window for auto-sync, or manual override
+    allow_historical = manual_override or getattr(device, "allow_historical_sync", False)
+
+    if allow_historical:
+        if getattr(device, "sync_cutoff_date", None):
+            rec_cutoff = timezone.make_aware(datetime.combine(device.sync_cutoff_date, datetime.min.time()), dt_timezone.utc)
+        else:
+            rec_cutoff = None
+    else:
+        max_rec_hours = conf.get("RECORDING_MAX_AGE_HOURS", 48)
+        rec_horizon_cutoff = timezone.now() - timedelta(hours=max_rec_hours)
+        if getattr(device, "sync_cutoff_date", None):
+            device_rec_cutoff = timezone.make_aware(datetime.combine(device.sync_cutoff_date, datetime.min.time()), dt_timezone.utc)
+            rec_cutoff = max(rec_horizon_cutoff, device_rec_cutoff)
+        else:
+            rec_cutoff = rec_horizon_cutoff
+
+    if rec_cutoff is not None and started_at and started_at < rec_cutoff:
+        raise RecordingRejected(
+            f"Call recording timestamp ({started_at.strftime('%Y-%m-%d %H:%M')}) is older than 48-hour rolling sync window "
+            f"(enable manual override to import historical audio)"
+        )
 
     # Recordings never create leads: personal calls stay out of the CRM.
     # 1. First priority: match CallHistory directly for this telecaller + remote phone around started_at
