@@ -155,6 +155,17 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
         pass
     token_preview = f"WI-{preview_branch_code}-{preview_daily_count:03d}"
 
+    kiosk_mode = (request.GET.get('kiosk') == '1' or request.POST.get('kiosk') == '1')
+    if slug and branch_id:
+        base_enquiry_url = reverse('public_student_enquiry_slug_branch', kwargs={'slug': slug, 'branch_id': branch_id})
+    elif slug:
+        base_enquiry_url = reverse('public_student_enquiry_slug', kwargs={'slug': slug})
+    elif branch_id:
+        base_enquiry_url = reverse('public_student_enquiry_branch', kwargs={'branch_id': branch_id})
+    else:
+        base_enquiry_url = reverse('public_student_enquiry_form')
+    kiosk_reset_url = f"{base_enquiry_url}?kiosk=1"
+
     if request.method == "GET":
         return render(request, 'public/student_enquiry_form.html', {
             'form_config': form_config,
@@ -165,6 +176,8 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
             'products': active_products,
             'token_preview': token_preview,
             'form_data': {},
+            'kiosk_mode': kiosk_mode,
+            'kiosk_reset_url': kiosk_reset_url,
         })
 
     # --- Process POST Submission ---
@@ -275,47 +288,35 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
         form_data_dict['interested_course_list'] = interested_courses
         form_data_dict['interested_course_str'] = ' | '.join(interested_courses)
         if not name or not phone_raw:
-
             return render(request, 'public/student_enquiry_form.html', {
-
                 'form_config': form_config,
-
                 'schema': schema,
-
+                'branding': branding,
                 'branch': selected_branch,
-
                 'branches': active_branches,
-
                 'products': active_products,
-
                 'error': 'Please enter your Full Name and Mobile Phone Number.',
-
                 'form_data': form_data_dict,
                 'token_preview': token_preview,
-
+                'kiosk_mode': kiosk_mode,
+                'kiosk_reset_url': kiosk_reset_url,
             }, status=400)
 
         phone_clean = normalize_phone_number(phone_raw)
 
         if len(phone_clean) < 10:
-
             return render(request, 'public/student_enquiry_form.html', {
-
                 'form_config': form_config,
-
                 'schema': schema,
-
+                'branding': branding,
                 'branch': selected_branch,
-
                 'branches': active_branches,
-
                 'products': active_products,
-
                 'error': 'Please enter a valid 10-digit mobile phone number.',
-
                 'form_data': form_data_dict,
                 'token_preview': token_preview,
-
+                'kiosk_mode': kiosk_mode,
+                'kiosk_reset_url': kiosk_reset_url,
             }, status=400)
 
         # Resolve branch
@@ -441,51 +442,73 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
                 WalkinEnquiryForm.objects.filter(id=form_config.id).update(submissions_count=F('submissions_count') + 1)
 
         return render(request, 'public/student_enquiry_success.html', {
-
             'lead': lead,
-
             'name': name,
-
             'token_number': token_number,
-
             'branch': branch,
-
             'is_re_enquiry': is_re_enquiry,
-
             'submitted_at': now,
-
+            'kiosk_mode': kiosk_mode,
+            'kiosk_reset_url': kiosk_reset_url,
         })
 
     except Exception as e:
-
         logger.exception("Failed to process public student enquiry: %s", e)
-
         return render(request, 'public/student_enquiry_form.html', {
-
             'form_config': form_config,
-
             'schema': schema,
-
+            'branding': branding,
             'branch': selected_branch,
-
             'branches': active_branches,
-
             'products': active_products,
-
             'error': f'An unexpected error occurred while submitting your enquiry: {str(e)}',
-
-            'form_data': form_data_dict,
-                'token_preview': token_preview,
-
+            'form_data': locals().get('form_data_dict', {}),
+            'token_preview': token_preview,
+            'kiosk_mode': kiosk_mode,
+            'kiosk_reset_url': kiosk_reset_url,
         }, status=500)
 
 @require_http_methods(["GET", "POST"])
-
 def public_student_enquiry_form_by_slug(request, slug, branch_id=None):
-
     """Route alias to open a specific walk-in form by its slug."""
-
     return public_student_enquiry_form(request, branch_id=branch_id, slug=slug)
+
+
+@require_http_methods(["GET"])
+def enquiry_kiosk_manifest(request):
+    """
+    Web App Manifest for installing the Reception Tablet Enquiry Form as a
+    fullscreen Standalone PWA (no browser address bar) on iPad or Android tablets.
+    """
+    branch_id_raw = (request.GET.get('branch_id') or '').strip()
+    start_url = f"/enquiry/{branch_id_raw}/?kiosk=1" if branch_id_raw.isdigit() else "/enquiry/?kiosk=1"
+    scope_url = f"/enquiry/{branch_id_raw}/" if branch_id_raw.isdigit() else "/enquiry/"
+    manifest = {
+        "name": "iTechPanda Enquiry Kiosk",
+        "short_name": "Enquiry Kiosk",
+        "description": "Student Enquiry Form – Training & Placement Walk-in Desk Kiosk",
+        "start_url": start_url,
+        "scope": scope_url,
+        "display": "standalone",
+        "orientation": "any",
+        "theme_color": "#174b89",
+        "background_color": "#f1f5f9",
+        "icons": [
+            {
+                "src": "/static/images/favicon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
+            {
+                "src": "/static/images/itechpanda_symbol.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any",
+            },
+        ],
+    }
+    return JsonResponse(manifest, content_type="application/manifest+json")
 
 # ==========================================================================
 

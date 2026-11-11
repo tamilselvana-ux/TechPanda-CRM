@@ -190,6 +190,37 @@
     .action-btn:hover {
       background: var(--primary-hover);
     }
+
+    .kiosk-reset-box {
+      background: #ecfdf5;
+      border: 1px solid #86efac;
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .kiosk-reset-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #166534;
+      margin-bottom: 8px;
+    }
+
+    .kiosk-progress-track {
+      width: 100%;
+      height: 6px;
+      background: #dcfce7;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .kiosk-progress-fill {
+      width: 100%;
+      height: 100%;
+      background: #16a34a;
+      transition: width 1s linear;
+    }
   </style>
 </head>
 <body>
@@ -233,9 +264,44 @@
       3. For any immediate assistance, please show this screen to the reception desk.
     </div>
 
+    {% if kiosk_mode %}
+    <div class="kiosk-reset-box">
+      <div class="kiosk-reset-text">
+        Tablet Kiosk Active &mdash; Auto-resetting for next student in <span id="kioskCountdown">6</span>s&hellip;
+      </div>
+      <div class="kiosk-progress-track">
+        <div class="kiosk-progress-fill" id="kioskProgressFill"></div>
+      </div>
+    </div>
+    <a href="{{ kiosk_reset_url }}" class="action-btn">
+      Next Student Now
+    </a>
+    {% else %}
     <a href="{% if branch %}{% url 'public_student_enquiry_branch' branch.id %}{% else %}{% url 'public_student_enquiry_form' %}{% endif %}" class="action-btn">
       Submit Another Enquiry Form
     </a>
+    {% endif %}
   </div>
+
+  {% if kiosk_mode %}
+  <script>
+    (function() {
+      var remaining = 6;
+      var total = 6;
+      var countEl = document.getElementById('kioskCountdown');
+      var fillEl = document.getElementById('kioskProgressFill');
+      var resetUrl = "{{ kiosk_reset_url|escapejs }}";
+      var timer = setInterval(function() {
+        remaining -= 1;
+        if (countEl) countEl.textContent = String(Math.max(0, remaining));
+        if (fillEl) fillEl.style.width = String(Math.max(0, (remaining / total) * 100)) + '%';
+        if (remaining <= 0) {
+          clearInterval(timer);
+          window.location.replace(resetUrl);
+        }
+      }, 1000);
+    })();
+  </script>
+  {% endif %}
 </body>
 </html>

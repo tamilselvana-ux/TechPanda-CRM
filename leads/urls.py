@@ -133,6 +133,7 @@ urlpatterns = [
     path('admin/leads/walk-in/<int:pk>/assign-counselor/', views.admin_walkin_assign_counselor, name='admin_walkin_assign_counselor'),
     path('admin/leads/walk-in/bulk-assign/', views.admin_walkin_bulk_assign_counselor, name='admin_walkin_bulk_assign_counselor'),
     path('admin/leads/walk-in/<int:pk>/status/', views.admin_walkin_update_status, name='admin_walkin_update_status'),
+    path('enquiry/manifest.json', views_walkin.enquiry_kiosk_manifest, name='enquiry_kiosk_manifest'),
     path('enquiry/', views_walkin.public_student_enquiry_form, name='public_student_enquiry_form'),
     path('enquiry/<int:branch_id>/', views_walkin.public_student_enquiry_form, name='public_student_enquiry_branch'),
     path('enquiry/f/<str:slug>/', views_walkin.public_student_enquiry_form_by_slug, name='public_student_enquiry_slug'),

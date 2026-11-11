@@ -5,10 +5,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#174b89">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Enquiry Kiosk">
   <title>Student Enquiry Form – Training &amp; Placement | iTechPandaCRM</title>
 
   <link rel="icon" type="image/png" href="{% static 'images/itechpanda_symbol.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'images/favicon-192.png' %}">
   <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}">
+  <link rel="manifest" href="{% url 'enquiry_kiosk_manifest' %}{% if branch %}?branch_id={{ branch.id }}{% endif %}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -365,9 +371,56 @@
     @media (max-width: 440px) {
       .course-grid { grid-template-columns: 1fr; }
     }
+
+    /* Tablet Kiosk Mode Optimizations */
+    .kiosk-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      margin-left: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      border: 1px solid #86efac;
+      color: #166534;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .kiosk-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #16a34a;
+      display: inline-block;
+    }
+
+    body.kiosk-active .form-control,
+    body.kiosk-active .form-select {
+      min-height: 44px;
+      font-size: 0.94rem;
+    }
+
+    body.kiosk-active .choice-box {
+      min-height: 44px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+    }
+
+    body.kiosk-active .choice-box input[type="radio"],
+    body.kiosk-active .choice-box input[type="checkbox"] {
+      width: 19px;
+      height: 19px;
+    }
+
+    body.kiosk-active .btn-submit {
+      min-height: 52px;
+      font-size: 1rem;
+    }
   </style>
 </head>
-<body>
+<body class="{% if kiosk_mode %}kiosk-active{% endif %}">
 
 <div class="form-wrapper">
   <div class="form-card">
@@ -392,9 +445,14 @@
       </div>
 
       <h1 class="form-subtitle">Student Enquiry Form – Training &amp; Placement</h1>
-      {% if branch %}
+      {% if branch or kiosk_mode %}
       <div style="text-align: center;">
+        {% if branch %}
         <span class="branch-pill">Branch: {{ branch.name }}</span>
+        {% endif %}
+        {% if kiosk_mode %}
+        <span class="kiosk-pill"><span class="kiosk-dot"></span>Tablet Kiosk Mode &bull; Auto-Reset Active</span>
+        {% endif %}
       </div>
       {% endif %}
     </header>
@@ -410,6 +468,9 @@
       {% csrf_token %}
       {% if branch %}
       <input type="hidden" name="branch_id" value="{{ branch.id }}">
+      {% endif %}
+      {% if kiosk_mode %}
+      <input type="hidden" name="kiosk" value="1">
       {% endif %}
 
       <!-- 1. BASIC INFORMATION -->
@@ -453,7 +514,7 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="age">Age</label>
-          <input type="number" name="age" id="age" class="form-control" placeholder="Age" min="15" max="80" value="{{ form_data.age|default:'' }}">
+          <input type="number" name="age" id="age" inputmode="numeric" class="form-control" placeholder="Age" min="15" max="80" value="{{ form_data.age|default:'' }}">
         </div>
       </div>
 
@@ -467,7 +528,7 @@
       <div class="form-row row-2col">
         <div class="form-group">
           <label class="form-label" for="phone"><span>Mobile Number <span class="required-star">*</span></span></label>
-          <input type="tel" name="phone" id="phone" class="form-control" placeholder="10-digit mobile number" value="{{ form_data.phone|default:'' }}" required maxlength="15">
+          <input type="tel" name="phone" id="phone" inputmode="tel" class="form-control" placeholder="10-digit mobile number" value="{{ form_data.phone|default:'' }}" required maxlength="15">
         </div>
         <div class="form-group">
           <div class="form-label">
@@ -476,14 +537,14 @@
               <input type="checkbox" id="sameAsMobileCb"> Same as Mobile
             </label>
           </div>
-          <input type="tel" name="whatsapp_number" id="whatsapp_number" class="form-control" placeholder="WhatsApp number" value="{{ form_data.whatsapp_number|default:'' }}" maxlength="15">
+          <input type="tel" name="whatsapp_number" id="whatsapp_number" inputmode="tel" class="form-control" placeholder="WhatsApp number" value="{{ form_data.whatsapp_number|default:'' }}" maxlength="15">
         </div>
       </div>
 
       <div class="form-row" style="grid-template-columns: 1fr;">
         <div class="form-group">
           <label class="form-label" for="emergency_contact">Emergency Contact Number</label>
-          <input type="tel" name="emergency_contact" id="emergency_contact" class="form-control" placeholder="Parent / Guardian / Emergency contact number" value="{{ form_data.emergency_contact|default:'' }}" maxlength="15">
+          <input type="tel" name="emergency_contact" id="emergency_contact" inputmode="tel" class="form-control" placeholder="Parent / Guardian / Emergency contact number" value="{{ form_data.emergency_contact|default:'' }}" maxlength="15">
         </div>
       </div>
 
@@ -553,7 +614,7 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="ug_passed_out_year">Passed Out Year</label>
-          <input type="text" name="ug_passed_out_year" id="ug_passed_out_year" class="form-control" placeholder="e.g. 2024" maxlength="10" value="{{ form_data.ug_passed_out_year|default:'' }}">
+          <input type="text" name="ug_passed_out_year" id="ug_passed_out_year" inputmode="numeric" class="form-control" placeholder="e.g. 2024" maxlength="10" value="{{ form_data.ug_passed_out_year|default:'' }}">
         </div>
       </div>
 
@@ -564,7 +625,7 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="pg_passed_out_year">Passed Out Year</label>
-          <input type="text" name="pg_passed_out_year" id="pg_passed_out_year" class="form-control" placeholder="e.g. 2026" maxlength="10" value="{{ form_data.pg_passed_out_year|default:'' }}">
+          <input type="text" name="pg_passed_out_year" id="pg_passed_out_year" inputmode="numeric" class="form-control" placeholder="e.g. 2026" maxlength="10" value="{{ form_data.pg_passed_out_year|default:'' }}">
         </div>
       </div>
 
