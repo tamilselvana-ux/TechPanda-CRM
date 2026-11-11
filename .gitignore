@@ -11,3 +11,4 @@ credentials/credentials.json
 credentials/token.json
 credentials/*.json
 private_media/
+scratch/
