@@ -1,8 +1,8 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-10 09:32 · Root: `d:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-11 16:25 · Root: `d:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
-**Blockers:** 0 · **Warnings:** 116 · **Verdict:** ✅ no stubs found
+**Blockers:** 0 · **Warnings:** 118 · **Verdict:** ✅ no stubs found
 
 ## 🚫 Blockers (must fix before 'done')
 | Rule | File | Line | Code |
@@ -21,6 +21,7 @@ Run: 2026-11-10 09:32 · Root: `d:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | Hard-coded localhost URL | config\settings.py | 305 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
 | alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 456 | `alert(data.error // "Failed to update cutoff date");` |
 | alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 461 | `alert("Network error updating cutoff date");` |
+| Hard-coded localhost URL | scratch\add_track_aa_todo.py | 18 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
 | alert() used for UX | scratch\apply_remediations.py | 31 | `2. **Stored XSS:** Creating a lead with name `"><script>alert(1)</script>` must render escaped characters (`&q` |
 | Hard-coded localhost URL | scratch\build_crawler_config.py | 7 | `"baseUrl": "http://127.0.0.1:8000",` |
 | Hard-coded localhost URL | scratch\capture_after_screenshots.py | 109 | `tabs = json.loads(urllib.request.urlopen('http://127.0.0.1:9223/json').read().decode('utf-8'))` |
@@ -37,6 +38,7 @@ Run: 2026-11-10 09:32 · Root: `d:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | Hard-coded localhost URL | scratch\capture_baseline_cdp.py | 121 | `mid = cdp.send("Page.navigate", {"url": "http://127.0.0.1:8000/accountant/dashboard/"})` |
 | Hard-coded localhost URL | scratch\check_calendar_render.py | 10 | `await page.goto('http://127.0.0.1:8000/accounts/login/')` |
 | Hard-coded localhost URL | scratch\check_calendar_render.py | 17 | `await page.goto('http://127.0.0.1:8000/admin/leads/?view=all_active&sort=-created_at')` |
+| Hard-coded localhost URL | scratch\mark_todo_track_z_done.py | 64 | `- Proof: Executed `test_new_enquiry_form.py` against live server (`http://127.0.0.1:8001/enquiry/` -> HTTP 200` |
 | alert() used for UX | scratch\patch_accounts_template.py | 73 | `alert(data.error // "Failed to update cutoff date");` |
 | alert() used for UX | scratch\patch_accounts_template.py | 78 | `alert("Network error updating cutoff date");` |
 | alert() used for UX | scratch\patch_dashboard_html_dates.py | 242 | `alert('Validation Error: From Date cannot be after To Date.');` |
@@ -48,10 +50,10 @@ Run: 2026-11-10 09:32 · Root: `d:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | scratch\security_audit_scanner.py | 163 | `custom_fields = {'working_status': '<img src=x onerror=alert("XSS_STATUS")>'}` |
 | alert() used for UX | static\js\crm.js | 246 | `alert('You have a completed call that still requires notes before calling another lead.');` |
 | alert() used for UX | static\js\crm.js | 612 | `alert(res.data.error // 'Failed to start call.');` |
-| alert() used for UX | static\js\crm.js | 1274 | `alert('Cannot save call notes: No active lead or call record associated with this form.');` |
-| alert() used for UX | static\js\crm.js | 1301 | `alert(res.data.error // 'Failed to save call notes.');` |
-| alert() used for UX | static\js\crm.js | 1317 | `alert('✓ ' + (res.data.message // 'Call notes saved successfully. You can now call another lead.'));` |
-| alert() used for UX | static\js\crm.js | 1326 | `alert('An unexpected error occurred while saving call notes.');` |
+| alert() used for UX | static\js\crm.js | 1278 | `alert('Cannot save call notes: No active lead or call record associated with this form.');` |
+| alert() used for UX | static\js\crm.js | 1305 | `alert(res.data.error // 'Failed to save call notes.');` |
+| alert() used for UX | static\js\crm.js | 1321 | `alert('✓ ' + (res.data.message // 'Call notes saved successfully. You can now call another lead.'));` |
+| alert() used for UX | static\js\crm.js | 1330 | `alert('An unexpected error occurred while saving call notes.');` |
 | alert() used for UX | static\js\data-tables-enhanced.js | 255 | `alert('Please select a target status from the dropdown.');` |
 | alert() used for UX | static\js\data-tables-enhanced.js | 261 | `alert('No leads selected.');` |
 | alert() used for UX | templates\accountant\dashboard.html | 591 | `alert('Validation Error: From Date cannot be after To Date.');` |

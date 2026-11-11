@@ -1096,7 +1096,9 @@
           waBtn.style.pointerEvents = 'auto';
           waBtn.style.opacity = '1';
         } else {
-          waBtn.role="button" tabindex="0";
+          waBtn.removeAttribute("href");
+          waBtn.setAttribute("role", "button");
+          waBtn.setAttribute("tabindex", "0");
           waBtn.style.pointerEvents = 'none';
           waBtn.style.opacity = '0.5';
         }
@@ -1109,7 +1111,9 @@
           emailBtn.style.pointerEvents = 'auto';
           emailBtn.style.opacity = '1';
         } else {
-          emailBtn.role="button" tabindex="0";
+          emailBtn.removeAttribute("href");
+          emailBtn.setAttribute("role", "button");
+          emailBtn.setAttribute("tabindex", "0");
           emailBtn.style.pointerEvents = 'none';
           emailBtn.style.opacity = '0.5';
         }

@@ -218,6 +218,9 @@
         {% if branch %}
         <span>📍 {{ branch.name }} Branch</span>
         {% endif %}
+        {% if lead.custom_fields.enquiry_form_no %}
+        <span>📄 Form: {{ lead.custom_fields.enquiry_form_no }}</span>
+        {% endif %}
         <span>🕒 {{ submitted_at|date:"h:i A" }}</span>
       </div>
     </div>
