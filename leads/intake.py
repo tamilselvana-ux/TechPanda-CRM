@@ -428,10 +428,14 @@ def intake_lead(
 
         if existing_lead is None and number and not number.startswith('+') and not number.startswith('NoPhone-'):
             tail = number[-4:]
-            for cand in Lead.objects.select_for_update().filter(Q(phone__endswith=tail) | Q(alternate_phone__endswith=tail)).order_by('id'):
-                if phone10(cand.phone) == number or phone10(cand.alternate_phone) == number:
-                    existing_lead = cand
+            cand_qs = Lead.objects.filter(Q(phone__endswith=tail) | Q(alternate_phone__endswith=tail)).values('id', 'phone', 'alternate_phone').order_by('id')
+            matched_id = None
+            for cand in cand_qs:
+                if phone10(cand['phone']) == number or phone10(cand['alternate_phone']) == number:
+                    matched_id = cand['id']
                     break
+            if matched_id:
+                existing_lead = Lead.objects.select_for_update().get(id=matched_id)
 
         now_ts = incoming_timestamp or timezone.now()
 

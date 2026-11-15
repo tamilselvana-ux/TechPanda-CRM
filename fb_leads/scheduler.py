@@ -10,7 +10,7 @@ import threading
 import time
 from datetime import timedelta
 from django.utils import timezone
-from django.db import transaction
+from django.db import transaction, close_old_connections
 
 logger = logging.getLogger("crm")
 
@@ -105,9 +105,12 @@ def _worker_loop():
     logger.info("Facebook Leads Auto-Sync background worker started.")
     while not _stop_event.is_set():
         try:
+            close_old_connections()
             run_auto_sync_cycle()
         except Exception as e:
             logger.exception("Unexpected error in Facebook Auto-Sync loop: %s", e)
+        finally:
+            close_old_connections()
 
         # Sleep in short increments to allow fast clean shutdown
         for _ in range(30):

@@ -104,6 +104,7 @@
         bizPhoneNumber: document.getElementById('bizPhoneNumber'),
         bizPhoneNumberId: document.getElementById('bizPhoneNumberId'),
         bizAccountId: document.getElementById('bizAccountId'),
+        bizBranch: document.getElementById('bizBranch'),
         bizAccessToken: document.getElementById('bizAccessToken'),
         btnDeleteBusinessLine: document.getElementById('btnDeleteBusinessLine'),
 
@@ -1281,10 +1282,15 @@
                 const phone = elements.bizPhoneNumber.value.trim();
                 const phoneId = elements.bizPhoneNumberId.value.trim();
                 const accountId = elements.bizAccountId.value.trim();
+                const branchId = elements.bizBranch ? elements.bizBranch.value.trim() : '';
                 const token = elements.bizAccessToken.value.trim();
 
                 if (!name || !phone || !phoneId) {
                     showToast('Please fill all required fields.');
+                    return;
+                }
+                if (!branchId) {
+                    showToast('Branch assignment is required. Please select a branch for this WhatsApp number.');
                     return;
                 }
 
@@ -1300,6 +1306,8 @@
                             phone_number: phone,
                             phone_number_id: phoneId,
                             business_account_id: accountId,
+                            crm_branch: branchId,
+                            crm_branch_id: branchId,
                             access_token: token,
                             is_active: true
                         }),

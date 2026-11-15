@@ -128,7 +128,7 @@ def push_to_crm(fb_lead):
             product=product_for(fb_lead),
             note=prefix + (_summary(fb_lead) or "new form submission"),
             provider_event_id=fb_lead.leadgen_id,
-            incoming_timestamp=getattr(fb_lead, 'created_time', None),
+            incoming_timestamp=getattr(fb_lead, 'created_on_facebook', None) or getattr(fb_lead, 'received_at', None),
             data_payload=payload,
         )
 

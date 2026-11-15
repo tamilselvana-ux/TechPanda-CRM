@@ -229,7 +229,8 @@ def generate_concierge_response(intent_data: Dict[str, Any], conversation, lead=
 
     elif intent == 'SYLLABUS_COURSE':
         action_taken = "SENT_BROCHURE"
-        brochure_url = "https://itechpanda.com/static/brochures/itechpanda_course_catalog.pdf"
+        base_url = getattr(settings, 'CRM_BASE_URL', '').rstrip('/') or "https://itechpanda.com"
+        brochure_url = f"{base_url}/static/brochures/itechpanda_course_catalog.pdf"
         reply_text = (
             f"📚 *iTechPanda Academy — Course Curriculum & Project Roadmap*\n\n"
             f"Hello {customer_name}! Our curriculum is designed with 100% live production projects:\n\n"
@@ -299,8 +300,9 @@ def evaluate_and_respond_concierge(
     try:
         from leads.models import Lead
         from chat.whatsapp.webhook import format_phone_e164
-        phone_digits = ''.join(c for c in conversation.phone_number if c.isdigit())[-10:]
-        lead = Lead.objects.filter(phone__endswith=phone_digits).first()
+        phone_digits = ''.join(c for c in (conversation.phone_number or '') if c.isdigit())[-10:]
+        if len(phone_digits) >= 10:
+            lead = Lead.objects.filter(phone__endswith=phone_digits).first()
     except Exception as lead_err:
         logger.warning(f"Could not link lead for concierge response: {lead_err}")
 

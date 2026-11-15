@@ -338,19 +338,25 @@ def fb_accounts(request):
 @login_required
 @require_POST
 def fb_account_connect(request):
-    """Add a new Facebook Account and automatically discover its Pages."""
+    """Add a new Facebook Account, require branch assignment, and automatically discover its Pages."""
     if not _can_manage(request.user):
         raise PermissionDenied("Only Admin and Sales Head can connect Facebook accounts.")
 
     from .models import FacebookAccount
     from .facebook import sync_pages_for_account
+    from branches.models import Branch
 
     account_name = request.POST.get("account_name", "").strip()
     access_token = request.POST.get("access_token", "").strip()
+    branch_id = request.POST.get("branch_id", "").strip()
 
     if not account_name or not access_token:
         messages.error(request, "Account name and access token are required.")
         return redirect("fb_leads:fb_accounts")
+
+    default_branch = None
+    if branch_id:
+        default_branch = Branch.objects.filter(id=branch_id, status=Branch.Status.ACTIVE).first()
 
     account = FacebookAccount.objects.create(
         account_name=account_name,
@@ -360,12 +366,13 @@ def fb_account_connect(request):
     )
 
     try:
-        pages_count = sync_pages_for_account(account)
-        messages.success(request, f"Connected Facebook Account '{account_name}' and imported {pages_count} page(s).")
+        pages_count = sync_pages_for_account(account, default_branch=default_branch)
+        branch_msg = f" (assigned default branch: {default_branch.name})" if default_branch else ""
+        messages.success(request, f"Connected Facebook Account '{account_name}' and imported {pages_count} page(s){branch_msg}.")
         log_activity(
             user=request.user,
             action="Facebook Account Connected",
-            description=f"Connected Facebook account '{account_name}' with {pages_count} pages.",
+            description=f"Connected Facebook account '{account_name}' with {pages_count} pages{branch_msg}.",
             object_type="FacebookAccount",
             object_id=account.id,
             request=request
@@ -373,6 +380,79 @@ def fb_account_connect(request):
     except Exception as exc:
         messages.warning(request, f"Account saved, but could not retrieve pages immediately: {exc}")
 
+    return redirect("fb_leads:fb_accounts")
+
+
+@login_required
+@require_POST
+def fb_page_create(request):
+    """Manually add or connect a specific Facebook Page with assigned Branch."""
+    if not _can_manage(request.user):
+        raise PermissionDenied("Only Admin and Sales Head can connect Facebook pages.")
+
+    from .models import FacebookAccount, FacebookPage
+    from branches.models import Branch
+    from .facebook import subscribe_page
+
+    page_name = request.POST.get("page_name", "").strip()
+    page_id = request.POST.get("page_id", "").strip()
+    page_access_token = request.POST.get("page_access_token", "").strip()
+    branch_id = request.POST.get("branch_id", "").strip()
+    account_id = request.POST.get("account_id", "").strip()
+
+    if not page_name or not page_id:
+        messages.error(request, "Page Name and Page ID are required.")
+        return redirect("fb_leads:fb_accounts")
+
+    if not branch_id:
+        messages.error(request, "Branch assignment is required. Please select a branch for this Facebook Page.")
+        return redirect("fb_leads:fb_accounts")
+
+    branch = Branch.objects.filter(id=branch_id, status=Branch.Status.ACTIVE).first()
+    if not branch:
+        messages.error(request, "Invalid branch selected.")
+        return redirect("fb_leads:fb_accounts")
+
+    account = None
+    if account_id:
+        account = FacebookAccount.objects.filter(id=account_id).first()
+    if not account:
+        account = FacebookAccount.objects.first()
+    if not account:
+        account = FacebookAccount.objects.create(
+            account_name="Direct Facebook Pages",
+            access_token=page_access_token or "DIRECT_PAGE_TOKEN",
+            connected_by=request.user,
+            status="CONNECTED",
+        )
+
+    page, created = FacebookPage.objects.update_or_create(
+        account=account,
+        page_id=page_id,
+        defaults={
+            "page_name": page_name,
+            "page_access_token": page_access_token or account.access_token,
+            "branch": branch,
+            "status": "CONNECTED",
+            "last_error": "",
+        }
+    )
+
+    try:
+        subscribe_page(page_id)
+    except Exception:
+        pass
+
+    action_word = "Added" if created else "Updated"
+    messages.success(request, f"{action_word} Facebook Page '{page_name}' (ID: {page_id}) assigned to branch '{branch.name}'.")
+    log_activity(
+        user=request.user,
+        action="Facebook Page Added",
+        description=f"{action_word} Facebook Page '{page_name}' assigned to branch '{branch.name}'.",
+        object_type="FacebookPage",
+        object_id=page.id,
+        request=request
+    )
     return redirect("fb_leads:fb_accounts")
 
 
@@ -550,28 +630,6 @@ def fb_page_update_cutoff(request, page_id):
             "message": msg,
         })
     messages.success(request, msg)
-    return redirect("fb_leads:fb_accounts")
-
-    try:
-        n = trigger_immediate_page_sync(page.page_id)
-        page.refresh_from_db()
-        msg = f"Sync complete for '{page.page_name}': {n} new lead(s) imported."
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({
-                "success": True,
-                "message": msg,
-                "new_leads": n,
-                "last_sync_at": page.last_sync_at.strftime("%d %b, %H:%M") if page.last_sync_at else "Just now",
-                "last_sync_status": page.last_sync_status,
-                "next_sync_at": page.next_sync_at.strftime("%H:%M") if page.next_sync_at else "—",
-            })
-        messages.success(request, msg)
-    except Exception as exc:
-        err_msg = f"Sync failed for '{page.page_name}': {exc}"
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({"success": False, "error": err_msg}, status=500)
-        messages.error(request, err_msg)
-
     return redirect("fb_leads:fb_accounts")
 
 

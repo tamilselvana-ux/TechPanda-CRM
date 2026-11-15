@@ -60,10 +60,13 @@ def process_incoming_message(value: Dict[str, Any], default_business_account: Op
         formatted_display = format_phone_e164(display_phone_number) if display_phone_number else business_phone_number_id
         business_account = BusinessAccount.objects.filter(phone_number_id=business_phone_number_id).first()
         if not business_account:
+            from leads.intake import default_branch
+            def_branch = default_branch('WHATSAPP_DEFAULT_BRANCH')
             business_account = BusinessAccount.objects.create(
                 name=f"Line ({formatted_display})",
                 phone_number=formatted_display,
                 phone_number_id=business_phone_number_id,
+                crm_branch=def_branch,
                 is_active=True,
             )
 

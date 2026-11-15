@@ -134,10 +134,11 @@ def unsubscribe_page(page_id):
     return success
 
 
-def sync_pages_for_account(account):
+def sync_pages_for_account(account, default_branch=None):
     """
     Fetches all Facebook Pages accessible with the account's access token via me/accounts
     and saves or updates FacebookPage records in the database.
+    Assigns default_branch if provided and the page has no branch assigned.
     """
     r = requests.get(
         f"{_graph()}/me/accounts",
@@ -166,6 +167,9 @@ def sync_pages_for_account(account):
                     "last_error": "",
                 }
             )
+            if default_branch and not fb_page.branch:
+                fb_page.branch = default_branch
+                fb_page.save(update_fields=['branch'])
             try:
                 subscribe_page(p_id)
             except Exception as e:

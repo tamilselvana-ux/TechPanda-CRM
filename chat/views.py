@@ -107,8 +107,10 @@ class InboxView(LoginRequiredMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
+        from branches.models import Branch
         return render(request, 'chat/inbox.html', {
             'can_manage_automation': crm.can_manage_automation(request.user),
+            'branches': Branch.objects.filter(status=Branch.Status.ACTIVE).order_by('name'),
         })
 
 
@@ -164,13 +166,26 @@ class BusinessAccountListAPI(APIView):
     def post(self, request):
         """
         POST /api/business-accounts/
-        Create a new WhatsApp Business number/account.
+        Create a new WhatsApp Business number/account with assigned branch.
         """
         if not crm.can_manage_automation(request.user):
             raise PermissionDenied("Only Admin and Sales Head can add WhatsApp numbers.")
-        serializer = BusinessAccountSerializer(data=request.data)
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if 'crm_branch_id' in data and not data.get('crm_branch'):
+            data['crm_branch'] = data['crm_branch_id']
+        serializer = BusinessAccountSerializer(data=data)
         if serializer.is_valid():
             account = serializer.save()
+            branch_val = data.get('crm_branch') or data.get('crm_branch_id')
+            if branch_val:
+                from branches.models import Branch
+                try:
+                    b_obj = Branch.objects.filter(id=int(branch_val)).first()
+                    if b_obj and account.crm_branch != b_obj:
+                        account.crm_branch = b_obj
+                        account.save(update_fields=['crm_branch'])
+                except (ValueError, TypeError):
+                    pass
             return Response(BusinessAccountSerializer(account).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

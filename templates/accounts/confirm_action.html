@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | TechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="tp-page-container" style="max-width: 600px; margin: 40px auto; padding: 20px;">
+  <div class="tp-card" style="padding: 32px; border-radius: 16px; background: var(--tp-surface-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
+    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); color: #2563eb; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+      </svg>
+    </div>
+
+    <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--tp-text-primary, #0f172a); margin-bottom: 12px;">{{ title }}</h2>
+    <p style="font-size: 0.95rem; color: var(--tp-text-secondary, #475569); line-height: 1.6; margin-bottom: 28px;">{{ message }}</p>
+
+    <form method="POST" action="{{ action_url }}" style="display: flex; gap: 12px; justify-content: flex-end;">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ cancel_url }}">
+      <a href="{{ cancel_url }}" class="btn btn-secondary" style="padding: 10px 20px; border-radius: 8px; font-weight: 600; text-decoration: none;">Cancel</a>
+      <button type="submit" class="btn btn-primary" style="padding: 10px 20px; border-radius: 8px; font-weight: 600; background: #2563eb; color: #fff; border: none; cursor: pointer;">{{ btn_text }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

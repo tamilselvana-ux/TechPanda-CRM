@@ -561,7 +561,17 @@
 
 
       <div style="margin-bottom: 14px;">
+        <label class="tp-label" style="color: #047857;">Assign CRM Branch * (Mandatory)</label>
+        <select id="newSenderBranch" class="form-control tp-input" required style="border-color: #059669; font-weight: 600; background: #ecfdf5;">
+          <option value="">-- Select Branch (Required) --</option>
+          {% for b in branches %}
+          <option value="{{ b.id }}">{{ b.name }}</option>
+          {% endfor %}
+        </select>
+        <div style="font-size: 0.75rem; color: var(--tp-text-muted); margin-top: 3px;">Incoming responses and leads on this number will be attributed to this branch.</div>
+      </div>
 
+      <div style="margin-bottom: 14px;">
         <label class="tp-label">Meta WABA ID (Optional)</label>
 
         <input type="text" id="newSenderWabaId" class="form-control tp-input" placeholder="e.g. 28997209329903245">
@@ -936,20 +946,22 @@ function submitAddSenderForm(e) {
 
 
 
+  var branchId = document.getElementById('newSenderBranch') ? document.getElementById('newSenderBranch').value.trim() : '';
+  if (!branchId) {
+    alert('Branch assignment is required. Please select a branch for this WhatsApp number.');
+    btn.disabled = false;
+    btn.textContent = 'Save Number & Sender';
+    return;
+  }
+
   var payload = {
-
     name: document.getElementById('newSenderName').value.trim(),
-
     phone_number: document.getElementById('newSenderPhone').value.trim(),
-
     phone_number_id: document.getElementById('newSenderPhoneId').value.trim(),
-
     business_account_id: document.getElementById('newSenderWabaId').value.trim(),
-
+    branch_id: branchId,
     access_token: document.getElementById('newSenderToken').value.trim(),
-
     daily_limit: parseInt(document.getElementById('newSenderLimit').value, 10) || 1000
-
   };
 
 

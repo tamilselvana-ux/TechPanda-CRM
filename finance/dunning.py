@@ -59,16 +59,28 @@ def run_dunning_cycle(target_date=None):
         if not stage:
             continue
 
-        # Idempotency check: Don't dispatch twice for same installment on same day
-        already_sent = PaymentEmailLog.objects.filter(
-            installment=inst,
-            email_type=email_type,
-            created_at__date=today,
-            status='SENT'
-        ).exists()
-
-        if already_sent:
-            continue
+        # Idempotency & Cadence check:
+        # Stage 1 & 2: max once per day
+        # Stage 3: max once every 5 days, capped at 3 automated escalations to prevent messaging fatigue
+        if stage == 'STAGE_3_OVERDUE_ESCALATION':
+            overdue_logs = PaymentEmailLog.objects.filter(
+                installment=inst,
+                email_type='OVERDUE_REMINDER'
+            ).order_by('-created_at')
+            if overdue_logs.count() >= 3:
+                continue  # Max 3 automated reminders sent; counselor/finance handles manually
+            latest_overdue = overdue_logs.first()
+            if latest_overdue and (today - latest_overdue.created_at.date()).days < 5:
+                continue  # 5-day cooldown between overdue reminders
+        else:
+            already_sent = PaymentEmailLog.objects.filter(
+                installment=inst,
+                email_type=email_type,
+                created_at__date=today,
+                status='SENT'
+            ).exists()
+            if already_sent:
+                continue
 
         try:
             # 1. Dispatch Email Reminder
@@ -133,7 +145,7 @@ def run_dunning_cycle(target_date=None):
                 recipient_name=enr.student_name,
                 subject=f"Dunning Alert: Installment #{inst.installment_number} ({stage})",
                 body=f"Dispatched automated dunning reminder for ₹{inst.remaining_balance} due {due}",
-                status='SENT',
+                status='SENT' if email_success else 'FAILED',
                 sent_at=timezone.now()
             )
 

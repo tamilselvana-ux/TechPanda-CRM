@@ -118,9 +118,12 @@ def generate_next_enrollment_number():
     """
     Generates the next strictly sequential enrollment number starting from 'ENR-001'.
     Finds the highest existing sequence suffix across all enrollments and adds 1.
+    Locks the latest enrollment record within an atomic block to prevent concurrent collisions.
     """
     from .models_enrollment import Enrollment
     import re
+    # Row lock on the latest enrollment to serialize concurrent numbering
+    Enrollment.objects.select_for_update().order_by('-id').first()
     max_seq = 0
     for enr_num in Enrollment.objects.values_list('enrollment_number', flat=True):
         if not enr_num:

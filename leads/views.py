@@ -11409,34 +11409,6 @@ def admin_pipeline_status_delete(request, pk):
     messages.success(request, f"Status '{name}' deleted successfully.")
     return redirect('admin_pipeline_statuses')
 
-    # CR-7: Block delete if any lead is currently in that status
-    leads_count = Lead.objects.filter(status=status_obj.name).count()
-    if leads_count > 0:
-        messages.error(request, f"Cannot delete: {leads_count} leads have this status. Reassign them first.")
-        return redirect('admin_pipeline_statuses')
-
-    name = status_obj.name
-
-    status_obj.delete()
-
-    log_activity(
-
-        user=request.user,
-
-        action="Pipeline Status Deleted",
-
-        description=f"Deleted custom pipeline status '{name}'.",
-
-        object_type="PipelineStatus",
-
-        request=request
-
-    )
-
-    messages.success(request, f"Status '{name}' deleted")
-
-    return redirect('admin_pipeline_statuses')
-
 
 # ==========================================
 # MODULARIZED SUB-PACKAGE RE-EXPORTS (Phase 6 Architecture)

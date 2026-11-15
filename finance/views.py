@@ -1038,9 +1038,10 @@ def finance_audit_export(request):
 
 
 @login_required
+@require_POST
 def finance_dunning_trigger(request):
     """
-    Triggers automated overdue installment dunning cycle on demand.
+    Triggers automated overdue installment dunning cycle on demand via POST.
     Available to Admin, Finance Head, and Sales Head roles.
     """
     if not (request.user.is_admin_user or request.user.role in (UserRole.SALES_HEAD, UserRole.FINANCE_HEAD)):

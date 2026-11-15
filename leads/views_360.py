@@ -7,6 +7,7 @@ from activities.models import Activity
 from leads.models_enrollment import Enrollment, PaymentTransaction
 from chat.models import Conversation
 from leads.duplicates import normalize_phone
+from accounts.permissions import can_access_lead
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,9 +26,9 @@ def lead_360_data(request, lead_id):
         pk=lead_id
     )
 
-    # Branch access validation if user is restricted
-    if user.is_receptionist_user and lead.branch_id and user.branch_id and lead.branch_id != user.branch_id:
-        return JsonResponse({'success': False, 'error': 'Branch access restricted.'}, status=403)
+    # Strict object-level access control across branches and assigned roles
+    if not can_access_lead(user, lead):
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
     timeline = []
 

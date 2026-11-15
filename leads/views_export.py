@@ -61,6 +61,16 @@ from .assignment import (
 logger = logging.getLogger('crm')
 
 
+def sanitize_for_excel(value):
+    """Prevents CSV formula injection (CWE-1236) in spreadsheet exports."""
+    if value is None:
+        return ""
+    val_str = str(value)
+    if val_str and val_str[0] in ('=', '+', '-', '@', '\t', '\r'):
+        return f"'{val_str}"
+    return val_str
+
+
 @login_required
 
 def export_leads_csv(request):
@@ -174,31 +184,18 @@ def export_leads_csv(request):
 
 
     for ld in qs.iterator(chunk_size=500):
-
         writer.writerow([
-
             ld.id,
-
-            ld.name,
-
-            ld.phone,
-
-            ld.email or '',
-
-            ld.branch.name if ld.branch else '',
-
-            ld.channel.name if ld.channel else (ld.source or ''),
-
-            ld.status,
-
-            ld.product.name if ld.product else '',
-
-            ld.assigned_telecaller.get_full_name() or ld.assigned_telecaller.username if ld.assigned_telecaller else 'Unassigned',
-
+            sanitize_for_excel(ld.name),
+            sanitize_for_excel(ld.phone),
+            sanitize_for_excel(ld.email or ''),
+            sanitize_for_excel(ld.branch.name if ld.branch else ''),
+            sanitize_for_excel(ld.channel.name if ld.channel else (ld.source or '')),
+            sanitize_for_excel(ld.status),
+            sanitize_for_excel(ld.product.name if ld.product else ''),
+            sanitize_for_excel(ld.assigned_telecaller.get_full_name() or ld.assigned_telecaller.username if ld.assigned_telecaller else 'Unassigned'),
             'Yes' if getattr(ld, 'whatsapp_opt_out', False) else 'No',
-
             ld.created_at.strftime('%Y-%m-%d %H:%M:%S') if ld.created_at else ''
-
         ])
 
 
@@ -293,43 +290,25 @@ def admin_duplicate_leads_export(request):
 
 
     for rec in qs:
-
         import json
-
         orig_branch = (rec.original_lead.branch.name if (rec.original_lead and rec.original_lead.branch)
-
                        else (rec.existing_branch_name or 'N/A'))
-
         dup_branch = rec.branch.name if rec.branch else (rec.branch_name or 'N/A')
 
         writer.writerow([
-
             rec.id,
-
-            rec.get_record_type_display(),
-
-            rec.name,
-
-            rec.phone,
-
-            rec.email,
-
-            dup_branch,
-
-            orig_branch,
-
-            rec.source,
-
-            rec.action_taken,
-
+            sanitize_for_excel(rec.get_record_type_display()),
+            sanitize_for_excel(rec.name),
+            sanitize_for_excel(rec.phone),
+            sanitize_for_excel(rec.email),
+            sanitize_for_excel(dup_branch),
+            sanitize_for_excel(orig_branch),
+            sanitize_for_excel(rec.source),
+            sanitize_for_excel(rec.action_taken),
             rec.elapsed_days or '',
-
-            timezone.localtime(rec.submitted_at).strftime('%Y-%m-%d %H:%M:%S'),
-
-            rec.notes,
-
-            json.dumps(rec.data_payload) if rec.data_payload else ''
-
+            timezone.localtime(rec.submitted_at).strftime('%Y-%m-%d %H:%M:%S') if rec.submitted_at else '',
+            sanitize_for_excel(rec.notes),
+            sanitize_for_excel(json.dumps(rec.data_payload) if rec.data_payload else '')
         ])
 
 

@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
@@ -316,111 +316,68 @@ def receptionist_dashboard(request):
 
 
     duplicate_records_map = {}
+    sheet_mappings_count_map = {}
+    assignment_history_count_map = {}
+    followups_exist_set = set()
+    calls_exist_set = set()
+    status_history_count_map = {}
 
     if lead_ids:
+        from .models import GoogleSheetLeadMapping, LeadStatusHistory, LeadAssignmentHistory
 
         for d in DuplicateLeadRecord.objects.filter(original_lead_id__in=lead_ids):
-
             duplicate_records_map.setdefault(d.original_lead_id, []).append(d)
 
+        for sm in GoogleSheetLeadMapping.objects.filter(lead_id__in=lead_ids).values('lead_id').annotate(c=Count('id')):
+            sheet_mappings_count_map[sm['lead_id']] = sm['c']
 
+        for ah in LeadAssignmentHistory.objects.filter(lead_id__in=lead_ids).values('lead_id').annotate(c=Count('id')):
+            assignment_history_count_map[ah['lead_id']] = ah['c']
+
+        followups_exist_set = set(FollowUp.objects.filter(lead_id__in=lead_ids).values_list('lead_id', flat=True))
+        calls_exist_set = set(CallHistory.objects.filter(lead_id__in=lead_ids).values_list('lead_id', flat=True))
+
+        for sh in LeadStatusHistory.objects.filter(lead_id__in=lead_ids).values('lead_id').annotate(c=Count('id')):
+            status_history_count_map[sh['lead_id']] = sh['c']
 
     for lead in displayed_leads:
-
         dups = duplicate_records_map.get(lead.id, [])
-
+        sm_count = sheet_mappings_count_map.get(lead.id, 0)
         is_ambiguous = any(
-
             d.action_taken == 'AMBIGUOUS_MATCH_FLAGGED' or 'ambiguous' in (d.duplicate_reason or '').lower()
-
             for d in dups
-
         )
-
-
 
         is_sheets = (
-
             (lead.source and lead.source.lower() == 'google sheets') or
-
             (lead.channel and lead.channel.name.lower() == 'google sheets') or
-
-            lead.sheet_mappings.exists()
-
+            sm_count > 0
         )
-
         lead.source_display = 'Google Sheets' if is_sheets else (lead.source or 'Walk-in')
 
-
-
         if is_ambiguous:
-
             lead.lead_type = 'Ambiguous Match'
-
             lead.lead_type_badge = 'warning'
-
             lead.is_existing_lead = True
-
             lead.is_ambiguous = True
-
-        elif dups or lead.sheet_mappings.count() > 1:
-
+        elif dups or sm_count > 1:
             lead.lead_type = 'Existing Lead'
-
             lead.lead_type_badge = 'info'
-
             lead.is_existing_lead = True
-
             lead.is_ambiguous = False
-
         else:
-
-            clean_p = normalize_phone(lead.phone)
-
-            clean_e = normalize_email(lead.email)
-
-            has_other_match = False
-
-            if clean_p and len(clean_p) >= 10:
-
-                p_tail = clean_p[-10:]
-
-                has_other_match = Lead.objects.filter(
-
-                    Q(phone__endswith=p_tail) | Q(alternate_phone__endswith=p_tail)
-
-                ).exclude(id=lead.id).exists()
-
-            if not has_other_match and clean_e:
-
-                has_other_match = Lead.objects.filter(email__iexact=clean_e).exclude(id=lead.id).exists()
-
-
-
             has_history = (
-
-                lead.assignment_history.count() > 1 or
-
-                lead.followups.exists() or
-
-                lead.calls.exists() or
-
-                lead.status_history.count() > 1
-
+                assignment_history_count_map.get(lead.id, 0) > 1 or
+                (lead.id in followups_exist_set) or
+                (lead.id in calls_exist_set) or
+                status_history_count_map.get(lead.id, 0) > 1
             )
 
-
-
-            if has_other_match or has_history:
-
+            if has_history:
                 lead.lead_type = 'Existing Lead'
-
                 lead.lead_type_badge = 'info'
-
                 lead.is_existing_lead = True
-
                 lead.is_ambiguous = False
-
             else:
 
                 lead.lead_type = 'New Lead'

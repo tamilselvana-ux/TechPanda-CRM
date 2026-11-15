@@ -221,9 +221,11 @@ def campaign_create_wizard_view(request):
             qs = qs.filter(assigned_telecaller_id=filter_params['telecaller'])
         initial_total = qs.count()
 
+    from branches.models import Branch
     return render(request, 'chat/campaigns/campaign_composer.html', {
         'senders': eligible_senders,
         'templates': approved_templates,
+        'branches': Branch.objects.filter(status=Branch.Status.ACTIVE).order_by('name'),
         'lead_ids_str': ','.join(str(i) for i in lead_ids),
         'lead_count': initial_total,
         'filter_params_json': json.dumps(filter_params),

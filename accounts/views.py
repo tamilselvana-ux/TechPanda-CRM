@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth import authenticate, login, logout
@@ -160,56 +161,52 @@ def receptionist_login(request):
         portal_title='Reception Desk Login'
     )
 
+@admin_required
 def manager_register(request):
-    if request.user.is_authenticated:
-        return login_redirect(request)
-
     if request.method == 'POST':
         form = ManagerRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             log_activity(
-                user=user,
+                user=request.user,
                 action="Sales Head Registered",
-                description=f"New Sales Head account registered: '{user.username}' ({user.email}).",
+                description=f"New Sales Head account created: '{user.username}' ({user.email}).",
                 object_type="User",
                 object_id=str(user.pk),
                 request=request
             )
-            messages.success(request, "Sales Head registration successful! You can now log in.")
-            return redirect('manager_login')
+            messages.success(request, f"Sales Head account for '{user.username}' created successfully!")
+            return redirect('admin_users_list')
     else:
         form = ManagerRegistrationForm()
 
     return render(request, 'registration/manager_register.html', {
         'form': form,
-        'portal_title': 'Register as Sales Head'
+        'portal_title': 'Register Sales Head (Admin Only)'
     })
 
+@admin_required
 def telecaller_register(request):
-    if request.user.is_authenticated:
-        return login_redirect(request)
-
     if request.method == 'POST':
         form = TelecallerRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             log_activity(
-                user=user,
+                user=request.user,
                 action="Telecaller Registered",
-                description=f"New Telecaller account registered: '{user.username}' ({user.email}).",
+                description=f"New Telecaller account created: '{user.username}' ({user.email}).",
                 object_type="User",
                 object_id=str(user.pk),
                 request=request
             )
-            messages.success(request, "Telecaller registration successful! You can now log in.")
-            return redirect('telecaller_login')
+            messages.success(request, f"Telecaller account for '{user.username}' created successfully!")
+            return redirect('admin_users_list')
     else:
         form = TelecallerRegistrationForm()
 
     return render(request, 'registration/telecaller_register.html', {
         'form': form,
-        'portal_title': 'Register as Telecaller'
+        'portal_title': 'Register Telecaller (Admin Only)'
     })
 
 @login_required
@@ -277,35 +274,47 @@ def account_setup_view(request, uidb64, token):
 def resend_user_invitation(request, pk):
     """
     Permission-checked idempotent action to resend the welcome email and secure password setup link.
+    Requires POST + CSRF to execute side effects. Renders confirmation page on GET.
     """
     target_user = get_object_or_404(User, pk=pk)
 
     if not can_manage_user(request.user, target_user):
         raise PermissionDenied("You do not have permission to resend invitations for this user.")
 
-    email_sent, email_msg = send_user_welcome_email(target_user, request=request)
-    if email_sent:
-        messages.success(request, f"Welcome invitation resent successfully to {target_user.email}.")
-    else:
-        messages.warning(request, f"Failed to send welcome invitation to {target_user.email}: {email_msg}")
+    if request.method == 'POST':
+        email_sent, email_msg = send_user_welcome_email(target_user, request=request)
+        if email_sent:
+            messages.success(request, f"Welcome invitation resent successfully to {target_user.email}.")
+        else:
+            messages.warning(request, f"Failed to send welcome invitation to {target_user.email}: {email_msg}")
 
-    next_url = request.META.get('HTTP_REFERER') or request.GET.get('next')
-    if next_url:
-        return redirect(next_url)
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
 
-    if target_user.role == UserRole.SALES_HEAD:
-        return redirect('admin_managers_list')
-    elif target_user.role == UserRole.BRANCH_HEAD:
-        return redirect('admin_branch_heads_list')
-    elif target_user.role == UserRole.COUNSELOR:
-        return redirect('admin_counselors_list')
-    elif target_user.role == UserRole.TELECALLER:
-        return redirect('admin_telecallers_list')
-    elif target_user.role == UserRole.RECEPTIONIST:
-        return redirect('admin_receptionists_list')
-    elif target_user.role == UserRole.ACCOUNTANT:
-        return redirect('admin_accountants_list')
-    return redirect('admin_dashboard')
+        if target_user.role == UserRole.SALES_HEAD:
+            return redirect('admin_managers_list')
+        elif target_user.role == UserRole.BRANCH_HEAD:
+            return redirect('admin_branch_heads_list')
+        elif target_user.role == UserRole.COUNSELOR:
+            return redirect('admin_counselors_list')
+        elif target_user.role == UserRole.TELECALLER:
+            return redirect('admin_telecallers_list')
+        elif target_user.role == UserRole.RECEPTIONIST:
+            return redirect('admin_receptionists_list')
+        elif target_user.role == UserRole.ACCOUNTANT:
+            return redirect('admin_accountants_list')
+        return redirect('admin_dashboard')
+
+    # GET request: render CSRF-protected confirmation modal/page
+    return render(request, 'accounts/confirm_action.html', {
+        'title': 'Confirm Resend Invitation',
+        'message': f"Are you sure you want to generate a new invitation setup link and send a welcome email to {target_user.get_full_name() or target_user.username} ({target_user.email})?",
+        'action_url': reverse('resend_user_invitation', args=[target_user.pk]),
+        'target_user': target_user,
+        'btn_text': 'Confirm & Resend Invitation',
+        'cancel_url': request.META.get('HTTP_REFERER') or reverse('admin_dashboard')
+    })
 
 
 @admin_required
@@ -527,37 +536,48 @@ def admin_send_password_reset_link(request, pk):
     """
     Authorized action to send a secure password reset link to a selected staff member's email.
     Enforces can_manage_user and superadmin protection.
-    Records audit logging without exposing secrets.
+    Requires POST + CSRF to execute side effects. Renders confirmation page on GET.
     """
     target_user = get_object_or_404(User, pk=pk)
 
     if not can_manage_user(request.user, target_user):
         raise PermissionDenied("You do not have permission to send a password reset link for this user.")
 
-    from .services import send_password_reset_email_for_user
-    email_sent, email_msg = send_password_reset_email_for_user(target_user, request=request, admin_user=request.user)
-    if email_sent:
-        messages.success(request, f"Password reset link successfully sent to {target_user.email}.")
-    else:
-        messages.error(request, f"Failed to send password reset link to {target_user.email}: {email_msg}")
+    if request.method == 'POST':
+        from .services import send_password_reset_email_for_user
+        email_sent, email_msg = send_password_reset_email_for_user(target_user, request=request, admin_user=request.user)
+        if email_sent:
+            messages.success(request, f"Password reset link successfully sent to {target_user.email}.")
+        else:
+            messages.error(request, f"Failed to send password reset link to {target_user.email}: {email_msg}")
 
-    next_url = request.META.get('HTTP_REFERER') or request.GET.get('next')
-    if next_url:
-        return redirect(next_url)
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
 
-    if target_user.role == UserRole.SALES_HEAD:
-        return redirect('admin_managers_list')
-    elif target_user.role == UserRole.BRANCH_HEAD:
-        return redirect('admin_branch_heads_list')
-    elif target_user.role == UserRole.COUNSELOR:
-        return redirect('admin_counselors_list')
-    elif target_user.role == UserRole.TELECALLER:
-        return redirect('admin_telecallers_list')
-    elif target_user.role == UserRole.RECEPTIONIST:
-        return redirect('admin_receptionists_list')
-    elif target_user.role == UserRole.ACCOUNTANT:
-        return redirect('admin_accountants_list')
-    return redirect('admin_dashboard')
+        if target_user.role == UserRole.SALES_HEAD:
+            return redirect('admin_managers_list')
+        elif target_user.role == UserRole.BRANCH_HEAD:
+            return redirect('admin_branch_heads_list')
+        elif target_user.role == UserRole.COUNSELOR:
+            return redirect('admin_counselors_list')
+        elif target_user.role == UserRole.TELECALLER:
+            return redirect('admin_telecallers_list')
+        elif target_user.role == UserRole.RECEPTIONIST:
+            return redirect('admin_receptionists_list')
+        elif target_user.role == UserRole.ACCOUNTANT:
+            return redirect('admin_accountants_list')
+        return redirect('admin_dashboard')
+
+    # GET request: render CSRF-protected confirmation modal/page
+    return render(request, 'accounts/confirm_action.html', {
+        'title': 'Confirm Password Reset Email',
+        'message': f"Are you sure you want to generate a secure password reset link and send it to {target_user.get_full_name() or target_user.username} ({target_user.email})?",
+        'action_url': reverse('admin_send_password_reset_link', args=[target_user.pk]),
+        'target_user': target_user,
+        'btn_text': 'Confirm & Send Reset Email',
+        'cancel_url': request.META.get('HTTP_REFERER') or reverse('admin_dashboard')
+    })
 
 
 @login_required

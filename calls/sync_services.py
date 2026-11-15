@@ -591,6 +591,7 @@ def save_recording(device, upload, data, manual_override=False):
     if not mime.startswith('audio/') and not mime.startswith('video/'):
         mime = mimetypes.guess_type(file_name)[0] or 'audio/mpeg'
 
+    rec = None
     try:
         with transaction.atomic():
             rec = CallRecording(
@@ -618,8 +619,11 @@ def save_recording(device, upload, data, manual_override=False):
             rec.audio_file.save(file_name, upload, save=False)
             rec.save()
     except IntegrityError:  # same file uploaded twice at the same moment
-        if rec.audio_file:
-            rec.audio_file.delete(save=False)
+        if rec and getattr(rec, 'audio_file', None):
+            try:
+                rec.audio_file.delete(save=False)
+            except Exception:
+                pass
         return CallRecording.objects.get(device=device, device_file_id=device_file_id), False
 
     device.last_recording_at = timezone.now()
