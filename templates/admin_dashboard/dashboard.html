@@ -575,8 +575,8 @@
       <tbody>
         {% for a in recent_activities %}
         <tr>
-          <td><strong>{{ a.user.get_full_name|default:a.user.username }}</strong></td>
-          <td><span class="badge {% if a.user.role == 'ADMIN' %}badge-admin{% elif a.user.role == 'SALES_HEAD' %}badge-manager{% else %}badge-telecaller{% endif %}">{{ a.user.role }}</span></td>
+          <td><strong>{% if a.user %}{{ a.user.get_full_name|default:a.user.username }}{% else %}System{% endif %}</strong></td>
+          <td><span class="badge {% if a.user and a.user.role == 'ADMIN' %}badge-admin{% elif a.user and a.user.role == 'SALES_HEAD' %}badge-manager{% else %}badge-telecaller{% endif %}">{{ a.user.role|default:"System" }}</span></td>
           <td><strong>{{ a.action }}</strong></td>
           <td>{{ a.description }}</td>
           <td>{{ a.timestamp|date:"M d, Y H:i" }}</td>

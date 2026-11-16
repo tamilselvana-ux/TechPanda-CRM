@@ -52,6 +52,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span class="nav-text">Dashboard</span>
         </a>
+        <a href="{% url 'admin_leads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_leads_list admin_lead_create admin_lead_detail admin_lead_edit admin_lead_delete admin_leads_import admin_lead_update_status admin_lead_duplicate_info admin_retry_pending_assignments admin_interested_leads admin_demo_scheduled_leads admin_converted_leads admin_lost_leads admin_later_leads admin_discussion_leads admin_new_leads admin_lead_queues admin_walkin_desk admin_duplicate_leads admin_duplicate_leads_keep_single admin_enrolled_students' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+          <span class="nav-text">All Leads</span>
+        </a>
         <a href="{% url 'leads_kanban' %}" class="nav-item {% if request.resolver_match.url_name == 'leads_kanban' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="10"></rect></svg>
           <span class="nav-text">Pipeline (Kanban)</span>
@@ -97,12 +101,6 @@
             </a>
           </div>
         </div>
-
-        <!-- GROUP: Lead Operations -->
-        <a href="{% url 'admin_leads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_leads_list admin_lead_create admin_lead_detail admin_lead_edit admin_lead_delete admin_leads_import admin_lead_update_status admin_lead_duplicate_info admin_retry_pending_assignments admin_interested_leads admin_demo_scheduled_leads admin_converted_leads admin_lost_leads admin_later_leads admin_discussion_leads admin_new_leads admin_lead_queues admin_walkin_desk admin_duplicate_leads admin_duplicate_leads_keep_single admin_enrolled_students' %}active{% endif %}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
-          <span class="nav-text">All Leads</span>
-        </a>
 
         <!-- GROUP: Calls & Omnichannel -->
         <div class="nav-group" id="nav-group-admin-comms">
@@ -213,14 +211,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span class="nav-text">Dashboard</span>
         </a>
-        <a href="{% url 'manager_telecallers_list' %}" class="nav-item {% if request.resolver_match.url_name in 'manager_telecallers_list manager_telecaller_detail manager_telecaller_create' %}active{% endif %}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-          <span class="nav-text">My Telecallers</span>
-        </a>
-        <a href="{% url 'sales_head_branch_heads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'sales_head_branch_heads_list sales_head_branch_head_detail' %}active{% endif %}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-          <span class="nav-text">Branch Heads</span>
-        </a>
         <a href="{% url 'manager_leads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'manager_leads_list manager_lead_create manager_lead_detail manager_lead_edit manager_lead_import' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
           <span class="nav-text">Leads</span>
@@ -228,6 +218,14 @@
         <a href="{% url 'leads_kanban' %}" class="nav-item {% if request.resolver_match.url_name == 'leads_kanban' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="10"></rect></svg>
           <span class="nav-text">Pipeline (Kanban)</span>
+        </a>
+        <a href="{% url 'manager_telecallers_list' %}" class="nav-item {% if request.resolver_match.url_name in 'manager_telecallers_list manager_telecaller_detail manager_telecaller_create' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          <span class="nav-text">My Telecallers</span>
+        </a>
+        <a href="{% url 'sales_head_branch_heads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'sales_head_branch_heads_list sales_head_branch_head_detail' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          <span class="nav-text">Branch Heads</span>
         </a>
         <a href="{% url 'manager_followups_list' %}" class="nav-item {% if request.resolver_match.url_name in 'manager_followups_list' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -298,10 +296,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span class="nav-text">Dashboard</span>
         </a>
-        <a href="{% url 'admin_enrolled_students' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_enrolled_students' %}active{% endif %}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-          <span class="nav-text">Student Enrollments</span>
-        </a>
         <a href="{% url 'branch_head_leads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'branch_head_leads_list branch_head_lead_detail' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
           <span class="nav-text">Leads</span>
@@ -309,6 +303,10 @@
         <a href="{% url 'leads_kanban' %}" class="nav-item {% if request.resolver_match.url_name == 'leads_kanban' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="10"></rect></svg>
           <span class="nav-text">Pipeline (Kanban)</span>
+        </a>
+        <a href="{% url 'admin_enrolled_students' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_enrolled_students' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+          <span class="nav-text">Student Enrollments</span>
         </a>
         <a href="{% url 'branch_head_counselors_list' %}" class="nav-item {% if request.resolver_match.url_name in 'branch_head_counselors_list branch_head_counselor_detail' %}active{% endif %}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path></svg>

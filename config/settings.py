@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
+    'django.contrib.humanize',
 
     # Third-party: REST API + login tokens for the CRM Call Sync Android app
     'rest_framework',

@@ -89,3 +89,65 @@ def build_kpi_url(context, view_name, kpi_field=None, kpi_value=None, **kwargs):
         encoded = urllib.parse.urlencode(query_params)
         return f"{base_url}?{encoded}"
     return base_url
+
+
+from django.utils import timezone
+
+@register.filter
+def short_naturaltime(dt):
+    """
+    Returns short relative time like '4m ago', '23m ago', '1h ago', '2d ago'
+    matching TeleCRM Image 2 format.
+    """
+    if not dt:
+        return "-"
+    now = timezone.now()
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    diff = now - dt
+    total_seconds = int(diff.total_seconds())
+    if total_seconds < 0:
+        return "just now"
+    if total_seconds < 60:
+        return "just now"
+    minutes = total_seconds // 60
+    if minutes < 60:
+        return f"{minutes}m ago"
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}h ago"
+    days = hours // 24
+    if days < 7:
+        return f"{days}d ago"
+    weeks = days // 7
+    if weeks < 4:
+        return f"{weeks}w ago"
+    return dt.strftime("%b %d, %Y")
+
+
+@register.filter
+def user_initials(user_or_name):
+    """
+    Extracts 2-letter uppercase initials for staff avatar badge, e.g. 'Shalini H' -> 'SH'
+    """
+    if not user_or_name:
+        return "--"
+    if hasattr(user_or_name, 'get_full_name'):
+        name = user_or_name.get_full_name() or user_or_name.username
+    else:
+        name = str(user_or_name)
+    parts = name.strip().split()
+    if len(parts) >= 2:
+        return f"{parts[0][0]}{parts[1][0]}".upper()
+    elif len(parts) == 1 and len(parts[0]) >= 2:
+        return parts[0][:2].upper()
+    elif len(parts) == 1:
+        return parts[0][:1].upper()
+    return "--"
+
+
+@register.filter
+def star_range(val):
+    """Generates a list [1, 2, 3, 4, 5] for rendering star icons."""
+    return [1, 2, 3, 4, 5]
+

@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% load static %}
+{% load humanize %}
+{% load kpi_tags %}
 
 {% block title %}Leads - iTechPanda CRM{% endblock %}
 
@@ -572,46 +574,29 @@ function addFilterConditionRow() {
 
     </div>
 
-    <!-- Actions Dropdown -->
+    <!-- Direct Action Buttons (TeleCRM Image 2) -->
+    <button type="button" class="btn btn-secondary tp-btn-secondary tp-btn-sm" onclick="openBulkEditModal()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+      <span>Bulk Edit</span>
+    </button>
 
+    <button type="button" class="btn btn-success tp-btn-sm" onclick="triggerBulkWhatsAppAction()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; background: #10b981; color: #ffffff; border: none; box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"></path><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+      <span>Bulk WACA Message</span>
+    </button>
+
+    <!-- Actions Dropdown for Secondary Tools -->
     <div class="dropdown tp-dropdown">
-
       <button type="button" class="btn btn-secondary tp-btn-secondary tp-btn-sm tp-dropdown-toggle" id="btn-actions-dropdown" onclick="toggleActionsDropdown(event)" aria-haspopup="true" aria-expanded="false" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
-
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-
-        <span>Actions ▾</span>
-
+        <span>More ▾</span>
       </button>
-
       <div id="leadsActionsDropdown" class="tp-dropdown-menu" role="menu">
-
-        <button type="button" class="tp-dropdown-item" onclick="triggerBulkWhatsAppAction()" style="color: #059669; font-weight: 700;">
-
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"></path><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-
-          Bulk WhatsApp Message
-
-        </button>
-
-        <button type="button" class="tp-dropdown-item" onclick="openBulkEditModal()">
-
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-
-          Bulk Edit
-
-        </button>
-
         <button type="button" class="tp-dropdown-item" onclick="triggerExportAction()">
-
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-
           Export
-
         </button>
-
       </div>
-
     </div>
 
     <button type="button" class="btn btn-secondary tp-btn-secondary tp-btn-sm" onclick="openFilterDrawer()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
@@ -993,254 +978,262 @@ function addFilterConditionRow() {
 
   </div>
 
-  <div class="table-responsive">
+  <style>
+    .telecrm-table-wrapper {
+      background: var(--bg-card, #ffffff);
+      border: 1px solid var(--border-color, #e2e8f0);
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      overflow-x: auto;
+    }
+    .telecrm-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.88rem;
+    }
+    .telecrm-table thead th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .telecrm-table tbody tr {
+      transition: background 0.12s ease;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .telecrm-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    .telecrm-table tbody td {
+      padding: 12px 14px;
+      vertical-align: middle;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .telecrm-status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.775rem;
+      font-weight: 600;
+      white-space: nowrap;
+      line-height: 1.25;
+    }
+    .pill-fresh { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .pill-call-taken { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .pill-hot { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .pill-call-not-picked { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+    .pill-interested { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .pill-converted { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .pill-default { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
-    <table class="crm-table">
+    .telecrm-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.74rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      letter-spacing: 0.5px;
+    }
+    .telecrm-assignee-name {
+      font-weight: 600;
+      font-size: 0.86rem;
+      color: #1e293b;
+      white-space: nowrap;
+    }
+    .lead-star-rating {
+      display: inline-flex;
+      gap: 2px;
+      user-select: none;
+    }
+    .lead-star-rating .star-item {
+      font-size: 1.15rem;
+      cursor: pointer;
+      line-height: 1;
+      transition: transform 0.1s ease, color 0.1s ease;
+    }
+    .lead-star-rating .star-item:hover {
+      transform: scale(1.25);
+    }
+  </style>
 
+  <div class="table-responsive telecrm-table-wrapper">
+    <table class="telecrm-table crm-table">
       <thead>
-
         <tr>
-
-          <th style="width: 36px; text-align: center;"><input type="checkbox" id="select-all-leads" title="Select all visible leads"></th>
-
-          <th style="width: 70px;">Sl No</th>
-
-          <th>Lead</th>
-
-          <th>Phone</th>
-
-          <th>Branch</th>
-
-          <th>Source</th>
-
-          <th>Status</th>
-
-          <th>Assignment</th>
-
-          <th>Sales Head</th>
-
-          <th>Telecaller</th>
-
-          <th>Product</th>
-
-          <th>Category</th>
-
-          <th>Duplicate</th>
-
-          <th>Created</th>
-
-          <th style="text-align: right;">Actions</th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {% for ld in page_obj %}
-
-        <tr>
-
-          <td style="text-align: center;">
-
-            <input type="checkbox" class="lead-row-select" value="{{ ld.id }}">
-
-          </td>
-
-          <td>
-
-            <span style="font-family: monospace; font-weight: 600; color: #64748b;" title="Database ID: #{{ ld.id }}">{% if page_obj.start_index %}{{ forloop.counter0|add:page_obj.start_index }}{% else %}{{ forloop.counter }}{% endif %}</span>
-
-          </td>
-
-          <td>
-
-            <strong><a href="{% url 'admin_lead_detail' ld.pk %}">{{ ld.name }}</a></strong>
-
-          </td>
-
-          <td>
-
-            <a href="tel:{{ ld.phone }}" style="color: inherit; text-decoration: none; font-weight: 500;" title="Click to call {{ ld.phone }}">
-
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 2px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-
-              {{ ld.phone }}
-
+          <th style="width: 38px; text-align: center;"><input type="checkbox" id="select-all-leads" title="Select all visible leads"></th>
+          <th style="min-width: 220px;">
+            <a href="?view={{ active_view }}&sort={% if sort_by == 'name' %}-name{% else %}name{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if telecaller_filter %}&telecaller={{ telecaller_filter }}{% endif %}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+              Name {% if sort_by == 'name' %}▴{% elif sort_by == '-name' %}▾{% endif %}
             </a>
-
-          </td>
-
-          <td>
-
-            {% if ld.branch %}
-
-            <span class="badge" style="background: #f1f5f9; color: #334155; font-size: 0.775rem;">{{ ld.branch.name }}</span>
-
-            {% else %}
-
-            <span style="color: var(--text-muted);">-</span>
-
-            {% endif %}
-
-          </td>
-
-          <td>
-
-            {% if ld.channel %}
-
-            <span>{{ ld.channel.name }}</span>
-
-            {% elif ld.source and ld.source != 'Manual Entry' and ld.source != 'Telecaller Entry' and ld.source != 'Manual' %}
-
-            <span>{{ ld.source }}</span>
-
-            {% else %}
-
-            <span style="color: var(--text-muted);">-</span>
-
-            {% endif %}
-
-          </td>
-
-          <td>
-
-            <span class="badge badge-{{ ld.status|lower|slugify }}">{{ ld.status }}</span>
-
-          </td>
-
-          <td>
-
-            {% if ld.assignment_status == 'Assigned' %}
-
-            <span style="color: var(--success); font-weight: 600;">Assigned</span>
-
-            {% elif ld.assignment_status == 'Pending Assignment' %}
-
-            <span style="color: var(--warning); font-weight: 600;" title="{{ ld.pending_assignment_reason|default:'Awaiting allocation' }}">Pending</span>
-
-            {% if ld.pending_assignment_reason %}
-
-            <div style="font-size: 0.7rem; color: var(--warning); max-width: 140px; word-break: break-word;" title="{{ ld.pending_assignment_reason }}">{{ ld.pending_assignment_reason|truncatechars:32 }}</div>
-
-            {% endif %}
-
-            {% else %}
-
-            <span style="color: var(--text-muted); font-weight: 600;">Unassigned</span>
-
-            {% endif %}
-
-          </td>
-
-          <td>
-
-            {% if ld.assigned_manager %}
-
-            <span>{{ ld.assigned_manager.get_full_name|default:ld.assigned_manager.username }}</span>
-
-            {% else %}
-
-            <span style="color: var(--text-muted);">-</span>
-
-            {% endif %}
-
-          </td>
-
-          <td>
-
-            {% if ld.assigned_telecaller %}
-
-            <a href="{% url 'admin_telecaller_detail' ld.assigned_telecaller.pk %}"><strong>{{ ld.assigned_telecaller.get_full_name|default:ld.assigned_telecaller.username }}</strong></a>
-
-            {% else %}
-
-            <span style="color: var(--text-muted);">-</span>
-
-            {% endif %}
-
-          </td>
-
-          <td>{{ ld.product.name|default:"-" }}</td>
-
-          <td>
-
-            <span class="badge" style="{% if ld.category == 'Placement' %}background:#fef3c7;color:#92400e;border:1px solid #fde68a;{% else %}background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;{% endif %}font-size:0.75rem;font-weight:600;">
-
-              {{ ld.category|default:'Training' }}
-
-            </span>
-
-          </td>
-
-          <td>
-
-            {% if ld.has_duplicate_attempts %}
-
-            <button type="button" class="btn btn-sm" onclick="openDuplicateModal('{{ ld.pk }}')" style="font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 9999px; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: all 0.15s ease;" title="Click to view duplicate intelligence">
-
-              <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#f59e0b;"></span> Duplicate Alert
-
-            </button>
-
-            {% else %}
-
-            <span style="color: var(--text-muted); font-weight: 500;">-</span>
-
-            {% endif %}
-
-          </td>
-
-          <td>{{ ld.created_at|date:"M d, Y" }}</td>
-
-          <td style="text-align: right;">
-
-            <div style="display: inline-flex; gap: 4px;">
-
-              <button type="button" class="btn btn-success btn-sm" onclick="openCallDialer('{{ ld.pk }}', '{{ ld.name|escapejs }}', '{{ ld.phone|escapejs }}')" title="Call Lead">
-
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-
-              </button>
-
-              <a href="{% url 'admin_lead_detail' ld.pk %}" class="btn btn-secondary btn-sm">View</a>
-
-              <a href="{% url 'admin_lead_edit' ld.pk %}" class="btn btn-secondary btn-sm">Edit</a>
-
-              <form method="POST" action="{% url 'admin_lead_delete' ld.pk %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this lead?');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm" style="padding: 2px 8px; font-size: 0.775rem;">Del</button></form>
-
-            </div>
-
-          </td>
-
+          </th>
+          <th style="min-width: 140px;">
+            <a href="?view={{ active_view }}&sort={% if sort_by == 'status' %}-status{% else %}status{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if telecaller_filter %}&telecaller={{ telecaller_filter }}{% endif %}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+              Status {% if sort_by == 'status' %}▴{% elif sort_by == '-status' %}▾{% endif %}
+            </a>
+          </th>
+          <th style="min-width: 120px; text-align: center;">
+            <a href="?view={{ active_view }}&sort={% if sort_by == '-rating' %}rating{% else %}-rating{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if telecaller_filter %}&telecaller={{ telecaller_filter }}{% endif %}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" title="Sort by priority rating">
+              Rating <span style="font-size: 0.75rem; color: #94a3b8;">⇅</span>
+            </a>
+          </th>
+          <th style="min-width: 170px;">Assignee</th>
+          <th style="min-width: 110px;">
+            <a href="?view={{ active_view }}&sort={% if sort_by == 'created_at' %}-created_at{% else %}created_at{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if telecaller_filter %}&telecaller={{ telecaller_filter }}{% endif %}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+              Created On {% if sort_by == 'created_at' %}▴{% elif sort_by == '-created_at' or not sort_by %}▾{% endif %}
+            </a>
+          </th>
+          <th style="width: 120px; text-align: right;">Actions</th>
         </tr>
+      </thead>
+      <tbody>
+        {% for ld in page_obj %}
+        <tr id="lead-row-{{ ld.id }}" class="telecrm-row">
+          <!-- 1. Checkbox -->
+          <td style="text-align: center;">
+            <input type="checkbox" class="lead-row-select" value="{{ ld.id }}">
+          </td>
 
-        {% empty %}
-
-        <tr>
-
-          <td colspan="13">
-
-            <div class="empty-state">
-
-              <div class="empty-state-icon">
-
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-
+          <!-- 2. Name (Image 2 format: Contact name + subtle subtitle for phone, branch, channel) -->
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <strong>
+                  <a href="{% url 'admin_lead_detail' ld.pk %}" style="color: #0f172a; text-decoration: none; font-size: 0.95rem; font-weight: 700;">{{ ld.name }}</a>
+                </strong>
+                <button type="button" onclick="openStudent360Drawer('{{ ld.pk }}', event)" title="Quick 360 View" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 0 3px; display: inline-flex; align-items: center;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
               </div>
-
-              <h4>No Leads Found</h4>
-
-              <p>Try modifying your filters or click "Add Lead" or "Import Leads" to populate records.</p>
-
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.775rem; color: #64748b; flex-wrap: wrap;">
+                <a href="tel:{{ ld.phone }}" style="color: #475569; text-decoration: none; font-weight: 500;" title="Click to call {{ ld.phone }}">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 1px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  {{ ld.phone }}
+                </a>
+                <button type="button" onclick="navigator.clipboard.writeText('{{ ld.phone }}'); this.innerText='✓'; setTimeout(()=>this.innerText='⧉', 1500);" title="Copy Phone Number" style="background: none; border: none; font-size: 0.72rem; color: #94a3b8; cursor: pointer; padding: 0 2px;">⧉</button>
+                {% if ld.branch %}
+                <span style="background: #f1f5f9; color: #334155; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem;">{{ ld.branch.name }}</span>
+                {% endif %}
+                {% if ld.channel %}
+                <span style="background: #eef2ff; color: #4338ca; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem;">{{ ld.channel.name }}</span>
+                {% elif ld.source and ld.source != 'Manual Entry' and ld.source != 'Telecaller Entry' and ld.source != 'Manual' %}
+                <span style="background: #f8fafc; color: #64748b; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem;">{{ ld.source }}</span>
+                {% endif %}
+                {% if ld.has_duplicate_attempts %}
+                <button type="button" onclick="openDuplicateModal('{{ ld.pk }}')" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; border-radius: 4px; font-size: 0.7rem; padding: 1px 5px; cursor: pointer; font-weight: 600;" title="Duplicate attempt detected">⚠️ Dup</button>
+                {% endif %}
+              </div>
             </div>
-
           </td>
 
+          <!-- 3. Status (Pill badges e.g. Fresh, Call Taken, Hot, Call not picked_1, Interested) -->
+          <td>
+            {% if ld.status == 'New' or ld.status == 'Fresh' %}
+              <span class="telecrm-status-pill pill-fresh">Fresh</span>
+            {% elif ld.status == 'Interested' %}
+              <span class="telecrm-status-pill pill-interested">Interested</span>
+            {% elif ld.status == 'Hot' %}
+              <span class="telecrm-status-pill pill-hot">Hot</span>
+            {% elif 'not' in ld.status|lower or 'rnr' in ld.status|lower or 'unreachable' in ld.status|lower %}
+              <span class="telecrm-status-pill pill-call-not-picked">{{ ld.status }}</span>
+            {% elif 'call' in ld.status|lower or ld.status == 'Discussion' %}
+              <span class="telecrm-status-pill pill-call-taken">{{ ld.status }}</span>
+            {% elif ld.status == 'Converted' or ld.status == 'Enrolled' %}
+              <span class="telecrm-status-pill pill-converted">{{ ld.status }}</span>
+            {% else %}
+              <span class="telecrm-status-pill pill-default">{{ ld.status }}</span>
+            {% endif %}
+          </td>
+
+          <!-- 4. Rating (Star ratings widget ☆☆☆☆☆ / ★★★★☆) -->
+          <td class="lead-rating-col" style="text-align: center; white-space: nowrap;">
+            <div class="lead-star-rating" data-lead-id="{{ ld.id }}" data-current-rating="{{ ld.rating|default:1 }}" style="display: inline-flex; gap: 2px; cursor: pointer;" title="Priority: {{ ld.rating|default:1 }} of 5 Stars (Click to update)">
+              {% for s in 1|star_range %}
+                <span class="star-item star-{{ s }}" data-star="{{ s }}" onclick="setLeadRating(event, '{{ ld.id }}', {{ s }})" onmouseover="hoverLeadRating('{{ ld.id }}', {{ s }})" onmouseout="resetLeadRating('{{ ld.id }}')" style="font-size: 1.15rem; color: {% if ld.rating and ld.rating >= s %}#f59e0b{% else %}#cbd5e1{% endif %}; line-height: 1; user-select: none;">★</span>
+              {% endfor %}
+            </div>
+          </td>
+
+          <!-- 5. Assignee (Avatar circle with uppercase initials + staff name) -->
+          <td>
+            {% if ld.assigned_telecaller %}
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="telecrm-avatar" style="background: #e0e7ff; color: #3730a3;" title="Telecaller">
+                  {{ ld.assigned_telecaller|user_initials }}
+                </span>
+                <span class="telecrm-assignee-name">{{ ld.assigned_telecaller.get_full_name|default:ld.assigned_telecaller.username }}</span>
+              </div>
+            {% elif ld.assigned_counselor %}
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="telecrm-avatar" style="background: #fef3c7; color: #92400e;" title="Counselor">
+                  {{ ld.assigned_counselor|user_initials }}
+                </span>
+                <span class="telecrm-assignee-name">{{ ld.assigned_counselor.get_full_name|default:ld.assigned_counselor.username }}</span>
+              </div>
+            {% elif ld.assigned_manager %}
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="telecrm-avatar" style="background: #f1f5f9; color: #475569;" title="Sales Head">
+                  {{ ld.assigned_manager|user_initials }}
+                </span>
+                <span class="telecrm-assignee-name">{{ ld.assigned_manager.get_full_name|default:ld.assigned_manager.username }}</span>
+              </div>
+            {% else %}
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="telecrm-avatar" style="background: #f8fafc; color: #94a3b8; border: 1px dashed #cbd5e1;">--</span>
+                <span style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">Unassigned</span>
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- 6. Created On (Human relative time e.g. 4m ago, 23m ago, 1h ago) -->
+          <td>
+            <span title="{{ ld.created_at|date:'M d, Y h:i A' }}" style="font-size: 0.85rem; color: #64748b; font-weight: 500; white-space: nowrap;">
+              {{ ld.created_at|short_naturaltime }}
+            </span>
+          </td>
+
+          <!-- 7. Actions (Quick actions: Call, WhatsApp, Edit, Delete) -->
+          <td style="text-align: right; white-space: nowrap;">
+            <div style="display: inline-flex; gap: 4px; align-items: center;">
+              <button type="button" class="btn btn-sm btn-success" onclick="openCallDialer('{{ ld.pk }}', '{{ ld.name|escapejs }}', '{{ ld.phone|escapejs }}')" title="Quick Call" style="padding: 4px 7px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              </button>
+              <a href="https://wa.me/91{{ ld.phone|slice:'-10:' }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-secondary" title="Direct WhatsApp Chat" style="padding: 4px 7px; color: #15803d;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+              </a>
+              <a href="{% url 'admin_lead_edit' ld.pk %}" class="btn btn-sm btn-secondary" title="Edit Lead" style="padding: 4px 7px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </a>
+              <form method="POST" action="{% url 'admin_lead_delete' ld.pk %}" style="display: inline;" onsubmit="return confirm('Permanently delete this lead?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Lead" style="padding: 3px 7px; font-size: 0.75rem;">Del</button>
+              </form>
+            </div>
+          </td>
         </tr>
-
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              </div>
+              <h4>No Leads Found</h4>
+              <p>Try modifying your filters or click "Add Lead" or "Import Leads" to populate records.</p>
+            </div>
+          </td>
+        </tr>
         {% endfor %}
-
       </tbody>
 
     </table>
@@ -2627,6 +2620,84 @@ function triggerExportAction() {
 
   window.location.href = exportUrl;
 
+}
+
+// TeleCRM Star Rating AJAX handlers
+function setLeadRating(event, leadId, newRating) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  var container = document.querySelector('.lead-star-rating[data-lead-id="' + leadId + '"]');
+  var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+  if (!csrfToken) {
+    var match = document.cookie.match(/csrftoken=([^;]+)/);
+    if (match) csrfToken = match[1];
+  }
+  
+  fetch('/leads/api/' + leadId + '/update-field/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({
+      field: 'rating',
+      value: newRating.toString()
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      if (container) {
+        container.setAttribute('data-current-rating', newRating);
+        container.setAttribute('title', 'Priority: ' + newRating + ' of 5 Stars (Click to update)');
+        var stars = container.querySelectorAll('.star-item');
+        stars.forEach(function(star, idx) {
+          if (idx < newRating) {
+            star.style.color = '#f59e0b';
+          } else {
+            star.style.color = '#cbd5e1';
+          }
+        });
+      }
+    } else {
+      console.warn('Could not update rating:', data.error);
+    }
+  })
+  .catch(function(err) {
+    console.error('Error updating rating:', err);
+  });
+}
+
+function hoverLeadRating(leadId, hoverRating) {
+  var container = document.querySelector('.lead-star-rating[data-lead-id="' + leadId + '"]');
+  if (!container) return;
+  var stars = container.querySelectorAll('.star-item');
+  stars.forEach(function(star, idx) {
+    if (idx < hoverRating) {
+      star.style.color = '#f59e0b';
+      star.style.transform = 'scale(1.2)';
+    } else {
+      star.style.color = '#cbd5e1';
+      star.style.transform = 'scale(1)';
+    }
+  });
+}
+
+function resetLeadRating(leadId) {
+  var container = document.querySelector('.lead-star-rating[data-lead-id="' + leadId + '"]');
+  if (!container) return;
+  var currentRating = parseInt(container.getAttribute('data-current-rating') || '0', 10);
+  var stars = container.querySelectorAll('.star-item');
+  stars.forEach(function(star, idx) {
+    star.style.transform = 'scale(1)';
+    if (idx < currentRating) {
+      star.style.color = '#f59e0b';
+    } else {
+      star.style.color = '#cbd5e1';
+    }
+  });
 }
 
 </script>
