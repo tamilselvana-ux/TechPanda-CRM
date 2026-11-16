@@ -27,6 +27,35 @@ def _can_manage(user):
     return user.is_authenticated and (user.is_admin_user or user.is_sales_head_user)
 
 
+def get_configured_fb_app_secrets():
+    """
+    Returns all configured Facebook App Secrets:
+    - Supports single secret or comma-separated secrets in settings.FB_APP_SECRET
+    - Supports settings.FB_APP_SECRETS
+    - Supports settings.WHATSAPP_APP_SECRET
+    - Supports secrets stored in database channels.LeadConnection config
+    """
+    secrets = []
+    for attr in ("FB_APP_SECRET", "FB_APP_SECRETS", "WHATSAPP_APP_SECRET"):
+        val = getattr(settings, attr, "")
+        if val:
+            for s in str(val).split(","):
+                clean_s = s.strip()
+                if clean_s and clean_s not in secrets:
+                    secrets.append(clean_s)
+
+    try:
+        from lead_channels.models import LeadConnection
+        for conn in LeadConnection.objects.all():
+            sec = (conn.config_details or {}).get('app_secret', '').strip()
+            if sec and sec not in secrets:
+                secrets.append(sec)
+    except Exception:
+        pass
+
+    return secrets
+
+
 @csrf_exempt
 def webhook(request):
     """
@@ -48,14 +77,25 @@ def webhook(request):
     if request.method != "POST":
         return HttpResponse(status=405)
 
-    # Only accept messages really signed by Facebook with our App Secret.
-    secret = getattr(settings, "FB_APP_SECRET", "") or ""
-    if not secret:
-        log.error("Facebook webhook rejected: FB_APP_SECRET is not set in .env")
+    # Validate against any of the configured Facebook App Secrets (supports 1, 2, or more apps)
+    secrets = get_configured_fb_app_secrets()
+    if not secrets:
+        log.error("Facebook webhook rejected: No FB_APP_SECRET configured in .env or database")
         return HttpResponse("Not configured", status=403)
+
     signature = request.headers.get("X-Hub-Signature-256", "")
-    expected = "sha256=" + hmac.new(secret.encode(), request.body, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(signature, expected):
+    if not signature:
+        log.warning("Facebook webhook rejected: missing X-Hub-Signature-256 header")
+        return HttpResponse("Missing signature", status=403)
+
+    is_valid = any(
+        hmac.compare_digest(
+            signature,
+            "sha256=" + hmac.new(s.encode("utf-8"), request.body, hashlib.sha256).hexdigest()
+        )
+        for s in secrets
+    )
+    if not is_valid:
         log.warning("Facebook webhook rejected: bad signature")
         return HttpResponse("Bad signature", status=403)
 

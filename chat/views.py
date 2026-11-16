@@ -491,15 +491,26 @@ class WhatsAppWebhookView(View):
         return HttpResponse("Verification token mismatch", status=403)
 
     def post(self, request):
-        secret = getattr(settings, "WHATSAPP_APP_SECRET", "") or getattr(settings, "FB_APP_SECRET", "")
-        if not secret:
-            logger.error("WhatsApp webhook rejected: WHATSAPP_APP_SECRET is not configured.")
+        from fb_leads.views import get_configured_fb_app_secrets
+        secrets = get_configured_fb_app_secrets()
+        if not secrets:
+            logger.error("WhatsApp webhook rejected: WHATSAPP_APP_SECRET or FB_APP_SECRET is not configured.")
             return HttpResponse("Webhook secret not configured", status=403)
 
         signature = request.headers.get("X-Hub-Signature-256", "")
-        expected = "sha256=" + hmac.new(secret.encode('utf-8'), request.body, hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(signature, expected):
-            logger.warning("WhatsApp webhook rejected: bad or missing X-Hub-Signature-256 signature")
+        if not signature:
+            logger.warning("WhatsApp webhook rejected: missing X-Hub-Signature-256 header")
+            return HttpResponse("Missing signature", status=403)
+
+        is_valid = any(
+            hmac.compare_digest(
+                signature,
+                "sha256=" + hmac.new(s.encode("utf-8"), request.body, hashlib.sha256).hexdigest()
+            )
+            for s in secrets
+        )
+        if not is_valid:
+            logger.warning("WhatsApp webhook rejected: bad signature")
             return HttpResponse("Bad signature", status=403)
 
         try:

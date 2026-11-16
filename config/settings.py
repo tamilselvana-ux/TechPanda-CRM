@@ -247,7 +247,9 @@ ALLOWED_MEDIA_TYPES = [
 # Facebook Lead Ads (fb_leads). Values come from .env, never commit them.
 # ---------------------------------------------------------------------------
 FB_VERIFY_TOKEN = os.getenv('FB_VERIFY_TOKEN', '')
+# Supports single secret or multiple comma-separated secrets (e.g. "secret1, secret2")
 FB_APP_SECRET = os.getenv('FB_APP_SECRET', '')
+FB_APP_SECRETS = os.getenv('FB_APP_SECRETS', '')
 FB_PAGE_TOKEN = os.getenv('FB_PAGE_TOKEN', '')
 FB_PAGE_ID = os.getenv('FB_PAGE_ID', '')
 FB_GRAPH_VERSION = os.getenv('FB_GRAPH_VERSION', 'v23.0')

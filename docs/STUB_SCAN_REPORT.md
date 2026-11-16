@@ -1,6 +1,6 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-15 14:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-16 09:59 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
 **Blockers:** 0 · **Warnings:** 96 · **Verdict:** ✅ no stubs found
 
@@ -18,7 +18,7 @@ Run: 2026-11-15 14:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
-| Hard-coded localhost URL | config\settings.py | 305 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
+| Hard-coded localhost URL | config\settings.py | 307 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
 | alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 535 | `alert(data.error // "Failed to update cutoff date");` |
 | alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 540 | `alert("Network error updating cutoff date");` |
 | Hard-coded localhost URL | scratch\add_track_aa_todo.py | 18 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
