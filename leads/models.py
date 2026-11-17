@@ -994,6 +994,29 @@ class WalkinEnquiryForm(models.Model):
         return f"{self.title}{branch_str}"
 
 
+class SavedLeadView(models.Model):
+    """
+    Stores custom saved view configurations (TeleCRM 'Create View' tabs).
+    Allows staff and admins to save filtered lead slices and access them with 1 click.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='saved_lead_views')
+    name = models.CharField(max_length=120)
+    view_key = models.SlugField(max_length=120, blank=True, default='')
+    query_string = models.TextField(blank=True, default='', help_text="Full URL query string for this view")
+    filters = models.JSONField(default=dict, blank=True, help_text="Structured filter conditions JSON")
+    is_shared = models.BooleanField(default=False, help_text="Available to other team members in same role/branch")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Saved Lead View'
+        verbose_name_plural = 'Saved Lead Views'
+
+    def __str__(self):
+        return f"{self.user.username} - {self.name}"
+
+
 from .models_enrollment import (
     Enrollment,
     Installment,

@@ -127,8 +127,270 @@ from .handoff_service import change_lead_status
 
 
 
-@admin_required
+def _parse_filter_datetime(val_str, is_end=False):
+    """
+    Parses datetime strings in multiple standard & TeleCRM formats (ISO, DD/MM/YYYY, etc.)
+    and returns a timezone-aware datetime object.
+    """
+    if not val_str:
+        return None
 
+
+def _apply_telecrm_dynamic_filters(leads_qs, request):
+    """
+    Applies TeleCRM Create View dynamic condition filters and operators ('is', 'is_not', 'contains', 'not_contains', 'before', 'after', 'starts_with').
+    Returns a tuple of (filtered_queryset, context_dict).
+    """
+    from .models import LeadStatus
+
+    # 1. Status
+    status_filter = request.GET.get('status', '').strip()
+    op_status = request.GET.get('op_status', 'is').strip()
+    if status_filter:
+        if status_filter.lower() == 'active':
+            if op_status == 'is_not':
+                leads_qs = leads_qs.filter(status__in=[LeadStatus.LOST, LeadStatus.CONVERTED])
+            else:
+                leads_qs = leads_qs.exclude(status__in=[LeadStatus.LOST, LeadStatus.CONVERTED])
+        else:
+            if op_status == 'is_not':
+                leads_qs = leads_qs.exclude(status=status_filter)
+            else:
+                leads_qs = leads_qs.filter(status=status_filter)
+
+    # 2. Branch
+    branch_val = request.GET.get('branch', '').strip()
+    op_branch = request.GET.get('op_branch', 'is').strip()
+    if branch_val:
+        if branch_val.isdigit():
+            if op_branch == 'is_not':
+                leads_qs = leads_qs.exclude(branch_id=int(branch_val))
+            else:
+                leads_qs = leads_qs.filter(branch_id=int(branch_val))
+        else:
+            if op_branch == 'is_not':
+                leads_qs = leads_qs.exclude(branch__name__icontains=branch_val)
+            else:
+                leads_qs = leads_qs.filter(branch__name__icontains=branch_val)
+
+    # 3. Assignee (Telecaller)
+    telecaller_id = request.GET.get('telecaller', '').strip() or request.GET.get('assignee', '').strip()
+    op_telecaller = request.GET.get('op_telecaller', 'is').strip()
+    if telecaller_id:
+        if telecaller_id.isdigit():
+            if op_telecaller == 'is_not':
+                leads_qs = leads_qs.exclude(assigned_telecaller_id=int(telecaller_id))
+            else:
+                leads_qs = leads_qs.filter(assigned_telecaller_id=int(telecaller_id))
+        else:
+            q_assignee = Q(assigned_telecaller__username__icontains=telecaller_id) | Q(assigned_telecaller__first_name__icontains=telecaller_id)
+            if op_telecaller == 'is_not':
+                leads_qs = leads_qs.exclude(q_assignee)
+            else:
+                leads_qs = leads_qs.filter(q_assignee)
+
+    # 4. Rating
+    rating_filter = request.GET.get('rating', '').strip()
+    op_rating = request.GET.get('op_rating', 'is').strip()
+    if rating_filter and rating_filter.isdigit():
+        if op_rating == 'is_not':
+            leads_qs = leads_qs.exclude(priority_rating=int(rating_filter))
+        else:
+            leads_qs = leads_qs.filter(priority_rating=int(rating_filter))
+
+    # 5. Status Last Updated On
+    status_updated_from = request.GET.get('status_updated_from', '').strip()
+    status_updated_to = request.GET.get('status_updated_to', '').strip()
+    op_status_updated = request.GET.get('op_status_updated', 'is').strip()
+    dt_up_from = _parse_filter_datetime(status_updated_from, is_end=False) if status_updated_from else None
+    dt_up_to = _parse_filter_datetime(status_updated_to, is_end=True) if status_updated_to else None
+
+    if op_status_updated == 'is_not':
+        if dt_up_from and dt_up_to:
+            leads_qs = leads_qs.exclude(
+                Q(updated_at__gte=dt_up_from, updated_at__lte=dt_up_to) |
+                Q(status_history__created_at__gte=dt_up_from, status_history__created_at__lte=dt_up_to)
+            ).distinct()
+        elif dt_up_from:
+            leads_qs = leads_qs.exclude(Q(updated_at__gte=dt_up_from) | Q(status_history__created_at__gte=dt_up_from)).distinct()
+        elif dt_up_to:
+            leads_qs = leads_qs.exclude(Q(updated_at__lte=dt_up_to) | Q(status_history__created_at__lte=dt_up_to)).distinct()
+    elif op_status_updated == 'before':
+        dt_target = dt_up_from or dt_up_to
+        if dt_target:
+            leads_qs = leads_qs.filter(Q(updated_at__lte=dt_target) | Q(status_history__created_at__lte=dt_target)).distinct()
+    elif op_status_updated == 'after':
+        dt_target = dt_up_from or dt_up_to
+        if dt_target:
+            leads_qs = leads_qs.filter(Q(updated_at__gte=dt_target) | Q(status_history__created_at__gte=dt_target)).distinct()
+    else: # 'is'
+        if dt_up_from:
+            leads_qs = leads_qs.filter(Q(updated_at__gte=dt_up_from) | Q(status_history__created_at__gte=dt_up_from)).distinct()
+        if dt_up_to:
+            leads_qs = leads_qs.filter(Q(updated_at__lte=dt_up_to) | Q(status_history__created_at__lte=dt_up_to)).distinct()
+
+    # 6. Created On
+    created_from_val = request.GET.get('created_from', '').strip()
+    created_to_val = request.GET.get('created_to', '').strip()
+    op_created_on = request.GET.get('op_created_on', 'is').strip()
+    dt_cr_from = _parse_filter_datetime(created_from_val, is_end=False) if created_from_val else None
+    dt_cr_to = _parse_filter_datetime(created_to_val, is_end=True) if created_to_val else None
+
+    if op_created_on == 'is_not':
+        if dt_cr_from and dt_cr_to:
+            leads_qs = leads_qs.exclude(created_at__gte=dt_cr_from, created_at__lte=dt_cr_to)
+        elif dt_cr_from:
+            leads_qs = leads_qs.exclude(created_at__gte=dt_cr_from)
+        elif dt_cr_to:
+            leads_qs = leads_qs.exclude(created_at__lte=dt_cr_to)
+    elif op_created_on == 'before':
+        dt_target = dt_cr_from or dt_cr_to
+        if dt_target:
+            leads_qs = leads_qs.filter(created_at__lte=dt_target)
+    elif op_created_on == 'after':
+        dt_target = dt_cr_from or dt_cr_to
+        if dt_target:
+            leads_qs = leads_qs.filter(created_at__gte=dt_target)
+    else: # 'is'
+        if dt_cr_from:
+            leads_qs = leads_qs.filter(created_at__gte=dt_cr_from)
+        if dt_cr_to:
+            leads_qs = leads_qs.filter(created_at__lte=dt_cr_to)
+
+    def _filter_text_field(qs, lookup_key, val, op):
+        if not val:
+            return qs
+        if op == 'not_contains':
+            return qs.exclude(**{f"{lookup_key}__icontains": val})
+        elif op == 'is':
+            return qs.filter(**{f"{lookup_key}__iexact": val})
+        elif op == 'is_not':
+            return qs.exclude(**{f"{lookup_key}__iexact": val})
+        elif op == 'starts_with':
+            return qs.filter(**{f"{lookup_key}__istartswith": val})
+        else: # 'contains'
+            return qs.filter(**{f"{lookup_key}__icontains": val})
+
+    # 7. Name / Search
+    search = request.GET.get('search', '').strip()
+    op_name = request.GET.get('op_name', 'contains').strip()
+    if search:
+        leads_qs = _filter_text_field(leads_qs, 'name', search, op_name)
+
+    # 8. Phone
+    phone_val = request.GET.get('phone', '').strip()
+    op_phone = request.GET.get('op_phone', 'contains').strip()
+    if phone_val:
+        leads_qs = _filter_text_field(leads_qs, 'phone', phone_val, op_phone)
+
+    # 9. Preferred Branch
+    preferred_branch = request.GET.get('preferred_branch', '').strip()
+    op_preferred_branch = request.GET.get('op_preferred_branch', 'contains').strip()
+    if preferred_branch:
+        if op_preferred_branch == 'not_contains':
+            leads_qs = leads_qs.exclude(
+                Q(branch__name__icontains=preferred_branch) |
+                Q(custom_fields__preferred_branch__icontains=preferred_branch)
+            )
+        elif op_preferred_branch == 'is':
+            leads_qs = leads_qs.filter(
+                Q(branch__name__iexact=preferred_branch) |
+                Q(custom_fields__preferred_branch__iexact=preferred_branch)
+            )
+        elif op_preferred_branch == 'is_not':
+            leads_qs = leads_qs.exclude(
+                Q(branch__name__iexact=preferred_branch) |
+                Q(custom_fields__preferred_branch__iexact=preferred_branch)
+            )
+        elif op_preferred_branch == 'starts_with':
+            leads_qs = leads_qs.filter(
+                Q(branch__name__istartswith=preferred_branch) |
+                Q(custom_fields__preferred_branch__istartswith=preferred_branch)
+            )
+        else: # 'contains'
+            leads_qs = leads_qs.filter(
+                Q(branch__name__icontains=preferred_branch) |
+                Q(custom_fields__preferred_branch__icontains=preferred_branch)
+            )
+
+    # 10. Created By
+    created_by_val = request.GET.get('created_by', '').strip()
+    op_created_by = request.GET.get('op_created_by', 'contains').strip()
+    if created_by_val:
+        if created_by_val.isdigit():
+            if op_created_by in ['is_not', 'not_contains']:
+                leads_qs = leads_qs.exclude(Q(created_by_id=int(created_by_val)) | Q(custom_fields__created_by=created_by_val))
+            else:
+                leads_qs = leads_qs.filter(Q(created_by_id=int(created_by_val)) | Q(custom_fields__created_by=created_by_val))
+        else:
+            q_cr = (
+                Q(created_by__username__icontains=created_by_val) |
+                Q(created_by__first_name__icontains=created_by_val) |
+                Q(created_by__last_name__icontains=created_by_val) |
+                Q(custom_fields__created_by__icontains=created_by_val)
+            )
+            if op_created_by in ['not_contains', 'is_not']:
+                leads_qs = leads_qs.exclude(q_cr)
+            else:
+                leads_qs = leads_qs.filter(q_cr)
+
+    # 11. Custom demographic fields
+    for field_name in ['degree', 'passed_out', 'working_status', 'purpose', 'college']:
+        field_val = request.GET.get(field_name, '').strip() or request.GET.get(f'filter_{field_name}', '').strip()
+        op_field = request.GET.get(f'op_{field_name}', 'contains').strip()
+        if field_val:
+            leads_qs = _filter_text_field(leads_qs, f"custom_fields__{field_name}", field_val, op_field)
+
+    filter_context = {
+        'status_updated_from': status_updated_from,
+        'status_updated_to': status_updated_to,
+        'op_status_updated': op_status_updated,
+        'created_from': created_from_val,
+        'created_to': created_to_val,
+        'op_created_on': op_created_on,
+        'preferred_branch': preferred_branch,
+        'op_preferred_branch': op_preferred_branch,
+        'created_by': created_by_val,
+        'op_created_by': op_created_by,
+        'op_status': op_status,
+        'op_branch': op_branch,
+        'op_telecaller': op_telecaller,
+        'op_rating': op_rating,
+        'op_name': op_name,
+        'op_phone': op_phone,
+        'op_degree': request.GET.get('op_degree', 'contains'),
+        'op_passed_out': request.GET.get('op_passed_out', 'contains'),
+        'op_working_status': request.GET.get('op_working_status', 'contains'),
+        'op_purpose': request.GET.get('op_purpose', 'contains'),
+    }
+
+    return leads_qs, filter_context
+    val_str = str(val_str).strip()
+    formats = [
+        '%Y-%m-%dT%H:%M:%S',
+        '%Y-%m-%dT%H:%M',
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d %H:%M',
+        '%Y-%m-%d',
+        '%d/%m/%Y %H:%M:%S',
+        '%d/%m/%Y %H:%M',
+        '%d/%m/%Y',
+    ]
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(val_str, fmt)
+            if fmt in ['%Y-%m-%d', '%d/%m/%Y']:
+                t = time.max if is_end else time.min
+                dt = datetime.combine(dt.date(), t)
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            return dt
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+@admin_required
 def admin_leads_list(request):
 
     active_view = request.GET.get('view', 'all_active').strip()
@@ -460,10 +722,22 @@ def admin_leads_list(request):
 
 
     if next_followup_date:
-
         leads_qs = leads_qs.filter(followups__follow_up_date=next_followup_date, followups__status='Pending').distinct()
 
+    # Dynamic TeleCRM 'Create View' Filters with Operators
+    leads_qs, telecrm_filters = _apply_telecrm_dynamic_filters(leads_qs, request)
 
+    # Saved View resolution: If active_view starts with 'view_' or is a saved view ID/slug
+    from .models import SavedLeadView
+    saved_views = []
+    active_saved_view = None
+    if request.user.is_authenticated:
+        saved_views = list(SavedLeadView.objects.filter(Q(user=request.user) | Q(is_shared=True)).order_by('id'))
+        saved_view_id = request.GET.get('saved_view_id')
+        if not saved_view_id and active_view and active_view.startswith('saved_'):
+            saved_view_id = active_view.replace('saved_', '')
+        if saved_view_id and str(saved_view_id).isdigit():
+            active_saved_view = SavedLeadView.objects.filter(pk=int(saved_view_id)).filter(Q(user=request.user) | Q(is_shared=True)).first()
 
     # Sorting (TeleCRM Multi-Metric Sort with Deterministic Secondary Sort)
 
@@ -598,8 +872,88 @@ def admin_leads_list(request):
         'kpi_label': kpi_label,
         'page_size': page_size,
         'allowed_page_sizes': ALLOWED_PAGE_SIZES,
-
+        'saved_views': saved_views,
+        'active_saved_view': active_saved_view,
+        **telecrm_filters,
     })
+
+
+@require_POST
+def api_save_lead_view(request):
+    """
+    Persists a custom TeleCRM Create View filter configuration for quick one-click tab access.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Authentication required.'}, status=401)
+
+    import json
+    data = {}
+    if request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            data = {}
+    else:
+        data = request.POST.dict()
+
+    name = data.get('name', '').strip()
+    if not name:
+        return JsonResponse({'status': 'error', 'message': 'View name is required.'}, status=400)
+
+    query_string = data.get('query_string', '').strip()
+    filters = data.get('filters', {})
+    is_shared = bool(data.get('is_shared', False))
+
+    from .models import SavedLeadView
+    saved_view = SavedLeadView.objects.create(
+        user=request.user,
+        name=name,
+        query_string=query_string,
+        filters=filters if isinstance(filters, dict) else {},
+        is_shared=is_shared
+    )
+
+    return JsonResponse({
+        'status': 'success',
+        'view_id': saved_view.id,
+        'name': saved_view.name,
+        'query_string': saved_view.query_string,
+        'message': f'View "{saved_view.name}" saved successfully.'
+    })
+
+
+@require_POST
+def api_delete_saved_view(request, view_id):
+    """
+    Deletes a saved lead view tab created by the user or admin.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Authentication required.'}, status=401)
+
+    from .models import SavedLeadView
+    saved_view = SavedLeadView.objects.filter(pk=view_id).first()
+    if not saved_view:
+        return JsonResponse({'status': 'error', 'message': 'Saved view not found.'}, status=404)
+
+    if saved_view.user != request.user and not request.user.is_superuser and getattr(request.user, 'role', '') != 'Admin':
+        return JsonResponse({'status': 'error', 'message': 'Permission denied.'}, status=403)
+
+    name = saved_view.name
+    saved_view.delete()
+    return JsonResponse({'status': 'success', 'message': f'View "{name}" deleted successfully.'})
+
+
+def api_filter_lead_count(request):
+    """
+    Returns live count of leads matching current TeleCRM Create View filter conditions and operators.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'count': 0, 'status': 'error'}, status=401)
+
+    leads_qs = Lead.objects.all()
+    leads_qs, _ = _apply_telecrm_dynamic_filters(leads_qs, request)
+    return JsonResponse({'status': 'success', 'count': leads_qs.count()})
+
 
 
 
@@ -6274,19 +6628,35 @@ def admin_lead_setup(request):
 
             source = request.POST.get('source', '').strip()
 
+            sources = request.POST.getlist('sources')
+
             percentage = request.POST.get('assignment_percentage', 0)
 
             is_active_val = request.POST.get('is_active', '1')
 
             is_active = str(is_active_val).lower() not in ['0', 'false', 'off']
 
+            target_sources = [s.strip() for s in sources if s.strip()]
 
+            if not target_sources and source:
+
+                target_sources = [source]
+
+            if not target_sources:
+
+                err_msg = "Please select at least one lead source."
+
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+
+                    return JsonResponse({'success': False, 'error': err_msg}, status=400)
+
+                messages.error(request, err_msg)
+
+                return redirect('admin_lead_setup')
 
             try:
 
                 from .models import normalize_lead_source
-
-                norm_source = normalize_lead_source(source) or 'WhatsApp'
 
                 branch = Branch.objects.get(id=branch_id)
 
@@ -6300,51 +6670,59 @@ def admin_lead_setup(request):
 
                 pct = int(percentage) if str(percentage).strip() else 0
 
-
-
                 if not telecaller.branch:
 
                     telecaller.branch = branch
 
                     telecaller.save(update_fields=['branch'])
 
+                saved_sources = []
 
+                with transaction.atomic():
 
-                setup, created = TelecallerLeadSetup.objects.get_or_create(
+                    for raw_source in target_sources:
 
-                    telecaller=telecaller,
+                        norm_source = normalize_lead_source(raw_source) or raw_source
 
-                    branch=branch,
+                        setup, created = TelecallerLeadSetup.objects.get_or_create(
 
-                    source=norm_source,
+                            telecaller=telecaller,
 
-                    defaults={
+                            branch=branch,
 
-                        'assignment_percentage': pct,
+                            source=norm_source,
 
-                        'lead_count': 0,
+                            defaults={
 
-                        'is_active': is_active,
+                                'assignment_percentage': pct,
 
-                    }
+                                'lead_count': 0,
 
-                )
+                                'is_active': is_active,
 
-                if not created:
+                            }
 
-                    setup.assignment_percentage = pct
+                        )
 
-                    setup.lead_count = 0
+                        if not created:
 
-                    setup.is_active = is_active
+                            setup.assignment_percentage = pct
 
-                    setup.save(update_fields=['assignment_percentage', 'lead_count', 'is_active', 'updated_at'])
+                            setup.lead_count = 0
 
+                            setup.is_active = is_active
 
+                            setup.save(update_fields=['assignment_percentage', 'lead_count', 'is_active', 'updated_at'])
+
+                        saved_sources.append(norm_source)
 
                 tc_name = telecaller.get_full_name() or telecaller.username
 
-                msg = f"Lead setup saved for {tc_name} ({branch.name} - {norm_source}): {pct}%."
+                primary_source = saved_sources[0] if saved_sources else 'WhatsApp'
+
+                sources_str = ", ".join(saved_sources)
+
+                msg = f"Lead setup saved for {tc_name} ({branch.name}): {sources_str} set to {pct}%."
 
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
 
@@ -6352,7 +6730,7 @@ def admin_lead_setup(request):
 
                 messages.success(request, msg)
 
-                return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
+                return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={primary_source}")
 
             except Exception:
 

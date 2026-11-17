@@ -446,8 +446,8 @@ def manager_telecallers_list(request):
 def manager_telecaller_detail(request, pk):
     manager = request.user
     branch_ids = get_accessible_branch_ids(manager)
-    # Ensure telecaller strictly belongs to an accessible branch
-    telecaller = get_object_or_404(User, pk=pk, role=UserRole.TELECALLER, branch_id__in=branch_ids)
+    # Ensure telecaller belongs to an accessible branch or central pool
+    telecaller = get_object_or_404(User, Q(branch_id__in=branch_ids) | Q(branch__isnull=True), pk=pk, role=UserRole.TELECALLER)
 
     leads = Lead.objects.filter(assigned_telecaller=telecaller).select_related('channel', 'product')[:15]
     calls = CallHistory.objects.filter(caller=telecaller).select_related('lead')[:15]

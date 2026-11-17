@@ -25,7 +25,7 @@ def admin_email_logs_list(request):
     """
     if request.user.role not in ['ADMIN', 'SUPERADMIN', 'ACCOUNTANT'] and not request.user.is_superuser:
         messages.error(request, "Permission denied: Access restricted to Administrators and Accountants.")
-        return redirect('dashboard')
+        return redirect('root')
 
     status_filter = request.GET.get('status', '').strip().upper()
     type_filter = request.GET.get('type', '').strip().upper()

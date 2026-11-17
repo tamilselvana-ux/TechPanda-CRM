@@ -360,14 +360,41 @@
       </div>
 
       <div style="margin-bottom: 16px;">
-        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">
-          Lead Source
-        </label>
-        <select name="source" id="modalSourceSelect" class="form-select" required>
-          {% for src in available_sources %}
-          <option value="{{ src }}" {% if selected_branch_data and src == selected_branch_data.source %}selected{% endif %}>{{ src }}</option>
-          {% endfor %}
-        </select>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin: 0;">
+            Lead Source
+          </label>
+          <button 
+            type="button" 
+            id="toggleAllSourcesBtn"
+            onclick="toggleAllModalSources()" 
+            style="background: none; border: none; padding: 0; font-size: 0.8rem; font-weight: 600; color: #4f46e5; cursor: pointer; text-decoration: underline;"
+          >
+            Select All
+          </button>
+        </div>
+
+        <div style="background: var(--bg-card-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 12px 14px;">
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px;">
+            {% for src in available_sources %}
+            {% if src != 'Walk-in' and src != 'Google Call' and src != 'Manual' %}
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-main); cursor: pointer; margin: 0; user-select: none;">
+              <input 
+                type="checkbox" 
+                name="sources" 
+                value="{{ src }}" 
+                class="modal-source-cb" 
+                style="accent-color: #2563eb; width: 16px; height: 16px; border-radius: 4px; cursor: pointer;"
+              >
+              <span>{{ src }}</span>
+            </label>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div id="sourceErrorMsg" style="display: none; color: #ef4444; font-size: 0.78rem; margin-top: 5px; font-weight: 500;">
+          ⚠️ Please select at least one lead source.
+        </div>
       </div>
 
       <div style="margin-bottom: 16px;">
@@ -502,10 +529,28 @@ function recalcBranchTotal(branchId) {
   }
 }
 
+function toggleAllModalSources() {
+  const cbs = document.querySelectorAll('.modal-source-cb');
+  const allChecked = Array.from(cbs).every(cb => cb.checked);
+  cbs.forEach(cb => { cb.checked = !allChecked; });
+  const btn = document.getElementById('toggleAllSourcesBtn');
+  if (btn) btn.textContent = allChecked ? 'Select All' : 'Deselect All';
+  const err = document.getElementById('sourceErrorMsg');
+  if (err && !allChecked) err.style.display = 'none';
+}
+
 function openAddModal() {
   document.getElementById('modalTitle').textContent = 'Add Telecaller Assignment';
   document.getElementById('modalPercentageInput').value = '50';
   filterTelecallersByBranch();
+  
+  const cbs = document.querySelectorAll('.modal-source-cb');
+  cbs.forEach(cb => { cb.checked = false; });
+  const btn = document.getElementById('toggleAllSourcesBtn');
+  if (btn) btn.textContent = 'Select All';
+  const err = document.getElementById('sourceErrorMsg');
+  if (err) err.style.display = 'none';
+  
   document.getElementById('leadSetupModal').style.display = 'flex';
 }
 
@@ -515,9 +560,26 @@ function editSetupModal(setupId, branchId, telecallerId, pct, source) {
   filterTelecallersByBranch();
   document.getElementById('modalTelecallerSelect').value = telecallerId;
   document.getElementById('modalPercentageInput').value = pct || '0';
-  if (source && document.getElementById('modalSourceSelect')) {
-    document.getElementById('modalSourceSelect').value = source;
+  
+  // Set source checkboxes
+  const cbs = document.querySelectorAll('.modal-source-cb');
+  cbs.forEach(cb => { cb.checked = false; });
+  if (source) {
+    const cleanSource = source.trim().toLowerCase();
+    cbs.forEach(cb => {
+      if (cb.value.trim().toLowerCase() === cleanSource) {
+        cb.checked = true;
+      }
+    });
   }
+  const btn = document.getElementById('toggleAllSourcesBtn');
+  if (btn) {
+    const allChecked = Array.from(cbs).every(cb => cb.checked);
+    btn.textContent = allChecked ? 'Deselect All' : 'Select All';
+  }
+  const err = document.getElementById('sourceErrorMsg');
+  if (err) err.style.display = 'none';
+  
   document.getElementById('leadSetupModal').style.display = 'flex';
 }
 
@@ -540,6 +602,32 @@ function filterTelecallersByBranch() {
     }
   });
 }
+
+// Validate that at least one lead source checkbox is selected
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('leadSetupForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const checkedSources = document.querySelectorAll('.modal-source-cb:checked');
+      if (checkedSources.length === 0) {
+        e.preventDefault();
+        const err = document.getElementById('sourceErrorMsg');
+        if (err) err.style.display = 'block';
+        return false;
+      }
+    });
+  }
+
+  // Hide error message when any checkbox is ticked
+  document.querySelectorAll('.modal-source-cb').forEach(cb => {
+    cb.addEventListener('change', function() {
+      const err = document.getElementById('sourceErrorMsg');
+      if (err && document.querySelectorAll('.modal-source-cb:checked').length > 0) {
+        err.style.display = 'none';
+      }
+    });
+  });
+});
 
 window.addEventListener('click', function(e) {
   const modal = document.getElementById('leadSetupModal');

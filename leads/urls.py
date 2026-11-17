@@ -123,6 +123,10 @@ urlpatterns = [
     path('admin/leads/queues/', views.admin_lead_queues, name='admin_lead_queues'),
     path('leads/api/bulk-assign/', views.api_bulk_assign_leads, name='api_bulk_assign_leads'),
     path('leads/api/bulk-assign/preview/', views.api_bulk_assign_preview, name='api_bulk_assign_preview'),
+    # Dynamic Saved Views & Live Filter Counter (TeleCRM Create View)
+    path('admin/leads/api/save-view/', views.api_save_lead_view, name='api_save_lead_view'),
+    path('admin/leads/api/delete-view/<int:view_id>/', views.api_delete_saved_view, name='api_delete_saved_view'),
+    path('admin/leads/api/filter-count/', views.api_filter_lead_count, name='api_filter_lead_count'),
 
     # Reception & Walk-in Desk (Phase 6 - Req 7 & 11)
     path('receptionist/dashboard/', views.receptionist_dashboard, name='receptionist_dashboard'),

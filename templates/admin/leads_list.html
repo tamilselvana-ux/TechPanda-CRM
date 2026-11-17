@@ -10,489 +10,224 @@
 
 {% block content %}
 
-<!-- LEFT FILTER DRAWER (TeleCRM Reference Image 2) -->
-
-<div class="filter-drawer-overlay" id="filterDrawerOverlay" onclick="closeFilterDrawer()"></div>
-
-<aside class="filter-drawer" id="filterDrawer" role="region" aria-label="Filter Leads">
-
-  <div class="filter-drawer-header">
-
-    <div class="filter-drawer-title">
-
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-
-      <span>Edit Filters</span>
-
-    </div>
-
-    <button type="button" class="filter-drawer-close" onclick="closeFilterDrawer()" aria-label="Close Filter Drawer">&times;</button>
-
-  </div>
-
-
-
-  <form method="GET" action="{% url 'admin_leads_list' %}" id="filterDrawerForm" class="filter-drawer-body">
-
-    <input type="hidden" name="view" value="{{ active_view }}">
-
-    {% if status_group or kpi_label %}
-
-<!-- Active KPI Filter Chip Banner -->
-
-<div class="active-kpi-banner" style="background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border: 1px solid #c7d2fe; border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--tp-shadow-sm);">
-
-  <div style="display: flex; align-items: center; gap: 10px;">
-
-    <span style="font-size: 1.25rem;">🔍</span>
-
-    <div>
-
-      <div style="font-size: 0.88rem; font-weight: 700; color: #1e1b4b;">
-
-        Filtered by KPI Metric: 
-
-        {% if kpi_label %}<span style="color: #2563eb;">{{ kpi_label }}</span>
-
-        {% elif status_group == 'connected' %}<span style="color: #059669;">Connected / Contacted Leads</span>
-
-        {% elif status_group == 'prospected' %}<span style="color: #d97706;">Prospected / Follow-up / Converted Leads</span>
-
-        {% elif status_group == 'not_connected' %}<span style="color: #dc2626;">Call Not Connected / Missed Leads</span>
-
-        {% else %}<span>{{ status_group|title }}</span>{% endif %}
-
+<!-- TeleCRM Create View Modal & Global UI Styles -->
+<div id="createSavedViewModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 16px;">
+  <div class="modal-dialog" style="background: var(--bg-card, #ffffff); color: var(--text-main, #0f172a); border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; width: 100%; max-width: 440px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; animation: telecrmModalPop 0.15s ease-out;">
+    <div style="padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Save Custom View</h3>
       </div>
-
-      <div style="font-size: 0.78rem; color: #4338ca;">
-
-        Showing {{ page_obj.paginator.count }} matching lead{{ page_obj.paginator.count|pluralize }} from Dashboard KPI drilldown
-
-      </div>
-
+      <button type="button" onclick="closeSaveViewModal()" style="background: none; border: none; font-size: 1.3rem; color: #64748b; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
     </div>
-
-  </div>
-
-  <a href="{% url 'admin_leads_list' %}?view={{ active_view|default:'all' }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if branch_filter %}&branch={{ branch_filter }}{% endif %}" class="btn btn-sm btn-secondary tp-btn-secondary" style="font-weight: 700; text-decoration: none; padding: 6px 14px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #c7d2fe; color: #4338ca;">
-
-    ✕ Clear KPI Filter
-
-  </a>
-
-</div>
-
-{% endif %}
-
-    
-
-    <!-- Search Bar -->
-
-    <div class="drawer-section">
-
-      <label class="drawer-label">Search Contact</label>
-
-      <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by name, number or notes..." value="{{ search_query }}">
-
-    </div>
-
-
-
-    <!-- Conditions Section -->
-
-    <div class="drawer-section">
-
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-
-        <label class="drawer-label" style="margin: 0;">Conditions</label>
-
-        <button type="button" class="btn-add-condition" onclick="addFilterConditionRow()">+ Add a Condition</button>
-
-      </div>
-
-
-
-      <div class="filter-conditions-list" id="filterConditionsList">
-
-        <!-- Condition Row: Branch -->
-
-        <div class="condition-row">
-
-          <div class="condition-field">
-
-            <select name="branch" class="form-select form-select-sm">
-
-              <option value="">Base Branch: All</option>
-
-              {% for b in branches %}
-
-              <option value="{{ b.id }}" {% if branch_filter == b.id|stringformat:"i" %}selected{% endif %}>Base Branch is {{ b.name }}</option>
-
-              {% endfor %}
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-
-        <!-- Condition Row: Status -->
-
-        <div class="condition-row">
-
-          <div class="condition-field">
-
-            <select name="status" class="form-select form-select-sm">
-
-              <option value="">Status: All</option>
-
-              {% for code, label in statuses %}
-
-              <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>Status is {{ label }}</option>
-
-              {% endfor %}
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-
-        <!-- Condition Row: Source / Channel -->
-
-        <div class="condition-row">
-
-          <div class="condition-field">
-
-            <select name="channel" class="form-select form-select-sm">
-
-              <option value="">Lead Source 1: All</option>
-
-              {% for c in channels %}
-
-              <option value="{{ c.id }}" {% if channel_filter == c.id|stringformat:"i" %}selected{% endif %}>Source 1 is {{ c.name }}</option>
-
-              {% endfor %}
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-
-        <!-- Condition Row: Courses / Product -->
-
-        <div class="condition-row">
-
-          <div class="condition-field">
-
-            <select name="product" class="form-select form-select-sm">
-
-              <option value="">Courses: All</option>
-
-              {% for p in products %}
-
-              <option value="{{ p.id }}" {% if product_filter == p.id|stringformat:"i" %}selected{% endif %}>Courses is {{ p.name }}</option>
-
-              {% endfor %}
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-
-        <!-- Condition Row: Assignee -->
-
-        <div class="condition-row">
-
-          <div class="condition-field">
-
-            <select name="telecaller" class="form-select form-select-sm">
-
-              <option value="">Assignee: All</option>
-
-              {% for t in telecallers %}
-
-              <option value="{{ t.id }}" {% if telecaller_filter == t.id|stringformat:"i" %}selected{% endif %}>Assignee is {{ t.get_full_name|default:t.username }}</option>
-
-              {% endfor %}
-
-            </select>
-
-          </div>
-
-        </div>
-
-
-
-        <!-- Condition Row: Priority Rating -->
-
-        <div class="condition-row">
-
-          <div class="condition-field">
-
-            <select name="rating" class="form-select form-select-sm">
-
-              <option value="">Priority Rating: All</option>
-
-              <option value="5" {% if rating_filter == "5" %}selected{% endif %}>Rating is ★★★★★ (5 Stars)</option>
-
-              <option value="4" {% if rating_filter == "4" %}selected{% endif %}>Rating is ★★★★☆ (4 Stars)</option>
-
-              <option value="3" {% if rating_filter == "3" %}selected{% endif %}>Rating is ★★★☆☆ (3 Stars)</option>
-
-              <option value="2" {% if rating_filter == "2" %}selected{% endif %}>Rating is ★★☆☆☆ (2 Stars)</option>
-
-              <option value="1" {% if rating_filter == "1" %}selected{% endif %}>Rating is ★☆☆☆☆ (1 Star)</option>
-
-            </select>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-
-    <!-- Dynamic Multi-Metric Sort Control -->
-
-    <div class="drawer-section">
-
-      <label class="drawer-label">Sort Records By</label>
-
-      <select name="sort" class="form-select form-select-sm">
-
-        <option value="-created_at" {% if sort_by == "-created_at" %}selected{% endif %}>Date Added: Newest First</option>
-
-        <option value="created_at" {% if sort_by == "created_at" %}selected{% endif %}>Date Added: Oldest First</option>
-
-        <option value="-updated_at" {% if sort_by == "-updated_at" %}selected{% endif %}>Last Modified: Recent First</option>
-
-        <option value="updated_at" {% if sort_by == "updated_at" %}selected{% endif %}>Last Modified: Oldest First</option>
-
-        <option value="-rating" {% if sort_by == "-rating" %}selected{% endif %}>Priority Rating: High to Low</option>
-
-        <option value="name" {% if sort_by == "name" %}selected{% endif %}>Lead Name: A to Z</option>
-
-        <option value="-name" {% if sort_by == "-name" %}selected{% endif %}>Lead Name: Z to A</option>
-
-        <option value="status" {% if sort_by == "status" %}selected{% endif %}>Status: A to Z</option>
-
-      </select>
-
-    </div>
-
-
-
-    <div class="filter-drawer-actions">
-
-      <a href="{% url 'admin_leads_list' %}?view={{ active_view }}" class="btn btn-secondary" style="flex: 1; text-align: center;">Reset</a>
-
-      <button type="submit" class="btn btn-primary" style="flex: 1.5; font-weight: 700;">Apply Filters</button>
-
-    </div>
-
-  </form>
-
-</aside>
-
-
-
-<!-- CREATE SAVED VIEW MODAL -->
-
-<div id="createSavedViewModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 16px;">
-
-  <div class="modal-dialog" style="background: var(--bg-card, #fff); color: var(--text-main); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; width: 100%; max-width: 440px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); overflow: hidden;">
-
-    <div style="padding: 16px 20px; background: var(--bg-card-hover, #f8fafc); border-bottom: 1px solid var(--border-color, #e2e8f0); display: flex; justify-content: space-between; align-items: center;">
-
-      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700;">Save Current View</h3>
-
-      <button type="button" onclick="closeCreateViewModal()" style="background: none; border: none; font-size: 1.3rem; color: var(--text-muted); cursor: pointer;">&times;</button>
-
-    </div>
-
     <div style="padding: 20px;">
-
       <div style="margin-bottom: 14px;">
-
-        <label style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">View Name</label>
-
-        <input type="text" id="customViewNameInput" class="form-control" placeholder="e.g., Chennai High Priority Leads">
-
+        <label style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 6px;">View Tab Name</label>
+        <input type="text" id="customViewNameInput" class="form-control" placeholder="e.g. Porur Hot Leads, Website Leads..." style="font-size: 0.9rem; border-radius: 8px; border: 1px solid #cbd5e1; padding: 8px 12px;">
       </div>
-
-      <p style="font-size: 0.825rem; color: var(--text-muted); margin: 0 0 16px 0;">This will save your currently applied search, filters, and sort options as a quick-access tab.</p>
-
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
-
-        <button type="button" class="btn btn-secondary" onclick="closeCreateViewModal()">Cancel</button>
-
-        <button type="button" class="btn btn-primary" onclick="saveCustomView()" style="font-weight: 700;">Save View</button>
-
+      <p style="font-size: 0.82rem; color: #64748b; margin: 0 0 18px 0; line-height: 1.4;">This will pin your currently configured conditions into a persistent quick-access tab on your top navigation bar.</p>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-secondary" onclick="closeSaveViewModal()" style="font-weight: 600; padding: 7px 16px;">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="confirmSaveCustomView()" style="font-weight: 700; padding: 7px 18px; background: #2563eb; color: #ffffff;">Save & Pin Tab</button>
       </div>
-
     </div>
-
   </div>
-
 </div>
 
-
-
-<script>
-
-function openFilterDrawer() {
-
-  var drawer = document.getElementById('filterDrawer');
-
-  var overlay = document.getElementById('filterDrawerOverlay');
-
-  if (drawer && overlay) {
-
-    drawer.classList.add('active');
-
-    overlay.style.display = 'block';
-
+<style>
+  @keyframes telecrmModalPop {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
   }
-
-}
-
-
-
-function closeFilterDrawer() {
-
-  var drawer = document.getElementById('filterDrawer');
-
-  var overlay = document.getElementById('filterDrawerOverlay');
-
-  if (drawer) drawer.classList.remove('active');
-
-  if (overlay) overlay.style.display = 'none';
-
-}
-
-
-
-function openCreateViewModal() {
-
-  var modal = document.getElementById('createSavedViewModal');
-
-  if (modal) modal.style.display = 'flex';
-
-  var inp = document.getElementById('customViewNameInput');
-
-  if (inp) {
-
-    inp.value = '';
-
-    setTimeout(function() { inp.focus(); }, 150);
-
+  .telecrm-layout-wrapper {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: 14px;
+    transition: all 0.2s ease;
   }
-
-}
-
-
-
-function closeCreateViewModal() {
-
-  var modal = document.getElementById('createSavedViewModal');
-
-  if (modal) modal.style.display = 'none';
-
-}
-
-
-
-function saveCustomView() {
-
-  var inp = document.getElementById('customViewNameInput');
-
-  var name = inp ? inp.value.trim() : '';
-
-  if (!name) {
-
-    alert('Please enter a name for this saved view.');
-
-    if (inp) inp.focus();
-
-    return;
-
+  .telecrm-create-view-panel {
+    width: 360px;
+    min-width: 340px;
+    max-width: 380px;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 120px);
+    position: sticky;
+    top: 20px;
+    z-index: 40;
   }
-
-  // Construct URL with current query parameters
-
-  var currentUrl = new URL(window.location.href);
-
-  currentUrl.searchParams.set('view_name', name);
-
-  closeCreateViewModal();
-
-  alert('View "' + name + '" saved successfully to your top views bar!');
-
-}
-
-
-
-function addFilterConditionRow() {
-
-  var list = document.getElementById('filterConditionsList');
-
-  if (!list) return;
-
-  var row = document.createElement('div');
-
-  row.className = 'condition-row';
-
-  row.innerHTML = `
-
-    <div class="condition-field">
-
-      <select class="form-select form-select-sm" onchange="this.name = this.value ? 'filter_' + this.value : ''">
-
-        <option value="">-- Choose Field --</option>
-
-        <option value="degree">Degree</option>
-
-        <option value="passed_out">PassedOut</option>
-
-        <option value="working_status">Working Status</option>
-
-        <option value="purpose">Purpose</option>
-
-        <option value="total_experience">Total Experience</option>
-
-        <option value="college">College</option>
-
-      </select>
-
-    </div>
-
-    <input type="text" class="form-control form-control-sm" placeholder="Value..." style="flex: 1;" oninput="var sel = this.previousElementSibling.querySelector('select'); if (sel && sel.value) this.name = sel.value;">
-
-    <button type="button" class="btn-remove-cond" onclick="this.closest('.condition-row').remove()">&times;</button>
-
-  `;
-
-  list.appendChild(row);
-
-}
-
-</script>
-
-
+  .telecrm-main-workspace {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cv-field-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #334155;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .cv-field-item:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+  .cv-field-item.active-field {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  .cv-field-icon {
+    width: 20px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #64748b;
+  }
+  .active-condition-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    transition: border-color 0.15s ease;
+  }
+  .active-condition-card:hover {
+    border-color: #94a3b8;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .card-icon-title {
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .operator-select {
+    border: 1px solid #cbd5e1;
+    background-color: #f1f5f9;
+    color: #334155;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 2px 22px 2px 8px;
+    cursor: pointer;
+    outline: none;
+    display: inline-block;
+    line-height: 1.3;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    transition: all 0.15s ease;
+    vertical-align: middle;
+  }
+  .operator-select:hover, .operator-select:focus {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  }
+  .operator-pill {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #475569;
+    background: #e2e8f0;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .btn-card-close {
+    background: none;
+    border: none;
+    font-size: 0.95rem;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    border-radius: 3px;
+  }
+  .btn-card-close:hover {
+    color: #dc2626;
+    background: #fee2e2;
+  }
+  .card-datetime-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .range-arrow {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 700;
+  }
+  .saved-view-tab-wrapper {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    padding-right: 18px;
+  }
+  .btn-tab-delete {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    border-radius: 50%;
+    opacity: 0.7;
+    transition: opacity 0.12s ease, color 0.12s ease;
+  }
+  .btn-tab-delete:hover {
+    opacity: 1;
+    color: #dc2626;
+  }
+  .refresh-spin {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  .refresh-spin:hover {
+    transform: rotate(180deg);
+  }
+  @media (max-width: 992px) {
+    .telecrm-layout-wrapper {
+      flex-direction: column;
+    }
+    .telecrm-create-view-panel {
+      width: 100%;
+      max-width: 100%;
+      position: static;
+      max-height: none;
+    }
+  }
+</style>
 
 <div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
 
@@ -630,330 +365,477 @@ function addFilterConditionRow() {
 
 
 <!-- Saved Views Tabs Bar (TeleCRM Phase 2) -->
-
 <div class="saved-views-tabs-container">
+  <div class="saved-views-tabs-scroll" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 4px 2px 8px 2px;">
+    <span style="font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; margin-right: 4px;">All Views:</span>
 
-  <div class="saved-views-tabs-scroll">
-
-    <a href="?view=all_active{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'all_active' %}active{% endif %}">
-
-      <span>All Active Leads</span>
-
-      <span class="tab-badge">{{ view_counts.all_active }}</span>
-
+    <a href="?view=all{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'all' or not active_view %}active{% endif %}">
+      <span>All Leads</span>
+      <span class="tab-badge">{{ view_counts.all }}</span>
     </a>
 
-    <a href="?view=all{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'all' %}active{% endif %}">
-
-      <span>All Leads</span>
-
-      <span class="tab-badge">{{ view_counts.all }}</span>
-
+    <a href="?view=all_active{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'all_active' %}active{% endif %}">
+      <span>All Active Leads</span>
+      <span class="tab-badge">{{ view_counts.all_active }}</span>
     </a>
 
     <a href="?view=assigned_to_me{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'assigned_to_me' %}active{% endif %}">
-
-      <span>Leads Assigned To Me</span>
-
+      <span>Assigned To Me</span>
       <span class="tab-badge">{{ view_counts.assigned_to_me }}</span>
-
     </a>
 
     <a href="?view=my_leads{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'my_leads' %}active{% endif %}">
-
       <span>My Leads</span>
-
       <span class="tab-badge">{{ view_counts.my_leads }}</span>
-
     </a>
 
     <a href="?view=tnagar_meta{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'tnagar_meta' %}active{% endif %}">
-
       <span>T Nagar Meta</span>
-
       <span class="tab-badge">{{ view_counts.tnagar_meta }}</span>
-
     </a>
 
     <a href="?view=velachery_meta{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="saved-view-tab {% if active_view == 'velachery_meta' %}active{% endif %}">
-
       <span>Velachery Meta</span>
-
       <span class="tab-badge">{{ view_counts.velachery_meta }}</span>
-
     </a>
 
-    <button type="button" class="saved-view-tab-add" onclick="openCreateViewModal()" title="Save Current Filters as Custom View">+</button>
-
-  </div>
-
-</div>
-
-
-
-<!-- Filters -->
-
-<div class="filter-card">
-
-  <form method="GET" class="filter-form" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
-
-    <input type="hidden" name="view" value="{{ active_view }}">
-
-    {% if status_group %}<input type="hidden" name="status_group" value="{{ status_group }}">{% endif %}
-
-    {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
-
-    {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size }}">{% endif %}
-
-    <div class="filter-col" style="flex: 2; min-width: 180px;">
-
-      <label>Search</label>
-
-      <input type="text" name="search" class="form-control" placeholder="Search name, phone, email, notes..." value="{{ search_query }}">
-
-    </div>
-
-    <!--<div class="filter-col" style="min-width: 130px;">
-
-      <label>Branch</label>
-
-      <select name="branch" class="form-select">
-
-        <option value="">All Branches</option>
-
-        {% for b in branches %}
-
-        <option value="{{ b.id }}" {% if branch_filter == b.id|stringformat:"i" %}selected{% endif %}>{{ b.name }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div> -->
-
-    <div class="filter-col" style="min-width: 130px;">
-
-      <label>Status</label>
-
-      <select name="status" class="form-select">
-
-        <option value="">All Statuses</option>
-
-        {% for code, label in statuses %}
-
-        <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div>
-
-    <div class="filter-col" style="min-width: 140px;">
-
-      <label>Assignment Status</label>
-
-      <select name="assignment_status" class="form-select">
-
-        <option value="">All Assignments</option>
-
-        {% for code, label in assignment_statuses %}
-
-        <option value="{{ code }}" {% if assignment_status_filter == code %}selected{% endif %}>{{ label }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div>
-
-    <!-- <div class="filter-col" style="min-width: 140px;">
-
-      <label>Spreadsheet</label>
-
-      <select name="spreadsheet" class="form-select">
-
-        <option value="">All Spreadsheets</option>
-
-        {% for cs in connected_spreadsheets %}
-
-        <option value="{{ cs.id }}" {% if spreadsheet_filter == cs.id|stringformat:"i" %}selected{% endif %}>{{ cs.name }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div> -->
-
-    <div class="filter-col" style="min-width: 130px;">
-
-      <label>Telecaller</label>
-
-      <select name="telecaller" class="form-select">
-
-        <option value="">All Telecallers</option>
-
-        {% for t in telecallers %}
-
-        <option value="{{ t.id }}" data-branch="{{ t.branch_id|default:'' }}" {% if telecaller_filter == t.id|stringformat:"i" %}selected{% endif %}>{{ t.get_full_name|default:t.username }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div>
-
-    <div class="filter-col" style="min-width: 120px;">
-
-      <label>Channel</label>
-
-      <select name="channel" class="form-select">
-
-        <option value="">All Channels</option>
-
-        {% for c in channels %}
-
-        <option value="{{ c.id }}" {% if channel_filter == c.id|stringformat:"i" %}selected{% endif %}>{{ c.name }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div>
-
-    <!-- <div class="filter-col" style="min-width: 120px;">
-
-      <label>Product</label>
-
-      <select name="product" class="form-select">
-
-        <option value="">All Products</option>
-
-        {% for p in products %}
-
-        <option value="{{ p.id }}" {% if product_filter == p.id|stringformat:"i" %}selected{% endif %}>{{ p.name }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div> -->
-
-    <div class="filter-col" style="min-width: 130px;">
-
-      <label>Counselor</label>
-
-      <select name="counselor" class="form-select">
-
-        <option value="">All Counselors</option>
-
-        {% for c in counselors %}
-
-        <option value="{{ c.id }}" data-branch="{{ c.branch_id|default:'' }}" {% if counselor_filter == c.id|stringformat:"i" %}selected{% endif %}>{{ c.get_full_name|default:c.username }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div>
-
-    <div class="filter-col" style="min-width: 120px;">
-
-      <label>Category</label>
-
-      <select name="category" class="form-select">
-
-        <option value="">All Categories</option>
-
-        {% for cat_code, cat_label in categories %}
-
-        <option value="{{ cat_code }}" {% if category_filter == cat_code %}selected{% endif %}>{{ cat_label }}</option>
-
-        {% endfor %}
-
-      </select>
-
-    </div>
-
-    <!-- <div class="filter-col" style="min-width: 130px;">
-
-      <label>Source</label>
-
-      <input type="text" name="source" class="form-control" placeholder="Source name..." value="{{ source_filter }}">
-
-    </div> -->
-
-    <div class="filter-col" style="flex: 0 0 auto; width: 220px;">
-      <label>Date Range</label>
-      {% include "partials/date_range_picker.html" with from_name="date_from" to_name="date_to" from_val=date_from to_val=date_to %}
-    </div>
-
-    <div class="filter-col" style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 2px;">
-
-      <a href="{% url 'admin_leads_list' %}{% if active_view %}?view={{ active_view }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="btn btn-secondary tp-btn-secondary" style="height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; font-weight: 600; text-decoration: none;" title="Reset all search filters">
-
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-
-        Reset
-
+    {% for sv in saved_views %}
+    <div class="saved-view-tab-wrapper">
+      <a href="{% url 'admin_leads_list' %}?{{ sv.query_string }}{% if not 'saved_view_id' in sv.query_string %}&saved_view_id={{ sv.id }}{% endif %}" class="saved-view-tab {% if active_saved_view.id == sv.id or active_view == 'saved_'|add:sv.id|stringformat:'i' %}active{% endif %}" title="Saved: {{ sv.created_at|date:'d M Y H:i' }}">
+        <span>⚑ {{ sv.name }}</span>
       </a>
-
+      <button type="button" class="btn-tab-delete" onclick="deleteSavedView(event, {{ sv.id }}, '{{ sv.name|escapejs }}')" title="Delete custom view">&times;</button>
     </div>
+    {% endfor %}
 
-  </form>
-
-</div>
-
-
-
-{% if status_group %}
-
-<!-- Active KPI Filter Chip Banner -->
-
-<div class="active-kpi-banner" style="background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border: 1px solid #c7d2fe; border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--tp-shadow-sm);">
-
-  <div style="display: flex; align-items: center; gap: 10px;">
-
-    <span style="font-size: 1.25rem;">📊</span>
-
-    <div>
-
-      <div style="font-size: 0.88rem; font-weight: 700; color: #1e1b4b;">
-
-        Filtered by KPI Metric: 
-
-        {% if status_group == 'connected' %}<span style="color: #059669;">Connected / Contacted Leads</span>
-
-        {% elif status_group == 'prospected' %}<span style="color: #d97706;">Prospected / Follow-up / Converted Leads</span>
-
-        {% elif status_group == 'not_connected' %}<span style="color: #dc2626;">Call Not Connected / Missed Leads</span>
-
-        {% else %}<span>{{ status_group|title }}</span>{% endif %}
-
-      </div>
-
-      <div style="font-size: 0.78rem; color: #4338ca;">
-
-        Showing {{ page_obj.paginator.count }} matching lead{{ page_obj.paginator.count|pluralize }} from Executive Report drilldown
-
-      </div>
-
-    </div>
-
+    <button type="button" class="saved-view-tab-add" onclick="toggleCreateViewPanel(true)" title="Open TeleCRM Create View Filter Builder" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; background: #eff6ff; color: #2563eb; border: 1px dashed #93c5fd; cursor: pointer; white-space: nowrap;">
+      <span>+ Create View</span>
+    </button>
   </div>
-
-  <a href="{% url 'admin_leads_list' %}?view={{ active_view }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if branch_filter %}&branch={{ branch_filter }}{% endif %}" class="btn btn-sm btn-secondary tp-btn-secondary" style="font-weight: 700; text-decoration: none; padding: 6px 14px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #c7d2fe; color: #4338ca;">
-
-    ✕ Clear KPI Filter
-
-  </a>
-
 </div>
 
-{% endif %}
+<div class="telecrm-layout-wrapper" id="telecrmLayoutWrapper">
 
+  <!-- LEFT SPLIT PANEL: CREATE VIEW (TeleCRM Dynamic Filter Builder) -->
+  <aside class="telecrm-create-view-panel" id="telecrmCreateViewPanel" style="display: {% if status_updated_from or status_updated_to or created_from or created_to or preferred_branch or created_by or request.GET.degree or request.GET.passed_out or request.GET.working_status or request.GET.purpose or request.GET.create_view == '1' %}flex{% else %}none{% endif %};">
+    
+    <!-- Panel Header -->
+    <div style="padding: 14px 18px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem; color: #2563eb;">⚡</span>
+        <span style="font-weight: 800; font-size: 1.05rem; color: #0f172a; letter-spacing: -0.01em;">Create View</span>
+      </div>
+      <button type="button" onclick="toggleCreateViewPanel(false)" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; padding: 2px 6px; border-radius: 4px;" title="Close Panel">✕</button>
+    </div>
 
+    <!-- Search Condition Input -->
+    <div style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+      <div style="position: relative; display: flex; align-items: center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="position: absolute; left: 12px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="cvFieldSearchInput" onkeyup="filterFieldCatalog(this.value)" placeholder="Add a new condition" class="form-control" style="padding-left: 36px; font-size: 0.88rem; border-radius: 8px; border: 1px solid #cbd5e1; height: 38px;">
+      </div>
+    </div>
 
+    <!-- Searchable Field Catalog -->
+    <div class="cv-fields-section" style="max-height: 200px; overflow-y: auto; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+      <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; padding: 4px 8px;">Fields Catalog (Click to add)</div>
+      <div id="cvFieldsCatalogList" style="display: flex; flex-direction: column; gap: 2px;">
+        <div class="cv-field-item {% if status_updated_from or status_updated_to %}active-field{% endif %}" data-field="status_updated_on" onclick="activateConditionCard('status_updated_on')">
+          <span class="cv-field-icon">📅</span> <span class="cv-field-name">Status Last Updated On</span>
+        </div>
+        <div class="cv-field-item {% if created_from or created_to %}active-field{% endif %}" data-field="created_on" onclick="activateConditionCard('created_on')">
+          <span class="cv-field-icon">📅</span> <span class="cv-field-name">Created On</span>
+        </div>
+        <div class="cv-field-item {% if created_by %}active-field{% endif %}" data-field="created_by" onclick="activateConditionCard('created_by')">
+          <span class="cv-field-icon">👤+</span> <span class="cv-field-name">Created By</span>
+        </div>
+        <div class="cv-field-item {% if search_query %}active-field{% endif %}" data-field="name" onclick="activateConditionCard('name')">
+          <span class="cv-field-icon" style="font-weight: 800;">T</span> <span class="cv-field-name">Name</span>
+        </div>
+        <div class="cv-field-item" data-field="phone" onclick="activateConditionCard('phone')">
+          <span class="cv-field-icon">📞</span> <span class="cv-field-name">Phone</span>
+        </div>
+        <div class="cv-field-item {% if request.GET.degree %}active-field{% endif %}" data-field="degree" onclick="activateConditionCard('degree')">
+          <span class="cv-field-icon" style="font-weight: 800;">T</span> <span class="cv-field-name">Degree</span>
+        </div>
+        <div class="cv-field-item {% if request.GET.passed_out %}active-field{% endif %}" data-field="passed_out" onclick="activateConditionCard('passed_out')">
+          <span class="cv-field-icon" style="font-weight: 800;">T</span> <span class="cv-field-name">PassedOut</span>
+        </div>
+        <div class="cv-field-item {% if request.GET.purpose %}active-field{% endif %}" data-field="purpose" onclick="activateConditionCard('purpose')">
+          <span class="cv-field-icon">🎯</span> <span class="cv-field-name">Purpose</span>
+        </div>
+        <div class="cv-field-item {% if branch_filter %}active-field{% endif %}" data-field="branch" onclick="activateConditionCard('branch')">
+          <span class="cv-field-icon">🏢</span> <span class="cv-field-name">Base Branch</span>
+        </div>
+        <div class="cv-field-item {% if preferred_branch %}active-field{% endif %}" data-field="preferred_branch" onclick="activateConditionCard('preferred_branch')">
+          <span class="cv-field-icon">🏢</span> <span class="cv-field-name">Preferred Branch</span>
+        </div>
+        <div class="cv-field-item {% if request.GET.working_status %}active-field{% endif %}" data-field="working_status" onclick="activateConditionCard('working_status')">
+          <span class="cv-field-icon">💼</span> <span class="cv-field-name">Working status</span>
+        </div>
+        <div class="cv-field-item {% if status_filter %}active-field{% endif %}" data-field="status" onclick="activateConditionCard('status')">
+          <span class="cv-field-icon">🏷️</span> <span class="cv-field-name">Status</span>
+        </div>
+        <div class="cv-field-item {% if rating_filter %}active-field{% endif %}" data-field="rating" onclick="activateConditionCard('rating')">
+          <span class="cv-field-icon">★</span> <span class="cv-field-name">Rating</span>
+        </div>
+        <div class="cv-field-item {% if telecaller_filter %}active-field{% endif %}" data-field="telecaller" onclick="activateConditionCard('telecaller')">
+          <span class="cv-field-icon">👤</span> <span class="cv-field-name">Assignee</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Conditions Form & Dynamic Cards Container -->
+    <form method="GET" action="{% url 'admin_leads_list' %}" id="telecrmCreateViewForm" style="flex: 1; overflow-y: auto; padding: 12px; margin: 0; display: flex; flex-direction: column;">
+      <input type="hidden" name="view" value="{{ active_view|default:'all' }}">
+      {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+      {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size }}">{% endif %}
+      <input type="hidden" name="create_view" value="1">
+
+      <div id="cvActiveConditionsList" style="flex: 1;">
+        
+        <!-- CARD: Status Last Updated On -->
+        <div class="active-condition-card" id="card_status_updated_on" style="display: {% if status_updated_from or status_updated_to %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              📅 Status Last Updated On
+              <select name="op_status_updated" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_status_updated == 'is' or not op_status_updated %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_status_updated == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="before" {% if op_status_updated == 'before' %}selected{% endif %}>Before</option>
+                <option value="after" {% if op_status_updated == 'after' %}selected{% endif %}>After</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('status_updated_on')" title="Remove condition">✕</button>
+          </div>
+          <select class="form-select form-select-sm" onchange="handlePresetDateRange(this, 'status_updated_from', 'status_updated_to')" style="margin-bottom: 6px; font-size: 0.8rem; background: #ffffff;">
+            <option value="custom">Select Range ▾</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last_7_days">Last 7 Days</option>
+            <option value="this_month">This Month</option>
+          </select>
+          <div class="card-datetime-inputs">
+            <input type="datetime-local" name="status_updated_from" value="{{ status_updated_from }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+            <span class="range-arrow">➔</span>
+            <input type="datetime-local" name="status_updated_to" value="{{ status_updated_to }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+          </div>
+        </div>
+
+        <!-- CARD: Created On -->
+        <div class="active-condition-card" id="card_created_on" style="display: {% if created_from or created_to %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              📅 Created On
+              <select name="op_created_on" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_created_on == 'is' or not op_created_on %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_created_on == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="before" {% if op_created_on == 'before' %}selected{% endif %}>Before</option>
+                <option value="after" {% if op_created_on == 'after' %}selected{% endif %}>After</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('created_on')" title="Remove condition">✕</button>
+          </div>
+          <select class="form-select form-select-sm" onchange="handlePresetDateRange(this, 'created_from', 'created_to')" style="margin-bottom: 6px; font-size: 0.8rem; background: #ffffff;">
+            <option value="custom">Select Range ▾</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last_7_days">Last 7 Days</option>
+            <option value="this_month">This Month</option>
+          </select>
+          <div class="card-datetime-inputs">
+            <input type="datetime-local" name="created_from" value="{{ created_from }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+            <span class="range-arrow">➔</span>
+            <input type="datetime-local" name="created_to" value="{{ created_to }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+          </div>
+        </div>
+
+        <!-- CARD: Status -->
+        <div class="active-condition-card" id="card_status" style="display: {% if status_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              🏷️ Status
+              <select name="op_status" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_status == 'is' or not op_status %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_status == 'is_not' %}selected{% endif %}>Is not</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('status')" title="Remove condition">✕</button>
+          </div>
+          <select name="status" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Statuses</option>
+            {% for code, label in statuses %}
+            <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- CARD: Base Branch -->
+        <div class="active-condition-card" id="card_branch" style="display: {% if branch_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              🏢 Base Branch
+              <select name="op_branch" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_branch == 'is' or not op_branch %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_branch == 'is_not' %}selected{% endif %}>Is not</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('branch')" title="Remove condition">✕</button>
+          </div>
+          <select name="branch" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Branches</option>
+            {% for b in branches %}
+            <option value="{{ b.id }}" {% if branch_filter == b.id|stringformat:"i" %}selected{% endif %}>{{ b.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- CARD: Preferred Branch -->
+        <div class="active-condition-card" id="card_preferred_branch" style="display: {% if preferred_branch %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              🏢 Preferred Branch
+              <select name="op_preferred_branch" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_preferred_branch == 'contains' or not op_preferred_branch %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_preferred_branch == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_preferred_branch == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_preferred_branch == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_preferred_branch == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('preferred_branch')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="preferred_branch" value="{{ preferred_branch }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Branch name (e.g. Porur, T Nagar)..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Assignee (Telecaller) -->
+        <div class="active-condition-card" id="card_telecaller" style="display: {% if telecaller_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              👤 Assignee
+              <select name="op_telecaller" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_telecaller == 'is' or not op_telecaller %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_telecaller == 'is_not' %}selected{% endif %}>Is not</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('telecaller')" title="Remove condition">✕</button>
+          </div>
+          <select name="telecaller" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Assignees</option>
+            {% for t in telecallers %}
+            <option value="{{ t.id }}" {% if telecaller_filter == t.id|stringformat:"i" %}selected{% endif %}>{{ t.get_full_name|default:t.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- CARD: Rating -->
+        <div class="active-condition-card" id="card_rating" style="display: {% if rating_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              ★ Priority Rating
+              <select name="op_rating" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_rating == 'is' or not op_rating %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_rating == 'is_not' %}selected{% endif %}>Is not</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('rating')" title="Remove condition">✕</button>
+          </div>
+          <select name="rating" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Ratings</option>
+            <option value="5" {% if rating_filter == "5" %}selected{% endif %}>★★★★★ (5 Stars)</option>
+            <option value="4" {% if rating_filter == "4" %}selected{% endif %}>★★★★☆ (4 Stars)</option>
+            <option value="3" {% if rating_filter == "3" %}selected{% endif %}>★★★☆☆ (3 Stars)</option>
+            <option value="2" {% if rating_filter == "2" %}selected{% endif %}>★★☆☆☆ (2 Stars)</option>
+            <option value="1" {% if rating_filter == "1" %}selected{% endif %}>★☆☆☆☆ (1 Star)</option>
+          </select>
+        </div>
+
+        <!-- CARD: Created By -->
+        <div class="active-condition-card" id="card_created_by" style="display: {% if created_by %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              👤 Created By
+              <select name="op_created_by" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_created_by == 'contains' or not op_created_by %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_created_by == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_created_by == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_created_by == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_created_by == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('created_by')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="created_by" value="{{ created_by }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Username or Name..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Name -->
+        <div class="active-condition-card" id="card_name" style="display: {% if search_query %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              T Name
+              <select name="op_name" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_name == 'contains' or not op_name %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_name == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_name == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_name == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_name == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('name')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="search" value="{{ search_query }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Search contact name..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Phone -->
+        <div class="active-condition-card" id="card_phone" style="display: none;">
+          <div class="card-head">
+            <span class="card-icon-title">
+              📞 Phone
+              <select name="op_phone" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_phone == 'contains' or not op_phone %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_phone == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_phone == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_phone == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_phone == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('phone')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="phone" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Mobile phone number..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Degree -->
+        <div class="active-condition-card" id="card_degree" style="display: {% if request.GET.degree %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              🎓 Degree
+              <select name="op_degree" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_degree == 'contains' or not op_degree %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_degree == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_degree == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_degree == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_degree == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('degree')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="degree" value="{{ request.GET.degree }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. B.E, B.Tech, MCA..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: PassedOut -->
+        <div class="active-condition-card" id="card_passed_out" style="display: {% if request.GET.passed_out %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              📅 PassedOut
+              <select name="op_passed_out" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_passed_out == 'contains' or not op_passed_out %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_passed_out == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_passed_out == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_passed_out == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_passed_out == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('passed_out')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="passed_out" value="{{ request.GET.passed_out }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. 2024, 2025..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Purpose -->
+        <div class="active-condition-card" id="card_purpose" style="display: {% if request.GET.purpose %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              🎯 Purpose
+              <select name="op_purpose" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_purpose == 'contains' or not op_purpose %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_purpose == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_purpose == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_purpose == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_purpose == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('purpose')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="purpose" value="{{ request.GET.purpose }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. Training, Internship, Placement..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Working status -->
+        <div class="active-condition-card" id="card_working_status" style="display: {% if request.GET.working_status %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              💼 Working status
+              <select name="op_working_status" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_working_status == 'contains' or not op_working_status %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_working_status == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_working_status == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_working_status == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_working_status == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('working_status')" title="Remove condition">✕</button>
+          </div>
+          <input type="text" name="working_status" value="{{ request.GET.working_status }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. Student, Working Professional, Job Seeker..." style="font-size: 0.82rem;">
+        </div>
+
+      </div>
+
+      <!-- Panel Footer Actions -->
+      <div style="padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; margin-top: auto;">
+        <button type="button" class="btn btn-secondary" onclick="resetAllConditions()" style="flex: 1; font-weight: 600; font-size: 0.85rem; padding: 7px 10px;">Reset All</button>
+        <button type="submit" class="btn btn-primary" style="flex: 1.5; font-weight: 700; font-size: 0.85rem; padding: 7px 10px; background: #2563eb; color: #ffffff;">Apply Filters</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- RIGHT MAIN WORKSPACE: TABLE & TOOLBAR -->
+  <main class="telecrm-main-workspace" id="telecrmMainWorkspace">
+    
+    <!-- TeleCRM Secondary Toolbar (Search, Live Count, Save View, Actions) -->
+    <div class="telecrm-table-toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; flex-wrap: wrap; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+      
+      <!-- Left: Column Type Tag + Search Lead Input + Live Lead Count -->
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="display: inline-flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; overflow: hidden; height: 34px;">
+          <span style="font-size: 0.8rem; font-weight: 700; color: #475569; padding: 0 10px; border-right: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9;">
+            <span style="font-weight: 900;">T</span> Name ▾
+          </span>
+          <input type="text" id="telecrmTableSearch" value="{{ search_query }}" placeholder="Search lead..." onkeydown="if(event.key==='Enter'){ triggerTableSearch(this.value); }" style="border: none; background: transparent; font-size: 0.84rem; padding: 4px 10px; outline: none; width: 170px;">
+        </div>
+
+        <!-- Live Matching Lead Counter with Refresh Indicator -->
+        <div class="telecrm-counter-badge" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; color: #1e293b; background: #f1f5f9; padding: 5px 12px; border-radius: 20px; border: 1px solid #e2e8f0;">
+          <span id="telecrmLiveLeadCount">{{ page_obj.paginator.count }} lead{{ page_obj.paginator.count|pluralize }}</span>
+          <span class="refresh-spin" onclick="fetchLiveFilteredCount()" title="Click to recalculate live count" style="cursor: pointer; font-size: 1rem; color: #2563eb;">↻</span>
+        </div>
+      </div>
+
+      <!-- Right: Columns, Cancel, Save View, More Actions -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-sm btn-secondary tp-btn-secondary" onclick="toggleCreateViewPanel(true)" style="font-weight: 600; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          <span>Filters</span>
+        </button>
+
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleCreateViewPanel(false)" style="font-weight: 600; font-size: 0.82rem; border-color: #cbd5e1; color: #64748b;">
+          ✕ Cancel
+        </button>
+
+        <button type="button" class="btn btn-sm btn-primary tp-btn-primary" onclick="openSaveViewModal()" style="font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 5px; background: #2563eb; color: #ffffff;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          <span>Save view</span>
+        </button>
+
+        <div class="dropdown tp-dropdown" style="display: inline-block;">
+          <button type="button" class="btn btn-sm btn-secondary tp-btn-secondary tp-dropdown-toggle" onclick="toggleActionsDropdown(event)" style="font-weight: 600; font-size: 0.82rem;">
+            Actions ▾
+          </button>
+          <div id="tableActionsMenu" class="tp-dropdown-menu" style="right: 0; left: auto;">
+            <button type="button" class="tp-dropdown-item" onclick="openBulkEditModal()">Bulk Edit</button>
+            <button type="button" class="tp-dropdown-item" onclick="triggerBulkWhatsAppAction()">Bulk WACA Message</button>
+            <button type="button" class="tp-dropdown-item" onclick="triggerExportAction()">Export CSV</button>
+          </div>
+        </div>
+      </div>
+    </div>
 <!-- Table -->
 
 <div class="crm-card">
@@ -1245,6 +1127,9 @@ function addFilterConditionRow() {
   {% include 'partials/pagination.html' %}
 
 </div>
+  </main>
+</div>
+
 
 
 
@@ -2706,5 +2591,293 @@ function resetLeadRating(leadId) {
 
 
 
+<script>
+// ==========================================
+// TeleCRM Dynamic 'Create View' Filter Engine
+// ==========================================
+
+function toggleCreateViewPanel(open) {
+  var panel = document.getElementById('telecrmCreateViewPanel');
+  if (!panel) return;
+  if (open === undefined) {
+    open = panel.style.display === 'none';
+  }
+  if (open) {
+    panel.style.display = 'flex';
+    sessionStorage.setItem('cv_panel_state', 'open');
+    var inp = document.getElementById('cvFieldSearchInput');
+    if (inp) inp.focus();
+  } else {
+    panel.style.display = 'none';
+    sessionStorage.setItem('cv_panel_state', 'closed');
+  }
+}
+
+function openFilterDrawer() {
+  toggleCreateViewPanel(true);
+}
+
+function closeFilterDrawer() {
+  toggleCreateViewPanel(false);
+}
+
+function filterFieldCatalog(query) {
+  var q = (query || '').toLowerCase().trim();
+  var items = document.querySelectorAll('#cvFieldsCatalogList .cv-field-item');
+  items.forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    if (!q || text.indexOf(q) !== -1) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+function activateConditionCard(fieldKey) {
+  var card = document.getElementById('card_' + fieldKey);
+  if (card) {
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    var inp = card.querySelector('input, select');
+    if (inp) inp.focus();
+  }
+  var catItem = document.querySelector('#cvFieldsCatalogList .cv-field-item[data-field="' + fieldKey + '"]');
+  if (catItem) {
+    catItem.classList.add('active-field');
+  }
+  fetchLiveFilteredCount();
+}
+
+function removeConditionCard(fieldKey) {
+  var card = document.getElementById('card_' + fieldKey);
+  if (card) {
+    var inputs = card.querySelectorAll('input, select');
+    inputs.forEach(function(el) {
+      el.value = '';
+    });
+    card.style.display = 'none';
+  }
+  var catItem = document.querySelector('#cvFieldsCatalogList .cv-field-item[data-field="' + fieldKey + '"]');
+  if (catItem) {
+    catItem.classList.remove('active-field');
+  }
+  fetchLiveFilteredCount();
+}
+
+function handlePresetDateRange(sel, fromInputName, toInputName) {
+  var val = sel.value;
+  var card = sel.closest('.active-condition-card');
+  if (!card) return;
+  var fromInput = card.querySelector('input[name="' + fromInputName + '"]');
+  var toInput = card.querySelector('input[name="' + toInputName + '"]');
+  if (!fromInput || !toInput) return;
+
+  var now = new Date();
+  function pad(n) { return n < 10 ? '0' + n : n; }
+  function formatDT(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  if (val === 'today') {
+    var start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0);
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+    fromInput.value = formatDT(start);
+    toInput.value = formatDT(end);
+  } else if (val === 'yesterday') {
+    var yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    var start = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 0, 0);
+    var end = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 23, 59);
+    fromInput.value = formatDT(start);
+    toInput.value = formatDT(end);
+  } else if (val === 'last_7_days') {
+    var past = new Date(now);
+    past.setDate(past.getDate() - 7);
+    fromInput.value = formatDT(past);
+    toInput.value = formatDT(now);
+  } else if (val === 'this_month') {
+    var start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0);
+    var end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59);
+    fromInput.value = formatDT(start);
+    toInput.value = formatDT(end);
+  }
+  fetchLiveFilteredCount();
+}
+
+var _countDebounceTimer = null;
+function debounceFilterCount() {
+  if (_countDebounceTimer) clearTimeout(_countDebounceTimer);
+  _countDebounceTimer = setTimeout(fetchLiveFilteredCount, 400);
+}
+
+function fetchLiveFilteredCount() {
+  var form = document.getElementById('telecrmCreateViewForm');
+  var countEl = document.getElementById('telecrmLiveLeadCount');
+  if (!form || !countEl) return;
+
+  var params = new URLSearchParams();
+  var elements = form.querySelectorAll('input, select');
+  elements.forEach(function(el) {
+    if (el.name && el.value.trim() && el.name !== 'create_view') {
+      params.append(el.name, el.value.trim());
+    }
+  });
+
+  var tableSearch = document.getElementById('telecrmTableSearch');
+  if (tableSearch && tableSearch.value.trim() && !params.has('search')) {
+    params.append('search', tableSearch.value.trim());
+  }
+
+  countEl.style.opacity = '0.5';
+  fetch('{% url "api_filter_lead_count" %}?' + params.toString())
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      countEl.style.opacity = '1';
+      if (data && data.status === 'success') {
+        var count = data.count;
+        countEl.textContent = count + ' lead' + (count === 1 ? '' : 's');
+      }
+    })
+    .catch(function(err) {
+      countEl.style.opacity = '1';
+      console.warn('Error fetching filter count:', err);
+    });
+}
+
+function resetAllConditions() {
+  var form = document.getElementById('telecrmCreateViewForm');
+  if (form) {
+    var inputs = form.querySelectorAll('input:not([type="hidden"]), select');
+    inputs.forEach(function(el) { el.value = ''; });
+  }
+  var cards = document.querySelectorAll('#cvActiveConditionsList .active-condition-card');
+  cards.forEach(function(card) { card.style.display = 'none'; });
+  var catItems = document.querySelectorAll('#cvFieldsCatalogList .cv-field-item');
+  catItems.forEach(function(item) { item.classList.remove('active-field'); });
+  fetchLiveFilteredCount();
+  window.location.href = '{% url "admin_leads_list" %}?view=all';
+}
+
+function triggerTableSearch(val) {
+  var url = new URL(window.location.href);
+  if (val.trim()) {
+    url.searchParams.set('search', val.trim());
+  } else {
+    url.searchParams.delete('search');
+  }
+  url.searchParams.set('page', '1');
+  window.location.href = url.toString();
+}
+
+function openSaveViewModal() {
+  var modal = document.getElementById('createSavedViewModal');
+  if (modal) modal.style.display = 'flex';
+  var inp = document.getElementById('customViewNameInput');
+  if (inp) {
+    inp.value = '';
+    setTimeout(function() { inp.focus(); }, 150);
+  }
+}
+
+function closeSaveViewModal() {
+  var modal = document.getElementById('createSavedViewModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmSaveCustomView() {
+  var inp = document.getElementById('customViewNameInput');
+  var name = inp ? inp.value.trim() : '';
+  if (!name) {
+    alert('Please enter a name for your custom view tab.');
+    if (inp) inp.focus();
+    return;
+  }
+
+  var form = document.getElementById('telecrmCreateViewForm');
+  var params = new URLSearchParams();
+  if (form) {
+    var elements = form.querySelectorAll('input, select');
+    elements.forEach(function(el) {
+      if (el.name && el.value.trim() && el.name !== 'create_view') {
+        params.append(el.name, el.value.trim());
+      }
+    });
+  }
+  var tableSearch = document.getElementById('telecrmTableSearch');
+  if (tableSearch && tableSearch.value.trim() && !params.has('search')) {
+    params.append('search', tableSearch.value.trim());
+  }
+
+  var queryString = params.toString();
+
+  var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+  if (!csrfToken) {
+    var match = document.cookie.match(/csrftoken=([^;]+)/);
+    if (match) csrfToken = match[1];
+  }
+
+  fetch('{% url "api_save_lead_view" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({
+      name: name,
+      query_string: queryString,
+      filters: {}
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      closeSaveViewModal();
+      window.location.href = '{% url "admin_leads_list" %}?' + queryString + '&saved_view_id=' + data.view_id;
+    } else {
+      alert(data.message || 'Error saving custom view.');
+    }
+  })
+  .catch(function(err) {
+    console.error('Error saving view:', err);
+    alert('Failed to save custom view. Please check connection.');
+  });
+}
+
+function deleteSavedView(e, viewId, viewName) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if (!confirm('Are you sure you want to delete the saved view tab "' + viewName + '"?')) {
+    return;
+  }
+
+  var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+  if (!csrfToken) {
+    var match = document.cookie.match(/csrftoken=([^;]+)/);
+    if (match) csrfToken = match[1];
+  }
+
+  fetch('/admin/leads/api/delete-view/' + viewId + '/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken
+    }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      window.location.href = '{% url "admin_leads_list" %}?view=all';
+    } else {
+      alert(data.message || 'Error deleting view.');
+    }
+  })
+  .catch(function(err) {
+    console.error('Error deleting view:', err);
+    alert('Failed to delete view.');
+  });
+}
+</script>
 {% endblock %}
 

@@ -76,7 +76,13 @@ def get_accessible_branch_ids(user):
         from branches.models import Branch
         return list(Branch.objects.values_list('id', flat=True))
     if user.role == UserRole.SALES_HEAD:
-        return list(user.branch_access.values_list('branch_id', flat=True))
+        assigned = list(user.branch_access.values_list('branch_id', flat=True))
+        if assigned:
+            return assigned
+        if user.branch_id:
+            return [user.branch_id]
+        from branches.models import Branch
+        return list(Branch.objects.values_list('id', flat=True))
     if user.role in (UserRole.ACCOUNTANT, UserRole.FINANCE_HEAD):
         if user.branch_id:
             return [user.branch_id]
@@ -94,6 +100,8 @@ def can_access_lead(user, lead):
         return True
     if user.role == UserRole.SALES_HEAD:
         if lead.assigned_sales_head_id == user.id:
+            return True
+        if not lead.branch_id:
             return True
         return lead.branch_id in get_accessible_branch_ids(user)
     if user.role == UserRole.COUNSELOR:
@@ -116,6 +124,8 @@ def can_access_telecaller(user, telecaller_user):
     if user.is_admin_user:
         return True
     if user.role == UserRole.SALES_HEAD:
+        if not telecaller_user.branch_id:
+            return True
         return telecaller_user.branch_id in get_accessible_branch_ids(user)
     if user.role in (UserRole.BRANCH_HEAD, UserRole.COUNSELOR):
         return telecaller_user.branch_id == user.branch_id
@@ -133,6 +143,8 @@ def can_edit_lead(user, lead):
         return True
     if user.role == UserRole.SALES_HEAD:
         if lead.assigned_sales_head_id == user.id:
+            return True
+        if not lead.branch_id:
             return True
         return lead.branch_id in get_accessible_branch_ids(user)
     if user.role in (UserRole.BRANCH_HEAD, UserRole.COUNSELOR):
