@@ -60,13 +60,10 @@ def process_incoming_message(value: Dict[str, Any], default_business_account: Op
         formatted_display = format_phone_e164(display_phone_number) if display_phone_number else business_phone_number_id
         business_account = BusinessAccount.objects.filter(phone_number_id=business_phone_number_id).first()
         if not business_account:
-            from leads.intake import default_branch
-            def_branch = default_branch('WHATSAPP_DEFAULT_BRANCH')
             business_account = BusinessAccount.objects.create(
                 name=f"Line ({formatted_display})",
                 phone_number=formatted_display,
                 phone_number_id=business_phone_number_id,
-                crm_branch=def_branch,
                 is_active=True,
             )
 
@@ -229,15 +226,6 @@ def process_incoming_message(value: Dict[str, Any], default_business_account: Op
             AutomationEngine.process_incoming(conversation, text_content, incoming_data=interactive_info)
         except Exception as auto_exc:
             logger.error(f"Error in AutomationEngine for conv {conversation.id}: {auto_exc}", exc_info=True)
-
-        # -------------------------------------------------------------
-        # 24/7 AI WhatsApp Admissions Concierge Bot for Off-Hours Inquiries
-        # -------------------------------------------------------------
-        try:
-            from chat.whatsapp.ai_concierge import evaluate_and_respond_concierge
-            evaluate_and_respond_concierge(conversation, message, text_content)
-        except Exception as concierge_exc:
-            logger.error(f"Error in AI Admissions Concierge for conv {conversation.id}: {concierge_exc}", exc_info=True)
 
 
 def process_message_status(status_item: Dict[str, Any]) -> None:

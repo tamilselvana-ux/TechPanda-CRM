@@ -242,7 +242,7 @@ class PasswordManagementTests(TestCase):
         self.client.login(username="admin_standard", password="AdminPassword123!")
 
         url = reverse('admin_send_password_reset_link', args=[self.telecaller.pk])
-        resp = self.client.get(url)
+        resp = self.client.post(url)
         self.assertEqual(resp.status_code, 302)
 
         # Email was dispatched

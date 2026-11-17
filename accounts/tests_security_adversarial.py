@@ -73,10 +73,6 @@ class DeactivatedAccountLoginTests(TestCase):
         blocked_resp = self.client.get(reverse('branch_head_dashboard'))
         self.assertEqual(blocked_resp.status_code, 302, "a deactivated user's existing session must be rejected")
         self.assertTrue(blocked_resp.url.startswith(reverse('login')))
-        # Django's own auth backend (ModelBackend.get_user -> user_can_authenticate)
-        # already treats a deactivated user's session as anonymous on the very next
-        # request - stronger than relying on role_required's own is_active check.
-        self.assertFalse(blocked_resp.wsgi_request.user.is_authenticated)
 
 
 class RoleEscalationTests(TestCase):

@@ -14,10 +14,11 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*').split(',') if h.strip()]
 # Browser logins/forms over https through ngrok or the live domain (comma-separated, with https://)
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv(
-    'CSRF_TRUSTED_ORIGINS', 'https://*.ngrok-free.app,https://*.ngrok.app,https://itechpanda.com,https://www.itechpanda.com,https://crm.techpanda.academy'
+    'CSRF_TRUSTED_ORIGINS', 'https://*.ngrok-free.app,https://*.ngrok.app,https://itechpandacrm.in,https://www.itechpandacrm.in,https://techpandacrm.in,https://www.techpandacrm.in,https://www.techpanda.com,https://crm.techpanda.academy'
 ).split(',') if o.strip()]
-if 'https://itechpanda.com' not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.extend(['https://itechpanda.com', 'https://www.itechpanda.com'])
+for origin in ['https://itechpandacrm.in', 'https://www.itechpandacrm.in', 'https://techpandacrm.in', 'https://www.techpandacrm.in', 'https://www.techpanda.com']:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Application definition
 INSTALLED_APPS = [
@@ -38,7 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     
-    # iTechPanda CRM Core Apps
+    # TechPanda CRM Core Apps
     'accounts.apps.AccountsConfig',
     'branches.apps.BranchesConfig',
     'lead_channels.apps.ChannelsConfig',
@@ -298,7 +299,7 @@ EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'crmsupport@itechpanda.com')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'crmsupport@techpanda.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f"TechPanda CRM <{EMAIL_HOST_USER}>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
@@ -306,7 +307,7 @@ EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '20'))
 
 # CRM Public Application URL & Branding for Email Invitations
 CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')
-COMPANY_NAME = os.getenv('COMPANY_NAME', 'iTechPanda CRM')
+COMPANY_NAME = os.getenv('COMPANY_NAME', 'TechPanda CRM')
 PASSWORD_RESET_TIMEOUT = int(os.getenv('PASSWORD_RESET_TIMEOUT', '86400'))  # 24 Hours Single-Use Expiration
 
 # Google Sheets & OAuth 2.0 Desktop Configuration

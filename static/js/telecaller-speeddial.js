@@ -1,5 +1,5 @@
 /**
- * iTechPanda CRM - 1-Click Telecaller Speed-Dial Keyboard Dispositions (Item 142)
+ * TechPanda CRM - 1-Click Telecaller Speed-Dial Keyboard Dispositions (Item 142)
  * Enables lightning-fast call logging via hotkeys 1-5 without touching the mouse.
  */
 (function() {

@@ -62,7 +62,7 @@ from services.email_service import (
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     DEFAULT_FROM_EMAIL='idpsachin@gmail.com',
     EMAIL_HOST_USER='idpsachin@gmail.com',
-    COMPANY_NAME='iTechPanda CRM'
+    COMPANY_NAME='DigiPanda CRM'
 )
 class StudentEmailAutomationTests(TestCase):
     def setUp(self):
@@ -130,7 +130,7 @@ class StudentEmailAutomationTests(TestCase):
             html_template="emails/enrollment_confirmation.html",
             text_template="emails/enrollment_confirmation.txt",
             context={
-                'company_name': 'iTechPanda CRM',
+                'company_name': 'DigiPanda CRM',
                 'student_name': 'Test Student',
                 'student_id': 'STU-100',
                 'enrollment_number': 'ENR-2026-100',

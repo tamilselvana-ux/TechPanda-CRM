@@ -1,5 +1,5 @@
 """
-Centralized Semantic Status Classifier for iTechPanda CRM.
+Centralized Semantic Status Classifier for TechPanda CRM.
 Intelligently classifies raw spreadsheet, form, and telecaller remarks into:
 (lead_status, call_status, call_outcome)
 """

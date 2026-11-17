@@ -5,12 +5,12 @@ from django.utils import timezone
 
 def landing_page_view(request):
     """
-    Public Homepage / Landing Page for iTechPanda CRM (https://itechpanda.com/).
+    Public Homepage / Landing Page for TechPanda CRM (https://www.techpanda.com/).
     Exposes authentic CRM features, benefits, FAQs, and portal CTAs without
     requiring authentication or triggering 302 redirects for search engine bots.
     """
     context = {
-        'canonical_url': 'https://itechpanda.com/',
+        'canonical_url': 'https://www.techpanda.com/',
         'current_year': timezone.now().year,
         'user': request.user,
         'is_authenticated': request.user.is_authenticated,
@@ -40,6 +40,6 @@ def robots_txt_view(request):
         "Disallow: /api/",
         "Disallow: /django-admin/",
         "",
-        "Sitemap: https://itechpanda.com/sitemap.xml",
+        "Sitemap: https://www.techpanda.com/sitemap.xml",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")

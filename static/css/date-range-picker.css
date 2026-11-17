@@ -1,6 +1,6 @@
-/* Compact Date Range Picker: iTechPanda CRM
+/* Compact Date Range Picker: TechPanda CRM
    One small calendar · first click = From, second click = To · auto-apply.
-   Theme: Mapped to iTechPanda CRM Design System variables. */
+   Theme: Mapped to TechPanda CRM Design System variables. */
 .drp-root {
   --drp-bg: var(--tp-surface-card, #ffffff);
   --drp-fg: var(--tp-text-primary, #0f172a);

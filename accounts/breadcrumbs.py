@@ -1,5 +1,5 @@
 """
-Centralized Breadcrumb Resolver for iTechPanda CRM.
+Centralized Breadcrumb Resolver for TechPanda CRM.
 Maps named Django URLs and context objects to hierarchical navigation items:
     [BreadcrumbItem(label="Dashboard", url="/admin/dashboard/"),
      BreadcrumbItem(label="All Leads", url="/admin/leads/"),

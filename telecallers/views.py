@@ -1,3 +1,6 @@
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
@@ -7,7 +10,7 @@ from datetime import datetime, timedelta, time
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
 from accounts.models import User, UserRole
-from accounts.permissions import admin_required, telecaller_required, branch_head_required, can_create_user
+from accounts.permissions import admin_required, telecaller_required, branch_head_required, can_create_user, role_required, get_accessible_branch_ids
 from branches.models import Branch
 from leads.models import Lead, TelecallerLeadSetup
 from calls.models import CallHistory, CallStatus, CallOutcome
@@ -26,7 +29,7 @@ from .forms import (
 # ADMIN: TELECALLER MANAGEMENT
 # ==========================================
 
-@admin_required
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)
 def admin_telecallers_list(request):
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', '').strip()
@@ -34,6 +37,17 @@ def admin_telecallers_list(request):
     branch_filter = request.GET.get('branch', '').strip()
 
     telecallers_qs = User.get_telecallers_queryset().select_related('counselor', 'branch')
+
+    # Role-based branch scoping for Branch Head and Sales Head with restricted access
+    if request.user.role == UserRole.BRANCH_HEAD:
+        if request.user.branch_id:
+            telecallers_qs = telecallers_qs.filter(branch_id=request.user.branch_id)
+    elif request.user.role == UserRole.SALES_HEAD:
+        from accounts.permissions import get_accessible_branch_ids
+        accessible_branches = get_accessible_branch_ids(request.user)
+        # Sales head sees telecallers in their accessible branches OR unassigned branch telecallers
+        if accessible_branches:
+            telecallers_qs = telecallers_qs.filter(Q(branch_id__in=accessible_branches) | Q(branch__isnull=True))
 
     if search_query:
         telecallers_qs = telecallers_qs.filter(
@@ -48,12 +62,16 @@ def admin_telecallers_list(request):
     elif status_filter == 'inactive':
         telecallers_qs = telecallers_qs.filter(is_active=False)
 
-    if manager_filter:
+    if manager_filter == 'unassigned':
+        telecallers_qs = telecallers_qs.filter(counselor__isnull=True)
+    elif manager_filter:
         telecallers_qs = telecallers_qs.filter(counselor_id=manager_filter)
     
     selected_branch = get_admin_selected_branch(request)
     if selected_branch:
         telecallers_qs = telecallers_qs.filter(branch=selected_branch)
+    elif branch_filter == 'unassigned':
+        telecallers_qs = telecallers_qs.filter(branch__isnull=True)
     elif branch_filter:
         telecallers_qs = telecallers_qs.filter(branch_id=branch_filter)
 
@@ -67,7 +85,19 @@ def admin_telecallers_list(request):
     page_obj = paginator.get_page(request.GET.get('page'))
 
     managers = User.objects.filter(role=UserRole.COUNSELOR, is_active=True)
-    branches = Branch.objects.filter(status='Active')
+    if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+        managers = managers.filter(branch_id=request.user.branch_id)
+        branches = Branch.objects.filter(id=request.user.branch_id, status='Active')
+    elif request.user.role == UserRole.SALES_HEAD:
+        from accounts.permissions import get_accessible_branch_ids
+        accessible_branches = get_accessible_branch_ids(request.user)
+        if accessible_branches:
+            managers = managers.filter(Q(branch_id__in=accessible_branches) | Q(branch__isnull=True))
+            branches = Branch.objects.filter(id__in=accessible_branches, status='Active')
+        else:
+            branches = Branch.objects.filter(status='Active')
+    else:
+        branches = Branch.objects.filter(status='Active')
 
     return render(request, 'admin/telecallers_list.html', {
         'page_obj': page_obj,
@@ -79,7 +109,7 @@ def admin_telecallers_list(request):
         'branch_filter': branch_filter,
     })
 
-@admin_required
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)
 def admin_telecaller_create(request):
     if request.method == 'POST':
         form = AdminTelecallerCreateForm(request.POST)
@@ -112,9 +142,136 @@ def admin_telecaller_create(request):
 
     return render(request, 'admin/telecaller_create.html', {'form': form})
 
-@admin_required
+
+@require_POST
+def telecaller_bulk_assign(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'Authentication required.'}, status=401)
+
+    allowed_roles = (UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)
+    if not (request.user.is_superuser or request.user.role in allowed_roles):
+        return JsonResponse({'ok': False, 'error': 'Permission denied.'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'ok': False, 'error': 'Invalid JSON body.'}, status=400)
+
+    telecaller_ids = data.get('telecaller_ids', [])
+    action = (data.get('action') or '').strip()
+    counselor_id = data.get('counselor_id')
+    branch_id = data.get('branch_id')
+    sync_branch = data.get('sync_branch', True)
+
+    if not isinstance(telecaller_ids, list) or not telecaller_ids:
+        return JsonResponse({'ok': False, 'error': 'No telecallers selected.'}, status=400)
+
+    if len(telecaller_ids) > 500:
+        return JsonResponse({'ok': False, 'error': 'Cannot process more than 500 telecallers at once.'}, status=400)
+
+    valid_actions = ('assign_counselor', 'set_branch', 'remove_counselor', 'remove_branch')
+    if action not in valid_actions:
+        return JsonResponse({'ok': False, 'error': f'Invalid action. Supported: {", ".join(valid_actions)}'}, status=400)
+
+    accessible_branches = get_accessible_branch_ids(request.user)
+    target_counselor = None
+    target_branch = None
+
+    if action == 'assign_counselor':
+        if not counselor_id:
+            return JsonResponse({'ok': False, 'error': 'Counselor is required.'}, status=400)
+        try:
+            target_counselor = User.objects.get(pk=counselor_id, role=UserRole.COUNSELOR, is_active=True)
+        except User.DoesNotExist:
+            return JsonResponse({'ok': False, 'error': 'Target counselor not found or inactive.'}, status=404)
+        
+        if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+            if target_counselor.branch_id != request.user.branch_id:
+                return JsonResponse({'ok': False, 'error': 'Selected counselor belongs to another branch.'}, status=403)
+        elif request.user.role == UserRole.SALES_HEAD and accessible_branches:
+            if target_counselor.branch_id and target_counselor.branch_id not in accessible_branches:
+                return JsonResponse({'ok': False, 'error': 'Selected counselor is outside your branch scope.'}, status=403)
+
+    elif action == 'set_branch':
+        if not branch_id:
+            return JsonResponse({'ok': False, 'error': 'Branch is required.'}, status=400)
+        try:
+            target_branch = Branch.objects.get(pk=branch_id, status='Active')
+        except Branch.DoesNotExist:
+            return JsonResponse({'ok': False, 'error': 'Target branch not found or inactive.'}, status=404)
+
+        if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+            if target_branch.id != request.user.branch_id:
+                return JsonResponse({'ok': False, 'error': 'Cannot assign to a branch other than your own.'}, status=403)
+        elif request.user.role == UserRole.SALES_HEAD and accessible_branches:
+            if target_branch.id not in accessible_branches:
+                return JsonResponse({'ok': False, 'error': 'Target branch is outside your branch scope.'}, status=403)
+
+    # Fetch and validate all telecallers
+    telecallers = list(User.objects.filter(id__in=telecaller_ids, role=UserRole.TELECALLER).select_related('counselor', 'branch'))
+    if len(telecallers) != len(set(telecaller_ids)):
+        return JsonResponse({'ok': False, 'error': 'One or more selected IDs are invalid or not telecallers.'}, status=400)
+
+    # Permission check per telecaller
+    for tc in telecallers:
+        if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+            if tc.branch_id and tc.branch_id != request.user.branch_id:
+                return JsonResponse({'ok': False, 'error': f'Telecaller {tc.username} belongs to another branch.'}, status=403)
+        elif request.user.role == UserRole.SALES_HEAD and accessible_branches:
+            if tc.branch_id and tc.branch_id not in accessible_branches:
+                return JsonResponse({'ok': False, 'error': f'Telecaller {tc.username} is outside your branch scope.'}, status=403)
+
+    # Execute all-or-nothing transaction
+    updated_count = 0
+    with transaction.atomic():
+        for tc in telecallers:
+            old_c = tc.counselor.username if tc.counselor else "None"
+            old_b = tc.branch.name if tc.branch else "None"
+
+            if action == 'assign_counselor':
+                tc.counselor = target_counselor
+                if sync_branch and target_counselor.branch:
+                    tc.branch = target_counselor.branch
+            elif action == 'set_branch':
+                tc.branch = target_branch
+                if tc.counselor and tc.counselor.branch_id and tc.counselor.branch_id != target_branch.id:
+                    tc.counselor = None
+            elif action == 'remove_counselor':
+                tc.counselor = None
+            elif action == 'remove_branch':
+                tc.branch = None
+
+            tc.save()
+            updated_count += 1
+
+            new_c = tc.counselor.username if tc.counselor else "None"
+            new_b = tc.branch.name if tc.branch else "None"
+
+            log_activity(
+                user=request.user,
+                action="Telecaller Bulk Reassigned",
+                description=f"Bulk action '{action}' on '{tc.username}': Counselor ({old_c} -> {new_c}), Branch ({old_b} -> {new_b}).",
+                object_type="User",
+                object_id=tc.id,
+                request=request
+            )
+
+    return JsonResponse({
+        'ok': True,
+        'updated': updated_count,
+        'skipped': []
+    })
+
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)
 def admin_telecaller_detail(request, pk):
     telecaller = get_object_or_404(User.objects.select_related('counselor', 'branch'), pk=pk, role=UserRole.TELECALLER)
+    if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+        if telecaller.branch_id and telecaller.branch_id != request.user.branch_id:
+            raise PermissionDenied("Access denied to telecallers in another branch.")
+    elif request.user.role == UserRole.SALES_HEAD:
+        accessible_branches = get_accessible_branch_ids(request.user)
+        if accessible_branches and telecaller.branch_id and telecaller.branch_id not in accessible_branches:
+            raise PermissionDenied("Access denied to telecallers outside your branch scope.")
 
     leads = Lead.objects.filter(assigned_telecaller=telecaller).select_related('channel', 'product')[:10]
     calls = CallHistory.objects.filter(caller=telecaller).select_related('lead')[:10]
@@ -150,9 +307,16 @@ def admin_telecaller_detail(request, pk):
         'completed_leads_count': completed_leads_count,
     })
 
-@admin_required
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)
 def admin_telecaller_edit(request, pk):
     telecaller = get_object_or_404(User, pk=pk, role=UserRole.TELECALLER)
+    if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+        if telecaller.branch_id and telecaller.branch_id != request.user.branch_id:
+            raise PermissionDenied("You do not have permission to edit telecallers in another branch.")
+    elif request.user.role == UserRole.SALES_HEAD:
+        accessible_branches = get_accessible_branch_ids(request.user)
+        if accessible_branches and telecaller.branch_id and telecaller.branch_id not in accessible_branches:
+            raise PermissionDenied("You do not have permission to edit telecallers outside your branch scope.")
     if request.method == 'POST':
         form = AdminTelecallerEditForm(request.POST, instance=telecaller)
         if form.is_valid():

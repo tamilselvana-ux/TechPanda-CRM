@@ -203,8 +203,6 @@ def check_device_status(request):
     return JsonResponse({
         'has_device': True,
         'is_online': is_online,
-        'battery_percent': device.battery_percent,
-        'is_charging': device.is_charging,
         'app_version': device.app_version or '',
         'last_seen_seconds_ago': int((now - device.last_seen_at).total_seconds()) if device.last_seen_at else None,
         'is_dispatched': is_dispatched,
@@ -214,48 +212,6 @@ def check_device_status(request):
         'call_ended_at': call_ended_at.isoformat() if call_ended_at else None,
         'duration': duration,
         'elapsed_seconds': elapsed_seconds,
-    })
-
-
-@login_required
-def api_device_heartbeat(request):
-    """
-    Heartbeat ping from CallSync companion app or simulated ping.
-    Updates last_seen_at, battery_percent, and is_charging.
-    """
-    import json
-    from .models import CallDevice
-    device, _ = CallDevice.objects.get_or_create(user=request.user)
-    device.last_seen_at = timezone.now()
-
-    try:
-        data = json.loads(request.body) if request.body else request.POST
-    except Exception:
-        data = request.POST
-
-    battery = data.get('battery_percent')
-    if battery is not None:
-        try:
-            device.battery_percent = int(battery)
-        except (ValueError, TypeError):
-            pass
-
-    charging = data.get('is_charging')
-    if charging is not None:
-        device.is_charging = str(charging).lower() in ('true', '1', 'yes')
-
-    app_ver = data.get('app_version')
-    if app_ver:
-        device.app_version = str(app_ver)[:20]
-
-    device.save(update_fields=['last_seen_at', 'battery_percent', 'is_charging', 'app_version'])
-
-    return JsonResponse({
-        'success': True,
-        'is_online': True,
-        'battery_percent': device.battery_percent,
-        'is_charging': device.is_charging,
-        'timestamp': timezone.now().isoformat()
     })
 
 
@@ -732,7 +688,7 @@ def mark_lead_called_back(request, lead_id):
 
     n = mark_called_back(lead, by=request.user)
     if n:
-        add_lead_note(lead, f"✅ Missed Google call marked as called back by "
+        add_lead_note(lead, f"Missed Google call marked as called back by "
                             f"{request.user.get_full_name() or request.user.username}")
         log_activity(user=request.user, action="Missed Call Called Back",
                      description=f"Marked {n} missed Google call(s) for '{lead.name}' as called back.",
@@ -746,92 +702,3 @@ def mark_lead_called_back(request, lead_id):
                                                require_https=request.is_secure()):
         return redirect(nxt)
     return redirect(_lead_detail_url_name(request.user), pk=lead.pk)
-
-
-@login_required
-def api_coaching_analyze(request):
-    """
-    Sub-second Real-Time AI Objection Coaching Endpoint.
-    Analyzes live speech utterances or manual objection category triggers.
-    """
-    import json
-    from .ai_coaching import analyze_call_speech
-    
-    if request.method == 'POST':
-        try:
-            body = json.loads(request.body.decode('utf-8'))
-        except Exception:
-            body = request.POST
-        
-        speech_text = body.get('speech_text', '')
-        category = body.get('category', '')
-        result = analyze_call_speech(speech_text=speech_text, manual_category=category)
-        return JsonResponse(result)
-    
-    return JsonResponse({'success': False, 'error': 'POST method required.'}, status=405)
-
-
-@login_required
-def api_coaching_quick_cards(request):
-    """
-    Returns full list of 1-click objection playbooks for telecaller screen.
-    """
-    from .ai_coaching import OBJECTION_PLAYBOOKS
-    cards = []
-    for code, p in OBJECTION_PLAYBOOKS.items():
-        cards.append({
-            'code': code,
-            'category': p['category'],
-            'icon': p['icon'],
-            'rebuttal': p['rebuttal'],
-            'talking_points': p['talking_points'],
-            'action_pitch': p['action_pitch']
-        })
-    return JsonResponse({'success': True, 'playbooks': cards})
-
-
-@login_required
-def api_update_device_sync_settings(request, device_id):
-    """
-    Allows Admin or Sales Head to configure a CallDevice's sync settings:
-    - allow_historical_sync (bool)
-    - sync_cutoff_date (YYYY-MM-DD or null)
-    """
-    if not (request.user.is_admin_user or request.user.is_sales_head_user):
-        return JsonResponse({'success': False, 'error': 'Forbidden'}, status=403)
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
-    
-    from .models import CallDevice
-    from django.shortcuts import get_object_or_404
-    import json
-    device = get_object_or_404(CallDevice, pk=device_id)
-    
-    try:
-        body = json.loads(request.body.decode('utf-8'))
-    except Exception:
-        body = request.POST
-
-    if 'allow_historical_sync' in body:
-        val = body.get('allow_historical_sync')
-        device.allow_historical_sync = bool(val and str(val).lower() not in ('false', '0', 'off'))
-
-    if 'sync_cutoff_date' in body:
-        raw_date = str(body.get('sync_cutoff_date') or '').strip()
-        if raw_date:
-            from datetime import datetime
-            try:
-                device.sync_cutoff_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
-            except ValueError:
-                return JsonResponse({'success': False, 'error': 'Invalid date format (YYYY-MM-DD required)'}, status=400)
-        else:
-            device.sync_cutoff_date = None
-
-    device.save(update_fields=['allow_historical_sync', 'sync_cutoff_date'])
-    return JsonResponse({
-        'success': True,
-        'device_id': device.pk,
-        'allow_historical_sync': device.allow_historical_sync,
-        'sync_cutoff_date': device.sync_cutoff_date.strftime('%Y-%m-%d') if device.sync_cutoff_date else None,
-        'message': f"Updated sync settings for {device.user.get_full_name() or device.user.username}'s phone"
-    })

@@ -4,7 +4,7 @@ from django.urls import reverse
 
 class StaticViewSitemap(Sitemap):
     """
-    Publicly indexable canonical sitemap for iTechPanda CRM.
+    Publicly indexable canonical sitemap for TechPanda CRM.
     Only valid, canonical, publicly accessible URLs are exposed.
     Private dashboards, APIs, and staff-only portals are strictly excluded.
     """

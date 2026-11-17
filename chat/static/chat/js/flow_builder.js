@@ -651,21 +651,21 @@
 
     // Node Type Metadata
     const NODE_TYPES = {
-        start: { label: 'Start Trigger', icon: '⚡', color: '#10b981' },
-        trigger: { label: 'Trigger', icon: '⚡', color: '#10b981' },
-        message: { label: 'Message', icon: '💬', color: '#3b82f6' },
-        buttons: { label: 'Buttons', icon: '🔘', color: '#8b5cf6' },
-        list: { label: 'List Menu', icon: '📋', color: '#06b6d4' },
-        condition: { label: 'Condition', icon: '🔀', color: '#f59e0b' },
-        question: { label: 'Question', icon: '❓', color: '#f59e0b' },
-        save_data: { label: 'Save Data', icon: '💾', color: '#10b981' },
+        start: { label: 'Start Trigger', icon: '', color: '#10b981' },
+        trigger: { label: 'Trigger', icon: '', color: '#10b981' },
+        message: { label: 'Message', icon: '', color: '#3b82f6' },
+        buttons: { label: 'Buttons', icon: '', color: '#8b5cf6' },
+        list: { label: 'List Menu', icon: '', color: '#06b6d4' },
+        condition: { label: 'Condition', icon: '', color: '#f59e0b' },
+        question: { label: 'Question', icon: '', color: '#f59e0b' },
+        save_data: { label: 'Save Data', icon: '', color: '#10b981' },
         delay: { label: 'Delay', icon: '⏳', color: '#a855f7' },
-        media: { label: 'Brochure / Media', icon: '📄', color: '#ec4899' },
-        location: { label: 'Location Pin', icon: '📍', color: '#10b981' },
-        human_handover: { label: 'Handover', icon: '👤', color: '#ef4444' },
-        lead_status: { label: 'Lead Status', icon: '🏷️', color: '#f97316' },
-        assign_telecaller: { label: 'Assign Telecaller', icon: '🎧', color: '#0ea5e9' },
-        end: { label: 'End Session', icon: '🏁', color: '#64748b' }
+        media: { label: 'Brochure / Media', icon: '', color: '#ec4899' },
+        location: { label: 'Location Pin', icon: '', color: '#10b981' },
+        human_handover: { label: 'Handover', icon: '', color: '#ef4444' },
+        lead_status: { label: 'Lead Status', icon: '', color: '#f97316' },
+        assign_telecaller: { label: 'Assign Telecaller', icon: '', color: '#0ea5e9' },
+        end: { label: 'End Session', icon: '', color: '#64748b' }
     };
 
     /* ==========================================================================
@@ -735,7 +735,7 @@
         if (node.type === 'lead_status') {
             const st = node.status || node.data?.status;
             const hrs = node.follow_up_hours || node.data?.follow_up_hours;
-            return `🏷️ Set lead to ${crmStatusLabel(st)}` + (hrs ? ` (follow up in ${hrs} h)` : '');
+            return ` Set lead to ${crmStatusLabel(st)}` + (hrs ? ` (follow up in ${hrs} h)` : '');
         }
         if (node.type === 'assign_telecaller') {
             const mode = node.mode || node.data?.mode || 'auto';
@@ -743,7 +743,7 @@
                 ? crmTelecallerName(node.telecaller_id || node.data?.telecaller_id)
                 : 'branch telecaller (Lead Setup %)';
             const only = (node.only_if_unassigned ?? node.data?.only_if_unassigned) ? ' (if unassigned)' : '';
-            return `🎧 Assign to ${who}${only}`;
+            return ` Assign to ${who}${only}`;
         }
         return '';
     }
@@ -937,7 +937,7 @@
     }
 
     function createNodeCardElement(node) {
-        const meta = NODE_TYPES[node.type] || { label: node.type, icon: '📦', color: '#94a3b8' };
+        const meta = NODE_TYPES[node.type] || { label: node.type, icon: '', color: '#94a3b8' };
 
         const card = document.createElement('div');
         card.className = `flow-node node-type-${node.type || 'message'} ${node.id === 'START' || node.type === 'trigger' ? 'start-node' : ''} ${state.selectedNodeId === node.id ? 'selected' : ''}`;
@@ -956,8 +956,8 @@
             choicesHtml = `<div class="node-choices-preview">` +
                 node.options.map(opt => `
                     <div class="choice-chip">
-                        <span>🔘 ${escapeHtml(opt.title)}</span>
-                        <span class="choice-target">➔ ${escapeHtml(opt.next_node_id || 'End')}</span>
+                        <span> ${escapeHtml(opt.title)}</span>
+                        <span class="choice-target"> ${escapeHtml(opt.next_node_id || 'End')}</span>
                     </div>
                 `).join('') + `</div>`;
         } else if (node.type === 'list' && Array.isArray(node.sections)) {
@@ -971,8 +971,8 @@
                         const targetLabel = targetNode ? (targetNode.title || targetNode.id) : (targetId ? targetId : 'Next');
                         return `
                             <div class="choice-chip">
-                                <span>📋 ${escapeHtml(r.title || `Option ${rIdx + 1}`)}</span>
-                                <span class="choice-target">➔ ${escapeHtml(targetLabel)}</span>
+                                <span> ${escapeHtml(r.title || `Option ${rIdx + 1}`)}</span>
+                                <span class="choice-target"> ${escapeHtml(targetLabel)}</span>
                             </div>
                         `;
                     }).join('') + `</div>`;
@@ -985,18 +985,18 @@
         } else if (node.description) {
             bodyPreview = `<p class="node-preview-text">${escapeHtml(node.description)}</p>`;
         } else if (node.type === 'media') {
-            bodyPreview = `<p class="node-preview-text">📄 ${escapeHtml(node.filename || 'Document')}</p>`;
+            bodyPreview = `<p class="node-preview-text"> ${escapeHtml(node.filename || 'Document')}</p>`;
         } else if (node.type === 'location') {
-            bodyPreview = `<p class="node-preview-text">📍 ${escapeHtml(node.name || 'Location')}</p>`;
+            bodyPreview = `<p class="node-preview-text"> ${escapeHtml(node.name || 'Location')}</p>`;
         } else if (node.type === 'lead_status' || node.type === 'assign_telecaller') {
             bodyPreview = `<p class="node-preview-text">${escapeHtml(crmNodeSummary(node))}</p>`;
         }
 
         let nextIndicator = '';
         if (node.next_node_id) {
-            nextIndicator = `<span class="node-port-out">➔ Next: ${escapeHtml(node.next_node_id)}</span>`;
+            nextIndicator = `<span class="node-port-out">Next: ${escapeHtml(node.next_node_id)}</span>`;
         } else if (node.type === 'end') {
-            nextIndicator = `<span style="color: #64748b;">🏁 Complete</span>`;
+            nextIndicator = `<span style="color: #64748b;">Complete</span>`;
         }
 
         // Real-time canvas connectivity linting
@@ -1008,9 +1008,9 @@
 
         let warningBadge = '';
         if (!isTrigger && !hasIncoming) {
-            warningBadge = `<span class="node-warning-badge" title="Warning: No step leads into this step.">⚠️</span>`;
+            warningBadge = `<span class="node-warning-badge"title="Warning: No step leads into this step."></span>`;
         } else if (!isEnd && !hasOutgoing) {
-            warningBadge = `<span class="node-warning-badge" title="Warning: This step has no outgoing connection.">⚠️</span>`;
+            warningBadge = `<span class="node-warning-badge"title="Warning: This step has no outgoing connection."></span>`;
         }
 
         card.innerHTML = `
@@ -1670,7 +1670,7 @@
         elements.inspectorForm.style.display = 'flex';
         refreshNextNodeOptions();
 
-        const meta = NODE_TYPES[node.type] || { label: node.type, icon: '📦' };
+        const meta = NODE_TYPES[node.type] || { label: node.type, icon: '' };
         elements.inspectorNodeBadge.textContent = `${meta.icon} ${meta.label}`;
         elements.inspectorTitle.textContent = node.title || node.id;
 
@@ -1822,7 +1822,7 @@
                     <button type="button" class="option-remove-btn" title="Remove Option" data-idx="${idx}">&times;</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 11px; color: var(--text-muted);">➔ Next:</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">Next:</span>
                     <select class="form-control opt-target-select">
                         <option value="">-- Stop / End --</option>
                         ${nodes.map(n => `<option value="${n.id}" ${opt.next_node_id === n.id ? 'selected' : ''}>${escapeHtml(n.title || n.id)}</option>`).join('')}
@@ -1844,7 +1844,7 @@
             limitNotice = document.createElement('div');
             limitNotice.className = 'meta-button-limit-notice';
             limitNotice.style.cssText = 'font-size: 11px; color: #f59e0b; padding: 6px 8px; background: rgba(245, 158, 11, 0.1); border-radius: 4px; margin-top: 8px; border-left: 2px solid #f59e0b;';
-            limitNotice.innerHTML = '⚠️ <strong>Meta WhatsApp rule:</strong> Maximum 3 quick-reply buttons allowed. For questions with 4 to 10 choices, use a <strong>List Menu</strong> step.';
+            limitNotice.innerHTML = ' <strong>Meta WhatsApp rule:</strong>Maximum 3 quick-reply buttons allowed. For questions with 4 to 10 choices, use a <strong>List Menu</strong>step.';
             elements.buttonsOptionsList.appendChild(limitNotice);
         }
         limitNotice.style.display = options.length >= 3 ? 'block' : 'none';
@@ -2529,7 +2529,7 @@
             });
             const data = await resp.json();
             if (data.valid) {
-                showToast('✓ Workflow is completely valid and ready to publish!');
+                showToast('Workflow is completely valid and ready to publish!');
             } else {
                 renderValidationIssues(data.errors || []);
             }
@@ -2664,7 +2664,7 @@
                     state.currentFlow = data.flow;
                     renderFlowMetadata();
                     setSaveStatus('saved');
-                    showToast(`🚀 Published Live as Version ${state.currentFlow.version}!`);
+                    showToast(` Published Live as Version ${state.currentFlow.version}!`);
                 } catch (err) {
                     console.error('Publish error:', err);
                     showToast(err.message || 'Error publishing flow.', true);
@@ -2828,7 +2828,7 @@
         }
         // 11. Human Handover
         else if (node.type === 'human_handover') {
-            addSimBotBubble("👤 Handed over to admissions counselor.");
+            addSimBotBubble("Handed over to admissions counselor.");
         }
     }
 
@@ -2866,12 +2866,12 @@
                 currNode._sim_retries = (currNode._sim_retries || 0) + 1;
                 const maxRetries = parseInt(currNode.retry_limit || currNode.data?.retry_limit || 3, 10);
                 if (currNode._sim_retries >= maxRetries) {
-                    addSimBotBubble(`⚠️ Maximum retry limit reached (${maxRetries}). Continuing...`);
+                    addSimBotBubble(` Maximum retry limit reached (${maxRetries}). Continuing...`);
                     currNode._sim_retries = 0;
                     const nextId = currNode.next_node_id || getNodeTarget(currNode.id, 'default');
                     if (nextId) setTimeout(() => executeSimNode(nextId), 600);
                 } else {
-                    addSimBotBubble(`⚠️ ${invalidMsg} (Attempt ${currNode._sim_retries}/${maxRetries})`);
+                    addSimBotBubble(` ${invalidMsg} (Attempt ${currNode._sim_retries}/${maxRetries})`);
                 }
                 return;
             }
@@ -3040,7 +3040,7 @@
 
         bubble.innerHTML = `
             <div class="sim-media-card">
-                <span class="sim-media-icon">📄</span>
+                <span class="sim-media-icon"></span>
                 <div class="sim-media-info">
                     <div class="sim-media-filename">${escapeHtml(node.filename || 'Brochure.pdf')}</div>
                     <div style="font-size: 10px; color: #8696a0;">PDF Document • 2.4 MB</div>
@@ -3059,7 +3059,7 @@
 
         bubble.innerHTML = `
             <div class="sim-location-card">
-                <div class="sim-loc-title">📍 ${escapeHtml(node.name || 'Branch Location')}</div>
+                <div class="sim-loc-title"> ${escapeHtml(node.name || 'Branch Location')}</div>
                 <div class="sim-loc-addr">${escapeHtml(node.address || '')}</div>
                 <div style="font-size: 10px; color: #34d399; margin-top: 4px;">Tap to open in Google Maps</div>
             </div>
@@ -3184,10 +3184,10 @@
         let optionsHtml = '';
         if (selectedNode && selectedNode.type === 'buttons' && Array.isArray(selectedNode.options) && selectedNode.options.length > 0) {
             optionsHtml = `<div class="wa-preview-buttons">` +
-                selectedNode.options.map(opt => `<button type="button" class="wa-preview-btn">🔘 ${escapeHtml(opt.title || 'Option')}</button>`).join('') +
+                selectedNode.options.map(opt => `<button type="button"class="wa-preview-btn"> ${escapeHtml(opt.title || 'Option')}</button>`).join('') +
                 `</div>`;
         } else if (selectedNode && selectedNode.type === 'list' && Array.isArray(selectedNode.sections) && selectedNode.sections.length > 0) {
-            optionsHtml = `<div class="wa-preview-list-btn"><button type="button" class="wa-preview-btn-menu">📋 View Options</button></div>`;
+            optionsHtml = `<div class="wa-preview-list-btn"><button type="button"class="wa-preview-btn-menu">View Options</button></div>`;
         }
 
         const now = new Date();
@@ -3200,7 +3200,7 @@
                 ${footerVal ? `<div class="wa-bubble-footer">${escapeHtml(footerVal)}</div>` : ''}
                 <div class="wa-bubble-meta">
                     <span class="wa-bubble-time">${timeStr}</span>
-                    <span class="wa-bubble-ticks">✓✓</span>
+                    <span class="wa-bubble-ticks"></span>
                 </div>
                 ${optionsHtml}
             </div>
@@ -3391,7 +3391,7 @@
             renderCanvas();
             recordHistory();
             setSaveStatus('saved');
-            showToast(`✨ Created flow "${name}"!`);
+            showToast(` Created flow "${name}"!`);
         } catch (err) {
             console.error('Error creating new flow:', err);
             showToast(err.message || 'Error creating flow', true);
@@ -3782,7 +3782,7 @@
                 }
                 const originalHtml = elements.btnGenerateFromPrompt.innerHTML;
                 elements.btnGenerateFromPrompt.disabled = true;
-                elements.btnGenerateFromPrompt.innerHTML = '<span>⚡ Synthesizing Workflow...</span>';
+                elements.btnGenerateFromPrompt.innerHTML = '<span>Synthesizing Workflow...</span>';
 
                 try {
                     const resp = await fetch('/api/flows/generate-from-prompt/', {
@@ -3806,7 +3806,7 @@
                         recordHistory();
                         setSaveStatus('unsaved');
                         if (elements.aiAssistantModal) elements.aiAssistantModal.style.display = 'none';
-                        showToast(`✨ Generated "${name}" with ${data.flow.flow_data?.nodes?.length || 0} nodes!`);
+                        showToast(` Generated "${name}"with ${data.flow.flow_data?.nodes?.length || 0} nodes!`);
                     }
                 } catch (err) {
                     console.error('AI Flow Generator error:', err);
@@ -3963,7 +3963,7 @@
         if (elements.builderToastMsg) elements.builderToastMsg.textContent = msg;
         const icon = elements.builderToast.querySelector('.toast-icon');
         if (icon) {
-            icon.textContent = isError ? '!' : '✓';
+            icon.textContent = isError ? '!' : '';
             icon.style.background = isError ? '#ef4444' : '#10b981';
         }
         elements.builderToast.classList.add('show');

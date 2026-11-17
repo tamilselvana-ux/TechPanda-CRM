@@ -1229,7 +1229,7 @@ def get_receipt_context(request, txn):
 
     Computes comprehensive financial, GST, ledger, installment, and tamper-verification
 
-    context for official iTechPanda CRM fee receipts.
+    context for official DigiPanda CRM fee receipts.
 
     """
 
@@ -1370,7 +1370,7 @@ def get_receipt_context(request, txn):
 
     if not branch_address:
 
-        branch_address = "iTechPanda Towers, Knowledge Park, OMR, Chennai, Tamil Nadu - 600096"
+        branch_address = "DigiPanda Towers, Knowledge Park, OMR, Chennai, Tamil Nadu - 600096"
 
 
 
@@ -1395,7 +1395,7 @@ def get_receipt_context(request, txn):
 
     font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Arial.ttf').replace('\\', '/')
 
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'itechpanda_logo.png').replace('\\', '/')
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'digipanda_logo.png').replace('\\', '/')
     logo_data_uri = None
     if os.path.exists(logo_path):
         try:
@@ -1672,7 +1672,7 @@ def enrollment_receipt_pdf_view(request, transaction_id):
 
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
 
-    filename = f"iTechPanda_Receipt_{txn.receipt_number}.pdf"
+    filename = f"DigiPanda_Receipt_{txn.receipt_number}.pdf"
 
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 

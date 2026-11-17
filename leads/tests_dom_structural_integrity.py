@@ -124,7 +124,7 @@ class DOMStructuralIntegrityTests(TestCase):
         self.assertIsNotNone(title_node, "Page must have a <title> tag")
         title_text = title_node.get_text().strip()
         
-        self.assertIn("Leads - iTechPanda CRM", title_text)
+        self.assertIn("Leads - DigipandaCRM", title_text)
         self.assertIsNone(title_node.find('div'), "CRITICAL: <title> must not contain <div> tags!")
         self.assertIsNone(title_node.find('aside'), "CRITICAL: <title> must not contain <aside> tags!")
         self.assertLess(len(title_text), 150, 

@@ -951,7 +951,7 @@
 
         <!-- Empty State Container -->
         <div class="empty-flows-box" id="emptyFlowsBox" style="display: none;">
-            <div class="empty-flows-icon">⚡</div>
+            <div class="empty-flows-icon"></div>
             <h2 class="empty-flows-title">Create your first automation</h2>
             <p class="empty-flows-desc">Build a WhatsApp customer journey using visual automation nodes. Handle course enquiries, admissions, brochure downloads, and branch appointments automatically.</p>
             <div class="empty-flows-actions">
@@ -980,10 +980,10 @@
                 <div class="form-group">
                     <label class="form-label">Trigger Type</label>
                     <select id="newFlowTriggerSelect" class="form-select">
-                        <option value="first_incoming_message">⚡ First Incoming Message</option>
-                        <option value="keyword">🔑 Keyword Trigger</option>
-                        <option value="button_reply">🔘 Button Reply</option>
-                        <option value="list_reply">📋 List Selection</option>
+                        <option value="first_incoming_message">First Incoming Message</option>
+                        <option value="keyword">Keyword Trigger</option>
+                        <option value="button_reply">Button Reply</option>
+                        <option value="list_reply">List Selection</option>
                     </select>
                 </div>
                 <div class="form-group" id="newFlowKeywordsWrap" style="display: none;">
@@ -1063,8 +1063,8 @@
             grid.innerHTML = flows.map(f => {
                 const isPublished = f.status === 'published';
                 const triggerDisplay = f.trigger_type === 'first_incoming_message'
-                    ? '⚡ First Incoming Message'
-                    : `🔑 Keyword (${f.trigger_keywords || 'default'})`;
+                    ? 'First Incoming Message'
+                    : ` Keyword (${f.trigger_keywords || 'default'})`;
 
                 return `
                     <div class="flow-card" data-id="${f.id}" data-name="${(f.name || '').toLowerCase()}">

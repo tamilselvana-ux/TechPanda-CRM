@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Create Telecaller - iTechPanda CRM{% endblock %}
+{% block title %}Create Telecaller - TechPanda CRM{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -45,7 +45,7 @@
             {% if form.phone.errors %}<div class="form-error">{{ form.phone.errors.0 }}</div>{% endif %}
           </div>
           <div class="form-group">
-            <label class="form-label">Assign to Counselor <span class="required">*</span></label>
+            <label class="form-label">Assign to Counselor (Optional)</label>
             {{ form.counselor }}
             {% if form.counselor.errors %}<div class="form-error">{{ form.counselor.errors.0 }}</div>{% endif %}
           </div>

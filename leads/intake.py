@@ -428,14 +428,10 @@ def intake_lead(
 
         if existing_lead is None and number and not number.startswith('+') and not number.startswith('NoPhone-'):
             tail = number[-4:]
-            cand_qs = Lead.objects.filter(Q(phone__endswith=tail) | Q(alternate_phone__endswith=tail)).values('id', 'phone', 'alternate_phone').order_by('id')
-            matched_id = None
-            for cand in cand_qs:
-                if phone10(cand['phone']) == number or phone10(cand['alternate_phone']) == number:
-                    matched_id = cand['id']
+            for cand in Lead.objects.select_for_update().filter(Q(phone__endswith=tail) | Q(alternate_phone__endswith=tail)).order_by('id'):
+                if phone10(cand.phone) == number or phone10(cand.alternate_phone) == number:
+                    existing_lead = cand
                     break
-            if matched_id:
-                existing_lead = Lead.objects.select_for_update().get(id=matched_id)
 
         now_ts = incoming_timestamp or timezone.now()
 
@@ -505,7 +501,7 @@ def intake_lead(
                 )
 
                 if is_family_member:
-                    add_note(existing_lead, f"👨‍👩‍👧 Potential Family/Sibling Enquiry: Incoming name '{clean_name}' (course: {get_product_display_name(product) if product else 'N/A'}) submitted with same phone number. Verify relationship on call.")
+                    add_note(existing_lead, f"Potential Family/Sibling Enquiry: Incoming name '{clean_name}' (course: {get_product_display_name(product) if product else 'N/A'}) submitted with same phone number. Verify relationship on call.")
 
                 # Fill blank fields on existing lead if missing, and track new information
                 filled_fields = []
@@ -602,7 +598,7 @@ def intake_lead(
                     existing_lead.save(update_fields=list(set(filled_fields)))
 
                 if new_info_notes:
-                    add_note(existing_lead, "🔔 Re-Enquiry Updates: " + "; ".join(new_info_notes))
+                    add_note(existing_lead, "Re-Enquiry Updates: " + "; ".join(new_info_notes))
 
                 if isinstance(data_payload, dict) and data_payload:
                     try:
@@ -678,7 +674,7 @@ def intake_lead(
                             cf['aliases'] = aliases
                             existing_lead.custom_fields = cf
                 elif is_family_member:
-                    add_note(existing_lead, f"👨‍👩‍👧 Potential Family/Sibling Re-enquiry: Incoming name '{clean_name}' differs from student '{existing_lead.name}'. Retained original student name.")
+                    add_note(existing_lead, f"Potential Family/Sibling Re-enquiry: Incoming name '{clean_name}'differs from student '{existing_lead.name}'. Retained original student name.")
 
                 if clean_email and not existing_lead.email:
                     field_changes['email'] = {'old': existing_lead.email, 'new': clean_email}
@@ -702,13 +698,13 @@ def intake_lead(
                             cf['latest_course_enquiry_date'] = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
                             existing_lead.custom_fields = cf
                             prev_p = existing_lead.product.name if existing_lead.product else 'None'
-                            add_note(existing_lead, f"🔔 Re-enquiry for course: {get_product_display_name(product)} (Original: {prev_p})")
+                            add_note(existing_lead, f"Re-enquiry for course: {get_product_display_name(product)} (Original: {prev_p})")
                     else:
                         cf = dict(existing_lead.custom_fields or {})
                         cf['latest_course_enquiry'] = str(product)
                         cf['latest_course_enquiry_date'] = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
                         existing_lead.custom_fields = cf
-                        add_note(existing_lead, f"🔔 Re-enquiry for course: {product}")
+                        add_note(existing_lead, f"Re-enquiry for course: {product}")
 
                 if channel_name and not existing_lead.channel:
                     chan = get_channel(channel_name)

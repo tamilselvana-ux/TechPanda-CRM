@@ -1,5 +1,5 @@
 """
-iTechPanda CRM — Centralized KPI Master Registry (Single Source of Truth)
+DigiPanda CRM — Centralized KPI Master Registry (Single Source of Truth)
 Defines uniform definitions, Q-filter mappings, and drilldown URL specifications
 across Admin, Branch Head, Sales Head, Counselor, and Telecaller dashboards.
 """

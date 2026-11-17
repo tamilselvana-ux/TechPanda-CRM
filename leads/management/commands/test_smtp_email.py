@@ -92,7 +92,7 @@ class Command(BaseCommand):
                 html = """<div style="font-family: sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
                     <h2 style="color: #0284c7; margin-top: 0;">DigiPanda Academy</h2>
                     <p>This is a diagnostic test message verifying official Hostinger SMTP delivery from <strong>admin@digipandaacademy.com</strong>.</p>
-                    <p style="color: #16a34a; font-weight: bold;">✔ All SMTP settings and SSL handshakes are verified.</p>
+                    <p style="color: #16a34a; font-weight: bold;">All SMTP settings and SSL handshakes are verified.</p>
                 </div>"""
 
                 msg = EmailMultiAlternatives(

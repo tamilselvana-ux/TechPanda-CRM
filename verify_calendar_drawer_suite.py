@@ -18,7 +18,7 @@ from accounts.models import UserRole
 User = get_user_model()
 
 print("=======================================================")
-print("DIGIPANDA CRM · CALENDAR DRAWER AUTOMATED TEST SUITE")
+print("TECHPANDA CRM · CALENDAR DRAWER AUTOMATED TEST SUITE")
 print("=======================================================")
 
 admin_user = User.objects.filter(role=UserRole.ADMIN, is_active=True).first()

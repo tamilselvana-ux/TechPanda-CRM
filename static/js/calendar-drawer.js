@@ -1,5 +1,5 @@
 /**
- * iTechPanda CRM — Universal Responsive Calendar Drawer Controller
+ * TechPanda CRM — Universal Responsive Calendar Drawer Controller
  * Singleton controller managing right-side slide-over (desktop >= 900px)
  * and mobile bottom sheet (< 600px) across all 17 CRM date-filtered views.
  */

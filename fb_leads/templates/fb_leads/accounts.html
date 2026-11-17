@@ -12,10 +12,9 @@
       Manage Facebook connections, configure automated lead synchronization (default 3 mins), and set branch routing per Facebook Page.
     </p>
   </div>
-  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+  <div style="display: flex; gap: 12px; align-items: center;">
     <button type="button" class="btn btn-secondary" onclick="refreshAllPagesStatus()" title="Refresh Auto-Sync Status">⟳ Check Status</button>
-    <button type="button" class="btn btn-primary" onclick="openAddPageModal()" style="font-weight: 600; background: #059669; border-color: #059669;">+ Add Facebook Page</button>
-    <button type="button" class="btn btn-secondary" onclick="openConnectModal()">+ Connect Business Account</button>
+    <button type="button" class="btn btn-primary" onclick="openConnectModal()">+ Connect Facebook Account</button>
   </div>
 </div>
 
@@ -69,13 +68,12 @@
         <table class="crm-table" style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr style="border-bottom: 2px solid var(--border-color, #e2e8f0); text-align: left; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">
-              <th style="padding: 10px 12px; width: 20%;">Page Name & ID</th>
-              <th style="padding: 10px 12px; width: 15%;">Assigned Branch</th>
-              <th style="padding: 10px 12px; width: 18%;">Auto-Sync Engine</th>
-              <th style="padding: 10px 12px; width: 16%;">Sync Cutoff Date</th>
-              <th style="padding: 10px 12px; width: 10%;">Webhook</th>
-              <th style="padding: 10px 12px; width: 12%;">Last Sync Status</th>
-              <th style="padding: 10px 12px; text-align: right; width: 9%;">Actions</th>
+              <th style="padding: 10px 12px; width: 22%;">Page Name & ID</th>
+              <th style="padding: 10px 12px; width: 18%;">Assigned Branch</th>
+              <th style="padding: 10px 12px; width: 24%;">Auto-Sync Engine</th>
+              <th style="padding: 10px 12px; width: 12%;">Webhook</th>
+              <th style="padding: 10px 12px; width: 14%;">Last Sync Status</th>
+              <th style="padding: 10px 12px; text-align: right; width: 10%;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -88,15 +86,10 @@
 
               <!-- Branch Assignment -->
               <td style="padding: 12px;">
-                <form method="post" action="{% url 'fb_leads:fb_page_update_branch' page.id %}" style="display: flex; flex-direction: column; gap: 4px; margin: 0;">
+                <form method="post" action="{% url 'fb_leads:fb_page_update_branch' page.id %}" style="display: flex; gap: 6px; align-items: center; margin: 0;">
                   {% csrf_token %}
-                  {% if not page.branch %}
-                  <div style="font-size: 0.72rem; color: #b45309; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                    <span>⚠️</span> Branch Required
-                  </div>
-                  {% endif %}
-                  <select name="branch_id" class="form-control" style="font-size: 0.8rem; padding: 4px 8px; width: 100%; max-width: 170px; {% if not page.branch %}border-color: #f59e0b; background: #fffbeb;{% endif %}" onchange="this.form.submit()">
-                    <option value="">-- Select Branch --</option>
+                  <select name="branch_id" class="form-control" style="font-size: 0.8rem; padding: 4px 8px; width: 100%; max-width: 170px;" onchange="this.form.submit()">
+                    <option value="">-- No Branch (Default) --</option>
                     {% for b in branches %}
                     <option value="{{ b.id }}" {% if page.branch_id == b.id %}selected{% endif %}>{{ b.name }}</option>
                     {% endfor %}
@@ -131,19 +124,6 @@
                       <option value="60" {% if page.sync_interval_minutes == 60 %}selected{% endif %}>Every 1 Hour</option>
                     </select>
                   </div>
-                </div>
-              </td>
-
-              <!-- Sync Cutoff Date Shield -->
-              <td style="padding: 12px;">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                  <input type="date" id="cutoffDate-{{ page.id }}" value="{{ page.sync_cutoff_date|date:'Y-m-d' }}" 
-                         class="form-control" style="font-size: 0.78rem; padding: 3px 6px; width: 100%; max-width: 140px;"
-                         onchange="updatePageCutoff({{ page.id }}, this.value)"
-                         title="Historical Cutoff: leads submitted before this date will never be synced">
-                  <span id="cutoffStatus-{{ page.id }}" style="font-size: 0.72rem; color: {% if page.sync_cutoff_date %}#059669{% else %}#94a3b8{% endif %}; font-weight: 500;">
-                    {% if page.sync_cutoff_date %}Shielded: from {{ page.sync_cutoff_date|date:"d M Y" }}{% else %}No cutoff (all leads){% endif %}
-                  </span>
                 </div>
               </td>
 
@@ -201,7 +181,7 @@
 </div>
 {% else %}
 <div class="crm-card" style="padding: 48px; text-align: center; background: #fff; border-radius: 12px;">
-  <div style="font-size: 2.5rem; margin-bottom: 12px;">📱</div>
+  <div style="font-size: 2.5rem; margin-bottom: 12px;"></div>
   <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 8px;">No Facebook Accounts Connected</h3>
   <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 20px auto; font-size: 0.9rem;">
     Connect your Facebook Business or User account token to synchronize pages, route leads to branches, and capture ad submissions automatically with background auto-sync.
@@ -230,75 +210,9 @@
           Token must include <code>pages_show_list</code>, <code>pages_read_engagement</code>, and <code>leads_retrieval</code>.
         </span>
       </div>
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Assign Default Branch for Imported Pages *</label>
-        <select name="branch_id" required class="form-control" style="width: 100%; border-color: #1877f2; font-weight: 600;">
-          <option value="">-- Select Branch (Required) --</option>
-          {% for b in branches %}
-          <option value="{{ b.id }}">{{ b.name }}</option>
-          {% endfor %}
-        </select>
-        <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-          All Facebook pages imported from this account will automatically be mapped to this branch for incoming lead routing.
-        </span>
-      </div>
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
         <button type="button" class="btn btn-secondary" onclick="closeConnectModal()">Cancel</button>
         <button type="submit" class="btn btn-primary">Connect & Import Pages</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Add Single Page Modal -->
-<div id="addPageModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-  <div style="background: #fff; border-radius: 12px; width: 100%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; margin: 16px;">
-    <div style="padding: 18px 24px; background: #065f46; color: #fff; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; font-size: 1.15rem; color: #fff;">Add Facebook Page & Assign Branch</h3>
-      <button type="button" onclick="closeAddPageModal()" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
-    </div>
-    <form method="post" action="{% url 'fb_leads:fb_page_create' %}" style="padding: 24px;">
-      {% csrf_token %}
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Facebook Page Name *</label>
-        <input type="text" name="page_name" required class="form-control" placeholder="e.g. DigiPanda Academy - Velachery" style="width: 100%;">
-      </div>
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Facebook Page ID *</label>
-        <input type="text" name="page_id" required class="form-control" placeholder="e.g. 1257838164088995" style="width: 100%;">
-        <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
-          Found in Meta Business Suite / Page Settings &rarr; About &rarr; Page ID.
-        </span>
-      </div>
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: #047857;">Assign CRM Branch * (Mandatory)</label>
-        <select name="branch_id" required class="form-control" style="width: 100%; border-color: #059669; font-weight: 600; background: #ecfdf5;">
-          <option value="">-- Select Branch (Required) --</option>
-          {% for b in branches %}
-          <option value="{{ b.id }}">{{ b.name }}</option>
-          {% endfor %}
-        </select>
-        <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
-          Incoming leads from this Facebook Page will be routed and attributed to this branch.
-        </span>
-      </div>
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Page Access Token (Optional)</label>
-        <textarea name="page_access_token" rows="3" class="form-control" placeholder="Leave empty to use parent account token or paste Page Access Token (EAA...)" style="width: 100%; font-family: monospace; font-size: 0.8rem;"></textarea>
-      </div>
-      {% if accounts|length > 1 %}
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Parent Facebook Account</label>
-        <select name="account_id" class="form-control" style="width: 100%;">
-          {% for acc in accounts %}
-          <option value="{{ acc.id }}">{{ acc.account_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      {% endif %}
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-        <button type="button" class="btn btn-secondary" onclick="closeAddPageModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary" style="background: #059669; border-color: #059669;">Save Page with Branch</button>
       </div>
     </form>
   </div>
@@ -313,13 +227,6 @@ function openConnectModal() {
 }
 function closeConnectModal() {
   document.getElementById('connectAccountModal').style.display = 'none';
-}
-
-function openAddPageModal() {
-  document.getElementById('addPageModal').style.display = 'flex';
-}
-function closeAddPageModal() {
-  document.getElementById('addPageModal').style.display = 'none';
 }
 
 function showToast(message, isError = false) {
@@ -338,7 +245,7 @@ function showToast(message, isError = false) {
     align-items: center;
     gap: 8px;
   `;
-  toast.textContent = (isError ? '⚠️ ' : '✓ ') + message;
+  toast.textContent = (isError ? ' ' : ' ') + message;
   container.appendChild(toast);
   setTimeout(() => {
     toast.style.opacity = '0';
@@ -505,40 +412,5 @@ setInterval(() => {
 
 // Initial status check
 refreshAllPagesStatus();
-
-function updatePageCutoff(pageId, dateStr) {
-  const statusEl = document.getElementById(`cutoffStatus-${pageId}`);
-  if (statusEl) {
-    statusEl.innerText = "Saving...";
-    statusEl.style.color = "#2563eb";
-  }
-
-  const formData = new FormData();
-  formData.append("sync_cutoff_date", dateStr);
-
-  fetch(`/facebook-leads/pages/${pageId}/cutoff/`, {
-    method: "POST",
-    headers: {
-      "X-CSRFToken": getCookie("csrftoken"),
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        if (statusEl) {
-          statusEl.innerText = data.sync_cutoff_date ? `Shielded: from ${data.sync_cutoff_date}` : "No cutoff (all leads)";
-          statusEl.style.color = data.sync_cutoff_date ? "#059669" : "#94a3b8";
-        }
-      } else {
-        alert(data.error || "Failed to update cutoff date");
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Network error updating cutoff date");
-    });
-}
 </script>
 {% endblock %}

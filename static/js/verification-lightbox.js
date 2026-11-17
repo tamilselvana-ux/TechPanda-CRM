@@ -1,5 +1,5 @@
 /**
- * iTechPanda CRM - Accountant Verification Image Zoom & Rotation Lightbox
+ * TechPanda CRM - Accountant Verification Image Zoom & Rotation Lightbox
  * Provides accountants high-resolution inspection tools (2x-4x zoom, 90° rotation,
  * contrast enhancement, and drag-to-pan) to verify mobile UPI transaction receipts.
  */

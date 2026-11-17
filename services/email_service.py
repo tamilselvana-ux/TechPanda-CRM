@@ -1,6 +1,6 @@
 """
 
-Shared Email Service for iTechPanda CRM.
+Shared Email Service for TechPanda CRM.
 
 Handles:
 
@@ -92,9 +92,9 @@ def is_valid_email(email):
 
 def get_brand_logo_data_uri():
 
-    """Returns Base64 Data URI for the authentic DigiPanda logo."""
+    """Returns Base64 Data URI for the authentic TechPanda logo."""
 
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'itechpanda_logo.png')
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'techpanda_logo.png')
 
     if os.path.exists(logo_path):
 
@@ -142,23 +142,24 @@ def send_template_email(subject, recipient, html_template, text_template, contex
 
 
 
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'itechpanda_logo.png')
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'techpanda_logo.png')
 
     if not os.path.exists(logo_path):
 
-        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'itechpanda_logo.png')
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'techpanda_logo.png')
 
 
 
-    has_logo_cid = any(cid == 'itechpanda_logo' for cid, _, _ in inline_images)
+    has_logo_cid = any(cid in ['techpanda_logo', 'techpanda_logo'] for cid, _, _ in inline_images)
 
     if not has_logo_cid and os.path.exists(logo_path):
 
         try:
 
             with open(logo_path, 'rb') as lf:
-
-                inline_images.append(('itechpanda_logo', lf.read(), 'image/png'))
+                logo_bytes = lf.read()
+                inline_images.append(('techpanda_logo', logo_bytes, 'image/png'))
+                inline_images.append(('techpanda_logo', logo_bytes, 'image/png'))
 
         except Exception:
 
@@ -168,7 +169,7 @@ def send_template_email(subject, recipient, html_template, text_template, contex
 
     if context is not None:
 
-        context['logo_cid'] = 'itechpanda_logo' 
+        context['logo_cid'] = 'techpanda_logo' 
 
 
 
@@ -348,7 +349,7 @@ def send_enrollment_confirmation_email(enrollment, force_retry=False):
 
     context = {
 
-        'company_name': getattr(settings, 'COMPANY_NAME', 'iTechPanda CRM'),
+        'company_name': getattr(settings, 'COMPANY_NAME', 'TechPanda CRM'),
 
         'student_name': enrollment.student_name,
 
@@ -368,7 +369,7 @@ def send_enrollment_confirmation_email(enrollment, force_retry=False):
 
         'session': session,
 
-        'portal_url': 'https://learn.itechpanda.com',
+        'portal_url': 'https://learn.techpanda.com',
 
         'total_payable': enrollment.total_payable,
 
@@ -546,7 +547,7 @@ def send_payment_receipt_email(payment, force_retry=False):
 
     context = {
 
-        'company_name': getattr(settings, 'COMPANY_NAME', 'iTechPanda CRM'),
+        'company_name': getattr(settings, 'COMPANY_NAME', 'TechPanda CRM'),
 
         'student_name': enrollment.student_name,
 
@@ -674,7 +675,7 @@ def send_payment_receipt_email(payment, force_retry=False):
 
         if pdf_bytes:
 
-            filename = f"iTechPanda_Receipt_{payment.receipt_number}.pdf"
+            filename = f"TechPanda_Receipt_{payment.receipt_number}.pdf"
 
             attachments.append((filename, pdf_bytes, "application/pdf"))
 
@@ -886,7 +887,7 @@ def send_installment_reminder_email(installment, reminder_type='DUE_REMINDER', f
 
     context = {
 
-        'company_name': getattr(settings, 'COMPANY_NAME', 'iTechPanda CRM'),
+        'company_name': getattr(settings, 'COMPANY_NAME', 'TechPanda CRM'),
 
         'student_name': enrollment.student_name,
 
@@ -930,9 +931,9 @@ def send_installment_reminder_email(installment, reminder_type='DUE_REMINDER', f
 
         'accounts_phone': getattr(enrollment.branch, 'phone', '') if enrollment.branch else '+91 98765 43210',
 
-        'accounts_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'support@itechpanda.com'),
+        'accounts_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'support@techpanda.com'),
 
-        'payment_url': 'https://pay.itechpanda.com',
+        'payment_url': 'https://pay.techpanda.com',
 
     }
 

@@ -157,13 +157,13 @@
                 </div>
 
                 <div class="conversations-empty" id="conversationsEmpty" style="display: none;">
-                    <div class="empty-icon">💬</div>
+                    <div class="empty-icon"></div>
                     <h3 class="empty-title">No conversations yet</h3>
                     <p class="empty-subtitle">Your WhatsApp conversations will appear here.</p>
                 </div>
 
                 <div class="conversations-empty" id="conversationsNotFound" style="display: none;">
-                    <div class="empty-icon">🔍</div>
+                    <div class="empty-icon"></div>
                     <h3 class="empty-title">No conversations found</h3>
                     <p class="empty-subtitle">Try searching with a different name or number.</p>
                 </div>
@@ -238,14 +238,8 @@
                     </div>
 
                     <div class="chat-header-actions">
-                        <!-- Meta 24-Hour Policy Window Countdown Badge -->
-                        <span id="metaWindowBadge" class="badge" style="display: none; font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; white-space: nowrap; margin-right: 6px;"></span>
-                        <!-- 1-Click Course Kit Dispatcher -->
-                        <button type="button" id="btnSendCourseKit" class="btn btn-sm" style="display: none; align-items: center; gap: 5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; background: #0284c7; color: #fff; border: none; cursor: pointer; margin-right: 8px;" onclick="sendCourseKitAction()">
-                            📚 Send Course Kit
-                        </button>
                         <div class="handover-pill-wrap" id="handoverPillWrap" style="display: none;">
-                            <span class="handover-badge">👤 Handed Over</span>
+                            <span class="handover-badge">Handed Over</span>
                             <button class="btn-resume-bot" id="btnResumeBot" title="Resume Automated Bot Flow">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
                                     <path d="M8 5v14l11-7z"/>
@@ -316,11 +310,11 @@
                     <!-- Attachment Picker Dropup -->
                     <div class="attachment-popup" id="attachmentPopup" style="display: none;">
                         <button class="attachment-option" data-type="image">
-                            <span class="attachment-icon img-icon">🖼️</span>
+                            <span class="attachment-icon img-icon"></span>
                             <span>Photos & Videos</span>
                         </button>
                         <button class="attachment-option" data-type="document">
-                            <span class="attachment-icon doc-icon">📄</span>
+                            <span class="attachment-icon doc-icon"></span>
                             <span>Document</span>
                         </button>
                     </div>
@@ -434,23 +428,6 @@
                 <div class="modal-field">
                     <label for="bizAccountId">Meta WABA ID (Optional)</label>
                     <input type="text" id="bizAccountId" placeholder="e.g. 1107454935187904">
-                </div>
-                <div class="modal-field">
-                    <label for="bizAccessToken">Access Token (Optional)</label>
-                    <input type="password" id="bizAccessToken" placeholder="Paste Access Token (EAA...) or leave blank to use .env token">
-                    <small style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">If this WhatsApp number belongs to a separate developer account, paste its token here.</small>
-                </div>
-                <div class="modal-field">
-                    <label for="bizBranch" style="color: #047857; font-weight: 700;">Assign CRM Branch * (Mandatory)</label>
-                    <select id="bizBranch" required style="width: 100%; border: 1px solid #10b981; font-weight: 600; padding: 9px 12px; border-radius: 6px; background: #ecfdf5; font-size: 0.85rem;">
-                        <option value="">-- Select Branch (Required) --</option>
-                        {% for b in branches %}
-                        <option value="{{ b.id }}">{{ b.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <small style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">
-                        Leads messaging this WhatsApp number will be automatically attributed and routed to this branch.
-                    </small>
                 </div>
                 <div class="modal-field">
                     <label for="bizAccessToken">Custom Access Token (Optional)</label>

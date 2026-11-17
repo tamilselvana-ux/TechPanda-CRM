@@ -62,8 +62,8 @@ class GoogleSheetLiveLeadFetchTests(TestCase):
         Connect a spreadsheet:
         - Saved as individual lead source.
         - Displays CONNECTED GOOGLE SHEET.
-        - Displays Spreadsheet: Student Enquiries, 🟢 Connected,
-          Source: Connected Spreadsheet Only, Live Sync: 🟢 Active,
+        - Displays Spreadsheet: Student Enquiries, Connected,
+          Source: Connected Spreadsheet Only, Live Sync: Active,
           Refresh Interval: Every 3 seconds, Last Fetch, Next Fetch,
           [ View Leads ], [ Sync Now ], [ Disconnect ].
         """
@@ -86,11 +86,11 @@ class GoogleSheetLiveLeadFetchTests(TestCase):
 
         self.assertIn("CONNECTED GOOGLE SHEET", content)
         self.assertIn("Spreadsheet: Student Enquiries", content)
-        self.assertIn("🟢 Connected", content)
+        self.assertIn("Connected", content)
         self.assertIn("Source:", content)
         self.assertIn("Connected Spreadsheet Only", content)
         self.assertIn("Live Sync:", content)
-        self.assertIn("🟢 Active", content)
+        self.assertIn("Active", content)
         self.assertIn("Refresh Interval:", content)
         self.assertIn("Every 3 seconds", content)
         self.assertIn("Last Fetch:", content)
@@ -237,7 +237,7 @@ class GoogleSheetLiveLeadFetchTests(TestCase):
         """
         Section 9:
         OFFLINE LEADS
-        🟢 LIVE SYNC ACTIVE
+         LIVE SYNC ACTIVE
         Auto Fetch: Every 3 seconds
         Last Updated: [System Time]
         Table columns: Name | Phone | Email | Source
@@ -253,7 +253,7 @@ class GoogleSheetLiveLeadFetchTests(TestCase):
         content = resp.content.decode('utf-8')
 
         self.assertIn("OFFLINE LEADS", content)
-        self.assertIn("🟢 LIVE SYNC ACTIVE", content)
+        self.assertIn("LIVE SYNC ACTIVE", content)
         self.assertIn("Auto Fetch:", content)
         self.assertIn("Every 3 seconds", content)
         self.assertIn("Last Updated:", content)

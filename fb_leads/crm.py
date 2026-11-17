@@ -31,8 +31,8 @@ def resolve_meta_source_and_channel(fb_lead):
     combined = f"{corpus} {answers_corpus}"
 
     if platform_val in ['ig', 'instagram'] or 'instagram' in combined or 'insta' in combined:
-        return 'Instagram', 'Instagram', 'instagram', '📸 Instagram Lead Ad — '
-    return 'Facebook', 'Facebook', 'facebook', '📘 Facebook Lead Ad — '
+        return 'Instagram', 'Instagram', 'instagram', 'Instagram Lead Ad — '
+    return 'Facebook', 'Facebook', 'facebook', 'Facebook Lead Ad — '
 
 
 
@@ -128,7 +128,7 @@ def push_to_crm(fb_lead):
             product=product_for(fb_lead),
             note=prefix + (_summary(fb_lead) or "new form submission"),
             provider_event_id=fb_lead.leadgen_id,
-            incoming_timestamp=getattr(fb_lead, 'created_on_facebook', None) or getattr(fb_lead, 'received_at', None),
+            incoming_timestamp=getattr(fb_lead, 'created_time', None),
             data_payload=payload,
         )
 

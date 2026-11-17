@@ -5,507 +5,507 @@
 
 <head>
 
-  <meta charset="UTF-8">
+ <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>QR Standee Poster - {{ form_obj.title }} | iTechPandaCRM Academy</title>
+ <title>QR Standee Poster - {{ form_obj.title }} | TechPanda CRM Academy</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
 
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+ <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <style>
+ <style>
 
-    :root {
+ :root {
 
-      --primary: {{ form_obj.theme_color|default:'#4f46e5' }};
+ --primary: {{ form_obj.theme_color|default:'#4f46e5' }};
 
-      --text-dark: #0f172a;
+ --text-dark: #0f172a;
 
-      --text-muted: #64748b;
+ --text-muted: #64748b;
 
-    }
+ }
 
 
 
-    * {
+ * {
 
-      box-sizing: border-box;
+ box-sizing: border-box;
 
-      margin: 0;
+ margin: 0;
 
-      padding: 0;
+ padding: 0;
 
-    }
+ }
 
 
 
-    body {
+ body {
 
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+ font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 
-      background: #f1f5f9;
+ background: #f1f5f9;
 
-      color: var(--text-dark);
+ color: var(--text-dark);
 
-      padding: 30px 16px;
+ padding: 30px 16px;
 
-      display: flex;
+ display: flex;
 
-      flex-direction: column;
+ flex-direction: column;
 
-      align-items: center;
+ align-items: center;
 
-      min-height: 100vh;
+ min-height: 100vh;
 
-    }
+ }
 
 
 
-    /* Non-printable action toolbar */
+ /* Non-printable action toolbar */
 
-    .print-toolbar {
+ .print-toolbar {
 
-      width: 100%;
+ width: 100%;
 
-      max-width: 600px;
+ max-width: 600px;
 
-      margin-bottom: 24px;
+ margin-bottom: 24px;
 
-      display: flex;
+ display: flex;
 
-      justify-content: space-between;
+ justify-content: space-between;
 
-      align-items: center;
+ align-items: center;
 
-      background: #ffffff;
+ background: #ffffff;
 
-      border: 1px solid #e2e8f0;
+ border: 1px solid #e2e8f0;
 
-      padding: 12px 20px;
+ padding: 12px 20px;
 
-      border-radius: 12px;
+ border-radius: 12px;
 
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+ box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 
-    }
+ }
 
-    .print-btn {
+ .print-btn {
 
-      background: var(--primary);
+ background: var(--primary);
 
-      color: #ffffff;
+ color: #ffffff;
 
-      border: none;
+ border: none;
 
-      padding: 10px 20px;
+ padding: 10px 20px;
 
-      border-radius: 8px;
+ border-radius: 8px;
 
-      font-weight: 700;
+ font-weight: 700;
 
-      font-size: 0.9rem;
+ font-size: 0.9rem;
 
-      cursor: pointer;
+ cursor: pointer;
 
-      display: inline-flex;
+ display: inline-flex;
 
-      align-items: center;
+ align-items: center;
 
-      gap: 8px;
+ gap: 8px;
 
-      transition: filter 0.15s;
+ transition: filter 0.15s;
 
-    }
+ }
 
-    .print-btn:hover {
+ .print-btn:hover {
 
-      filter: brightness(0.92);
+ filter: brightness(0.92);
 
-    }
+ }
 
-    .back-link {
+ .back-link {
 
-      color: #475569;
+ color: #475569;
 
-      text-decoration: none;
+ text-decoration: none;
 
-      font-size: 0.85rem;
+ font-size: 0.85rem;
 
-      font-weight: 600;
+ font-weight: 600;
 
-    }
+ }
 
 
 
-    /* Printable Poster Frame (A4 aspect) */
+ /* Printable Poster Frame (A4 aspect) */
 
-    .poster-sheet {
+ .poster-sheet {
 
-      width: 100%;
+ width: 100%;
 
-      max-width: 580px;
+ max-width: 580px;
 
-      background: #ffffff;
+ background: #ffffff;
 
-      border-radius: 20px;
+ border-radius: 20px;
 
-      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15);
+ box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15);
 
-      border: 2px solid #e2e8f0;
+ border: 2px solid #e2e8f0;
 
-      padding: 44px 36px;
+ padding: 44px 36px;
 
-      text-align: center;
+ text-align: center;
 
-      position: relative;
+ position: relative;
 
-      overflow: hidden;
+ overflow: hidden;
 
-    }
+ }
 
 
 
-    /* Branded Top Accent */
+ /* Branded Top Accent */
 
-    .poster-sheet::before {
+ .poster-sheet::before {
 
-      content: '';
+ content: '';
 
-      position: absolute;
+ position: absolute;
 
-      top: 0;
+ top: 0;
 
-      left: 0;
+ left: 0;
 
-      right: 0;
+ right: 0;
 
-      height: 8px;
+ height: 8px;
 
-      background: linear-gradient(90deg, var(--primary), #06b6d4, #10b981);
+ background: linear-gradient(90deg, var(--primary), #06b6d4, #10b981);
 
-    }
+ }
 
 
 
-    .brand-logo-area {
+ .brand-logo-area {
 
-      display: inline-flex;
+ display: inline-flex;
 
-      align-items: center;
+ align-items: center;
 
-      gap: 12px;
+ gap: 12px;
 
-      margin-bottom: 14px;
+ margin-bottom: 14px;
 
-    }
+ }
 
-    .brand-panda-badge {
+ .brand-panda-badge {
 
-      width: 48px;
+ width: 48px;
 
-      height: 48px;
+ height: 48px;
 
-      border-radius: 50%;
+ border-radius: 50%;
 
-      background: #0f172a;
+ background: #0f172a;
 
-      display: flex;
+ display: flex;
 
-      align-items: center;
+ align-items: center;
 
-      justify-content: center;
+ justify-content: center;
 
-      font-size: 1.6rem;
+ font-size: 1.6rem;
 
-    }
+ }
 
-    .brand-name-text {
+ .brand-name-text {
 
-      font-size: 1.9rem;
+ font-size: 1.9rem;
 
-      font-weight: 800;
+ font-weight: 800;
 
-      letter-spacing: -0.03em;
+ letter-spacing: -0.03em;
 
-      color: #0f172a;
+ color: #0f172a;
 
-      text-align: left;
+ text-align: left;
 
-    }
+ }
 
-    .brand-name-text span {
+ .brand-name-text span {
 
-      color: var(--primary);
+ color: var(--primary);
 
-    }
+ }
 
 
 
-    .poster-hero-tag {
+ .poster-hero-tag {
 
-      display: inline-block;
+ display: inline-block;
 
-      background: #f1f5f9;
+ background: #f1f5f9;
 
-      color: var(--primary);
+ color: var(--primary);
 
-      border: 1.5px solid #cbd5e1;
+ border: 1.5px solid #cbd5e1;
 
-      padding: 6px 16px;
+ padding: 6px 16px;
 
-      border-radius: 20px;
+ border-radius: 20px;
 
-      font-size: 0.85rem;
+ font-size: 0.85rem;
 
-      font-weight: 800;
+ font-weight: 800;
 
-      letter-spacing: 0.05em;
+ letter-spacing: 0.05em;
 
-      text-transform: uppercase;
+ text-transform: uppercase;
 
-      margin-bottom: 12px;
+ margin-bottom: 12px;
 
-    }
+ }
 
 
 
-    .poster-heading {
+ .poster-heading {
 
-      font-size: 1.85rem;
+ font-size: 1.85rem;
 
-      font-weight: 800;
+ font-weight: 800;
 
-      color: #0f172a;
+ color: #0f172a;
 
-      line-height: 1.2;
+ line-height: 1.2;
 
-      margin-bottom: 8px;
+ margin-bottom: 8px;
 
-    }
+ }
 
 
 
-    .poster-subheading {
+ .poster-subheading {
 
-      font-size: 1.05rem;
+ font-size: 1.05rem;
 
-      color: #475569;
+ color: #475569;
 
-      margin-bottom: 24px;
+ margin-bottom: 24px;
 
-      line-height: 1.4;
+ line-height: 1.4;
 
-    }
+ }
 
 
 
-    /* QR Code Display Container */
+ /* QR Code Display Container */
 
-    .qr-standee-box {
+ .qr-standee-box {
 
-      background: #ffffff;
+ background: #ffffff;
 
-      border: 3px solid #0f172a;
+ border: 3px solid #0f172a;
 
-      border-radius: 20px;
+ border-radius: 20px;
 
-      padding: 24px;
+ padding: 24px;
 
-      display: inline-block;
+ display: inline-block;
 
-      margin-bottom: 24px;
+ margin-bottom: 24px;
 
-      box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.12);
+ box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.12);
 
-      position: relative;
+ position: relative;
 
-    }
+ }
 
-    .qr-standee-box::after {
+ .qr-standee-box::after {
 
-      content: 'SCAN TO REGISTER';
+ content: 'SCAN TO REGISTER';
 
-      position: absolute;
+ position: absolute;
 
-      bottom: -13px;
+ bottom: -13px;
 
-      left: 50%;
+ left: 50%;
 
-      transform: translateX(-50%);
+ transform: translateX(-50%);
 
-      background: #0f172a;
+ background: #0f172a;
 
-      color: #ffffff;
+ color: #ffffff;
 
-      font-size: 0.72rem;
+ font-size: 0.72rem;
 
-      font-weight: 800;
+ font-weight: 800;
 
-      letter-spacing: 0.1em;
+ letter-spacing: 0.1em;
 
-      padding: 4px 16px;
+ padding: 4px 16px;
 
-      border-radius: 12px;
+ border-radius: 12px;
 
-      white-space: nowrap;
+ white-space: nowrap;
 
-    }
+ }
 
-    .qr-code-img {
+ .qr-code-img {
 
-      width: 260px;
+ width: 260px;
 
-      height: 260px;
+ height: 260px;
 
-      display: block;
+ display: block;
 
-      margin: 0 auto;
+ margin: 0 auto;
 
-    }
+ }
 
 
 
-    /* 3-Step Process Instruction */
+ /* 3-Step Process Instruction */
 
-    .steps-container {
+ .steps-container {
 
-      display: grid;
+ display: grid;
 
-      grid-template-columns: 1fr 1fr 1fr;
+ grid-template-columns: 1fr 1fr 1fr;
 
-      gap: 12px;
+ gap: 12px;
 
-      margin-bottom: 28px;
+ margin-bottom: 28px;
 
-      text-align: center;
+ text-align: center;
 
-    }
+ }
 
-    .step-item {
+ .step-item {
 
-      background: #f8fafc;
+ background: #f8fafc;
 
-      border: 1px solid #e2e8f0;
+ border: 1px solid #e2e8f0;
 
-      border-radius: 12px;
+ border-radius: 12px;
 
-      padding: 12px 8px;
+ padding: 12px 8px;
 
-    }
+ }
 
-    .step-circle {
+ .step-circle {
 
-      width: 28px;
+ width: 28px;
 
-      height: 28px;
+ height: 28px;
 
-      border-radius: 50%;
+ border-radius: 50%;
 
-      background: var(--primary);
+ background: var(--primary);
 
-      color: #ffffff;
+ color: #ffffff;
 
-      display: flex;
+ display: flex;
 
-      align-items: center;
+ align-items: center;
 
-      justify-content: center;
+ justify-content: center;
 
-      font-weight: 800;
+ font-weight: 800;
 
-      font-size: 0.85rem;
+ font-size: 0.85rem;
 
-      margin: 0 auto 6px;
+ margin: 0 auto 6px;
 
-    }
+ }
 
-    .step-title {
+ .step-title {
 
-      font-size: 0.8rem;
+ font-size: 0.8rem;
 
-      font-weight: 700;
+ font-weight: 700;
 
-      color: #1e293b;
+ color: #1e293b;
 
-      margin-bottom: 2px;
+ margin-bottom: 2px;
 
-    }
+ }
 
-    .step-desc {
+ .step-desc {
 
-      font-size: 0.7rem;
+ font-size: 0.7rem;
 
-      color: #64748b;
+ color: #64748b;
 
-    }
+ }
 
 
 
-    /* Footer Info */
+ /* Footer Info */
 
-    .poster-footer {
+ .poster-footer {
 
-      border-top: 1px solid #e2e8f0;
+ border-top: 1px solid #e2e8f0;
 
-      padding-top: 18px;
+ padding-top: 18px;
 
-      font-size: 0.85rem;
+ font-size: 0.85rem;
 
-      color: #475569;
+ color: #475569;
 
-      display: flex;
+ display: flex;
 
-      justify-content: space-between;
+ justify-content: space-between;
 
-      align-items: center;
+ align-items: center;
 
-      flex-wrap: wrap;
+ flex-wrap: wrap;
 
-      gap: 8px;
+ gap: 8px;
 
-    }
+ }
 
 
 
-    /* Print Styles */
+ /* Print Styles */
 
-    @media print {
+ @media print {
 
-      body {
+ body {
 
-        background: #ffffff;
+ background: #ffffff;
 
-        padding: 0;
+ padding: 0;
 
-      }
+ }
 
-      .print-toolbar {
+ .print-toolbar {
 
-        display: none !important;
+ display: none !important;
 
-      }
+ }
 
-      .poster-sheet {
+ .poster-sheet {
 
-        border: none;
+ border: none;
 
-        box-shadow: none;
+ box-shadow: none;
 
-        max-width: 100%;
+ max-width: 100%;
 
-        padding: 24px 20px;
+ padding: 24px 20px;
 
-        page-break-inside: avoid;
+ page-break-inside: avoid;
 
-      }
+ }
 
-    }
+ }
 
-  </style>
+ </style>
 
 </head>
 
@@ -513,159 +513,159 @@
 
 
 
-  <!-- Non-printable Action Bar -->
+ <!-- Non-printable Action Bar -->
 
-  <div class="print-toolbar">
+ <div class="print-toolbar">
 
-    <a href="javascript:window.history.back()" class="back-link">← Back</a>
+ <a href="javascript:window.history.back()" class="back-link">← Back</a>
 
-    <div style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">
+ <div style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">
 
-      Standee Poster: {{ form_obj.title }}
+ Standee Poster: {{ form_obj.title }}
 
-    </div>
+ </div>
 
-    <button type="button" class="print-btn" onclick="window.print()">
+ <button type="button" class="print-btn" onclick="window.print()">
 
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
 
-      Print Poster (A4)
+ Print Poster (A4)
 
-    </button>
+ </button>
 
-  </div>
+ </div>
 
 
 
-  <!-- A4 Printable Standee -->
+ <!-- A4 Printable Standee -->
 
-  <div class="poster-sheet">
+ <div class="poster-sheet">
 
-    <div class="brand-logo-area">
+ <div class="brand-logo-area">
 
-      {% if form_obj.logo %}
+ {% if form_obj.logo %}
 
-      <img src="{{ form_obj.logo.url }}" alt="{{ branding.brand_name|default:'Brand Logo' }}" style="max-height: 56px; max-width: 240px; object-fit: contain; margin-bottom: 8px;">
+ <img src="{{ form_obj.logo.url }}" alt="{{ branding.brand_name|default:'Brand Logo' }}" style="max-height: 56px; max-width: 240px; object-fit: contain; margin-bottom: 8px;">
 
-      {% if branding.brand_name %}
+ {% if branding.brand_name %}
 
-      <div class="brand-name-text" style="font-size: 1.3rem;">{{ branding.brand_name }}</div>
+ <div class="brand-name-text" style="font-size: 1.3rem;">{{ branding.brand_name }}</div>
 
-      {% endif %}
+ {% endif %}
 
-      {% else %}
+ {% else %}
 
-      <div class="brand-panda-badge">{{ branding.icon|default:"🐼" }}</div>
+ <div class="brand-panda-badge">{{ branding.icon|default:"" }}</div>
 
-      <div class="brand-name-text">{{ branding.brand_name|default:"iTechPanda" }}</div>
+ <div class="brand-name-text">{{ branding.brand_name|default:"TechPanda" }}</div>
 
-      {% endif %}
+ {% endif %}
 
-    </div>
+ </div>
 
 
 
-    <div style="margin-bottom: 8px;">
+ <div style="margin-bottom: 8px;">
 
-      <span class="poster-hero-tag">
+ <span class="poster-hero-tag">
 
-        📍 {% if form_obj.branch %}{{ form_obj.branch.name }} Center{% elif branch %}{{ branch.name }} Center{% else %}Student Walk-in Desk{% endif %}
+ {% if form_obj.branch %}{{ form_obj.branch.name }} Center{% elif branch %}{{ branch.name }} Center{% else %}Student Walk-in Desk{% endif %}
 
-      </span>
+ </span>
 
-    </div>
+ </div>
 
 
 
-    <h1 class="poster-heading">{% if form_obj %}{{ form_obj.title|default:"Welcome to iTechPanda Academy" }}{% else %}Welcome to iTechPanda Academy{% endif %}</h1>
+ <h1 class="poster-heading">{% if form_obj %}{{ form_obj.title|default:"Welcome to TechPanda Academy" }}{% else %}Welcome to TechPanda Academy{% endif %}</h1>
 
-    <p class="poster-subheading">
+ <p class="poster-subheading">
 
-      {{ branding.subtitle|default:"Scan the QR code on your mobile phone to fill your enquiry details and get connected with our career counselors." }}
+ {{ branding.subtitle|default:"Scan the QR code on your mobile phone to fill your enquiry details and get connected with our career counselors." }}
 
-    </p>
+ </p>
 
 
 
-    <!-- High Resolution QR Code -->
+ <!-- High Resolution QR Code -->
 
-    <div class="qr-standee-box">
+ <div class="qr-standee-box">
 
-      {% if qr_b64 %}
+ {% if qr_b64 %}
 
-      <img src="data:image/png;base64,{{ qr_b64 }}" alt="Walk-in Enquiry QR Code" class="qr-code-img">
+ <img src="data:image/png;base64,{{ qr_b64 }}" alt="Walk-in Enquiry QR Code" class="qr-code-img">
 
-      {% else %}
+ {% else %}
 
-      <div style="width: 260px; height: 260px; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 0.85rem; color: #64748b;">
+ <div style="width: 260px; height: 260px; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 0.85rem; color: #64748b;">
 
-        Generating QR Code...
+ Generating QR Code...
 
-      </div>
+ </div>
 
-      {% endif %}
+ {% endif %}
 
-    </div>
+ </div>
 
 
 
-    <!-- 3-Step Process -->
+ <!-- 3-Step Process -->
 
-    <div class="steps-container">
+ <div class="steps-container">
 
-      <div class="step-item">
+ <div class="step-item">
 
-        <div class="step-circle">1</div>
+ <div class="step-circle">1</div>
 
-        <div class="step-title">Scan Code</div>
+ <div class="step-title">Scan Code</div>
 
-        <div class="step-desc">Open Phone Camera or Google Lens</div>
+ <div class="step-desc">Open Phone Camera or Google Lens</div>
 
-      </div>
+ </div>
 
-      <div class="step-item">
+ <div class="step-item">
 
-        <div class="step-circle">2</div>
+ <div class="step-circle">2</div>
 
-        <div class="step-title">Enter Details</div>
+ <div class="step-title">Enter Details</div>
 
-        <div class="step-desc">Fill course interest &amp; qualification</div>
+ <div class="step-desc">Fill course interest &amp; qualification</div>
 
-      </div>
+ </div>
 
-      <div class="step-item">
+ <div class="step-item">
 
-        <div class="step-circle">3</div>
+ <div class="step-circle">3</div>
 
-        <div class="step-title">Get Token</div>
+ <div class="step-title">Get Token</div>
 
-        <div class="step-desc">Meet your assigned counselor</div>
+ <div class="step-desc">Meet your assigned counselor</div>
 
-      </div>
+ </div>
 
-    </div>
+ </div>
 
 
 
-    <!-- Direct URL and Footer -->
+ <!-- Direct URL and Footer -->
 
-    <div class="poster-footer">
+ <div class="poster-footer">
 
-      <div>
+ <div>
 
-        📞 Need Help? Call <strong>+91 74488 88593</strong>
+ Need Help? Call <strong>+91 74488 88593</strong>
 
-      </div>
+ </div>
 
-      <div>
+ <div>
 
-        🌐 <strong>www.itechpanda.com</strong>
+ <strong>www.techpanda.com</strong>
 
-      </div>
+ </div>
 
-    </div>
+ </div>
 
-  </div>
+ </div>
 
 
 

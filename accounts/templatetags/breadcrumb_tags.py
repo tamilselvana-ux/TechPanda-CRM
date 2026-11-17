@@ -1,5 +1,5 @@
 """
-Django Template Tag Library for DigiPanda CRM Dynamic Breadcrumbs.
+Django Template Tag Library for TechPanda CRM Dynamic Breadcrumbs.
 Provides {% render_breadcrumbs %} and {% get_breadcrumbs as breadcrumb_list %}.
 """
 from django import template

@@ -1083,7 +1083,7 @@ class AutomationEngine:
         except Exception as exc:
             logger.error(f"Failed to dispatch bot buttons to Meta: {exc}")
 
-        btn_str = "\n".join([f"🔘 {opt.get('title')}" for opt in options[:3]])
+        btn_str = "\n".join([f" {opt.get('title')}"for opt in options[:3]])
         full_text = f"{body}\n\n{btn_str}"
         cls._save_and_broadcast_bot_msg(conversation, full_text, Message.TYPE_TEXT, whatsapp_msg_id)
 
@@ -1106,7 +1106,7 @@ class AutomationEngine:
         except Exception as exc:
             logger.error(f"Failed to dispatch bot list to Meta: {exc}")
 
-        preview = f"{body}\n[📋 {button_text}]"
+        preview = f"{body}\n[ {button_text}]"
         cls._save_and_broadcast_bot_msg(conversation, preview, Message.TYPE_TEXT, whatsapp_msg_id)
 
     @classmethod
@@ -1127,7 +1127,7 @@ class AutomationEngine:
         except Exception as exc:
             logger.error(f"Failed to dispatch bot media to Meta: {exc}")
 
-        display_text = f"📄 {filename or 'Brochure'}\n{caption}".strip()
+        display_text = f" {filename or 'Brochure'}\n{caption}".strip()
         cls._save_and_broadcast_bot_msg(conversation, display_text, Message.TYPE_DOCUMENT, whatsapp_msg_id)
 
     @classmethod
@@ -1148,7 +1148,7 @@ class AutomationEngine:
         except Exception as exc:
             logger.error(f"Failed to dispatch bot location to Meta: {exc}")
 
-        display_text = f"📍 *{name}*\n{address}"
+        display_text = f" *{name}*\n{address}"
         cls._save_and_broadcast_bot_msg(conversation, display_text, Message.TYPE_TEXT, whatsapp_msg_id)
 
     # -------------------------------------------------------------------------
@@ -1366,7 +1366,7 @@ class AutomationEngine:
                 d_sec = node.get('delay_seconds') or node.get('data', {}).get('delay_seconds', 60)
                 sim_messages.append({
                     'type': 'delay',
-                    'body': f"⏱️ Wait for {d_sec} seconds (simulated)",
+                    'body': f"⏱ Wait for {d_sec} seconds (simulated)",
                     'node_id': node['id']
                 })
                 next_node_id = cls.get_target_node_id(flow_data, node['id'], 'default')
@@ -1375,7 +1375,7 @@ class AutomationEngine:
                 target = node.get('url') or node.get('data', {}).get('url', 'https://api.example.com')
                 sim_messages.append({
                     'type': 'webhook',
-                    'body': f"🌐 Outbound webhook dispatched to {target} (simulated)",
+                    'body': f"Outbound webhook dispatched to {target} (simulated)",
                     'node_id': node['id']
                 })
                 next_node_id = cls.get_target_node_id(flow_data, node['id'], 'default')
@@ -1383,7 +1383,7 @@ class AutomationEngine:
             elif curr_type == 'human_handover':
                 sim_messages.append({
                     'type': 'handover',
-                    'body': '👤 Flow transferred to a human counselor.',
+                    'body': 'Flow transferred to a human counselor.',
                     'node_id': node['id']
                 })
                 is_complete = True

@@ -92,7 +92,7 @@ class OfflineLeadsLiveSpreadsheetTests(TestCase):
 
         self.assertIn("Spreadsheet:", content)
         self.assertIn(sheet_url, content)
-        self.assertIn("🟢 Connected", content)
+        self.assertIn("Connected", content)
         self.assertIn("LIVE SPREADSHEET DATA", content)
 
         # Dynamic columns

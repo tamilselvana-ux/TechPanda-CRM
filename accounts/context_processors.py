@@ -4,7 +4,7 @@ from django.utils import timezone
 
 def crm_context(request):
     context = {
-        'APP_NAME': 'iTechPanda CRM', 'COMPANY_NAME': 'iTechPanda CRM',
+        'APP_NAME': 'TechPanda CRM', 'COMPANY_NAME': 'TechPanda CRM',
         'is_admin': False,
         'is_manager': False,
         'is_branch_head': False,

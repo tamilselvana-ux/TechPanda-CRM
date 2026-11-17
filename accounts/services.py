@@ -1,5 +1,5 @@
 """
-Accounts Service Layer for iTechPanda CRM.
+Accounts Service Layer for TechPanda CRM.
 Handles:
 - Automatic unique login ID / username generation
 - User creation with credential onboarding
@@ -134,7 +134,7 @@ def send_user_welcome_email(user, request=None):
         setup_url = f"{base_url}{relative_url}"
         login_url = f"{base_url}/login/"
 
-    company_name = getattr(settings, 'COMPANY_NAME', 'iTechPanda CRM')
+    company_name = getattr(settings, 'COMPANY_NAME', 'TechPanda CRM')
 
     context = {
         'user': user,
@@ -153,7 +153,7 @@ def send_user_welcome_email(user, request=None):
         html_content = render_to_string('emails/user_welcome.html', context)
         text_content = render_to_string('emails/user_welcome.txt', context)
 
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or f"{company_name} CRM <no-reply@itechpanda.com>"
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or f"{company_name} CRM <no-reply@techpanda.com>"
 
         msg = EmailMultiAlternatives(
             subject=subject,
@@ -288,7 +288,7 @@ def send_password_reset_email_for_user(target_user, request=None, admin_user=Non
         protocol = 'https' if base_url.startswith('https') else 'http'
         domain = base_url.split('://')[-1]
 
-    company_name = getattr(settings, 'COMPANY_NAME', 'iTechPanda CRM')
+    company_name = getattr(settings, 'COMPANY_NAME', 'TechPanda CRM')
 
     context = {
         'email': target_user.email,
@@ -305,7 +305,7 @@ def send_password_reset_email_for_user(target_user, request=None, admin_user=Non
 
     try:
         html_content = render_to_string('registration/password_reset_email.html', context)
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or f"{company_name} CRM <no-reply@itechpanda.com>"
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or f"{company_name} CRM <no-reply@techpanda.com>"
 
         msg = EmailMultiAlternatives(
             subject=subject,

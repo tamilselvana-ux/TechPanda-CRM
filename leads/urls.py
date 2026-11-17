@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, api_google_sheets, views_enrollment, views_bulk, views_accountant, views_walkin, views_email_logs, views_360
+from . import views, api_google_sheets, views_enrollment, views_bulk, views_accountant, views_walkin, views_email_logs
 
 urlpatterns = [
     # Admin Lead routes
@@ -123,10 +123,6 @@ urlpatterns = [
     path('admin/leads/queues/', views.admin_lead_queues, name='admin_lead_queues'),
     path('leads/api/bulk-assign/', views.api_bulk_assign_leads, name='api_bulk_assign_leads'),
     path('leads/api/bulk-assign/preview/', views.api_bulk_assign_preview, name='api_bulk_assign_preview'),
-    # Dynamic Saved Views & Live Filter Counter (TeleCRM Create View)
-    path('admin/leads/api/save-view/', views.api_save_lead_view, name='api_save_lead_view'),
-    path('admin/leads/api/delete-view/<int:view_id>/', views.api_delete_saved_view, name='api_delete_saved_view'),
-    path('admin/leads/api/filter-count/', views.api_filter_lead_count, name='api_filter_lead_count'),
 
     # Reception & Walk-in Desk (Phase 6 - Req 7 & 11)
     path('receptionist/dashboard/', views.receptionist_dashboard, name='receptionist_dashboard'),
@@ -137,7 +133,6 @@ urlpatterns = [
     path('admin/leads/walk-in/<int:pk>/assign-counselor/', views.admin_walkin_assign_counselor, name='admin_walkin_assign_counselor'),
     path('admin/leads/walk-in/bulk-assign/', views.admin_walkin_bulk_assign_counselor, name='admin_walkin_bulk_assign_counselor'),
     path('admin/leads/walk-in/<int:pk>/status/', views.admin_walkin_update_status, name='admin_walkin_update_status'),
-    path('enquiry/manifest.json', views_walkin.enquiry_kiosk_manifest, name='enquiry_kiosk_manifest'),
     path('enquiry/', views_walkin.public_student_enquiry_form, name='public_student_enquiry_form'),
     path('enquiry/<int:branch_id>/', views_walkin.public_student_enquiry_form, name='public_student_enquiry_branch'),
     path('enquiry/f/<str:slug>/', views_walkin.public_student_enquiry_form_by_slug, name='public_student_enquiry_slug'),
@@ -177,8 +172,6 @@ urlpatterns = [
     # Admin Email Logs Audit & Retry (CR-1)
     path('admin/email-logs/', views_email_logs.admin_email_logs_list, name='admin_email_logs'),
     path('admin/email-logs/<int:log_id>/retry/', views_email_logs.admin_email_log_retry, name='admin_email_log_retry'),
-    # Student 360° Unified Admissions Drawer
-    path('leads/<int:lead_id>/360-data/', views_360.lead_360_data, name='lead_360_data'),
 ]
 
 

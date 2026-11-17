@@ -138,7 +138,7 @@ class FrontendIntegrityTestSuite(TestCase):
         title_node = doc.find('title')
         self.assertIsNotNone(title_node, "<title> tag must exist")
         title_text = title_node.get_text()
-        self.assertIn("Leads - iTechPanda CRM", title_text)
+        self.assertIn("Leads - DigipandaCRM", title_text)
         self.assertIsNone(title_node.find('div'), "<title> must not contain <div> tags")
         self.assertIsNone(title_node.find('aside'), "<title> must not contain <aside> tags")
         self.assertLess(len(title_text), 100, f"Title text unexpectedly long: {len(title_text)}")

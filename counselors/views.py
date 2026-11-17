@@ -229,13 +229,26 @@ def counselor_lead_unassign(request, lead_pk):
 # ADMIN: COUNSELOR OVERSIGHT (ALL BRANCHES)
 # ==========================================
 
-@admin_required
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)
 def admin_counselors_list(request):
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', '').strip()
     branch_filter = request.GET.get('branch', '').strip()
 
     counselors_qs = User.objects.filter(role=UserRole.COUNSELOR).select_related('branch')
+
+    if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+        counselors_qs = counselors_qs.filter(branch_id=request.user.branch_id)
+        branches = Branch.objects.filter(id=request.user.branch_id, status='Active')
+    elif request.user.role == UserRole.SALES_HEAD:
+        accessible = get_accessible_branch_ids(request.user)
+        if accessible:
+            counselors_qs = counselors_qs.filter(branch_id__in=accessible)
+            branches = Branch.objects.filter(id__in=accessible, status='Active')
+        else:
+            branches = Branch.objects.filter(status='Active')
+    else:
+        branches = Branch.objects.filter(status='Active')
 
     if search_query:
         counselors_qs = counselors_qs.filter(
@@ -262,16 +275,23 @@ def admin_counselors_list(request):
 
     return render(request, 'admin/counselors_list.html', {
         'page_obj': page_obj,
-        'branches': Branch.objects.filter(status='Active'),
+        'branches': branches,
         'search_query': search_query,
         'status_filter': status_filter,
         'branch_filter': branch_filter,
     })
 
 
-@admin_required
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)
 def admin_counselor_create(request):
     allowed_branches = Branch.objects.filter(status='Active')
+    if request.user.role == UserRole.BRANCH_HEAD and request.user.branch_id:
+        allowed_branches = allowed_branches.filter(id=request.user.branch_id)
+    elif request.user.role == UserRole.SALES_HEAD:
+        accessible = get_accessible_branch_ids(request.user)
+        if accessible:
+            allowed_branches = allowed_branches.filter(id__in=accessible)
+
     if request.method == 'POST':
         form = AdminCounselorCreateForm(request.POST, allowed_branches=allowed_branches)
         if form.is_valid():
@@ -279,7 +299,7 @@ def admin_counselor_create(request):
             log_activity(
                 user=request.user,
                 action="Counselor Created",
-                description=f"Admin created Counselor account '{counselor.username}' for branch '{counselor.branch.name}'.",
+                description=f"User '{request.user.username}' created Counselor account '{counselor.username}' for branch '{counselor.branch.name}'.",
                 object_type="User",
                 object_id=counselor.pk,
                 request=request

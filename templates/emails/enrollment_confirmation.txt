@@ -1,12 +1,12 @@
-iTechPanda – Learning Today, Building Tomorrow
+TechPanda – Learning Today, Building Tomorrow
 
-Welcome to iTechPanda!
+Welcome to TechPanda!
 Enrollment Confirmed — {{ course_name }}
 
 Hi {{ student_name }},
 
 Your enrollment is confirmed and you're all set to begin your learning journey with us.
-We are happy to confirm your enrollment in {{ course_name }} at iTechPanda.
+We are happy to confirm your enrollment in {{ course_name }} at TechPanda.
 
 STUDENT INFORMATION:
 - Name: {{ student_name }}
@@ -21,18 +21,18 @@ STUDENT INFORMATION:
 WHAT'S NEXT?
 1. Complete your profile (if not done already).
 2. Access your learning portal and course materials:
-   {{ portal_url|default:"https://learn.itechpanda.com" }}
+   {{ portal_url|default:"https://learn.techpanda.com" }}
 3. Join your batch and start learning!
 
 NEED HELP?
 Our support team is always here to assist you:
 - Phone: +91 98765 43210
-- Email: support@itechpanda.com
-- Website: https://www.itechpanda.com
+- Email: support@techpanda.com
+- Website: https://www.techpanda.com
 
-Once again, welcome to iTechPanda!
+Once again, welcome to TechPanda!
 Let's build your future together.
 
 ---
-iTechPanda | Learn | Build | Grow
-© 2026 iTechPanda. All rights reserved.
+TechPanda | Learn | Build | Grow
+© 2026 TechPanda. All rights reserved.

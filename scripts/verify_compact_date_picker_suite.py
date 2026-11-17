@@ -16,7 +16,7 @@ setup_test_environment()
 
 def run_tests():
     print("=" * 70)
-    print("DIGIPANDA CRM — COMPACT DATE RANGE PICKER VERIFICATION SUITE")
+    print("TECHPANDA CRM — COMPACT DATE RANGE PICKER VERIFICATION SUITE")
     print("=" * 70)
 
     # Fetch active test users per role

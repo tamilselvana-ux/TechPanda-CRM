@@ -1,4 +1,4 @@
-/* Compact Date Range Picker: iTechPanda CRM (vanilla JS, no dependencies)
+/* Compact Date Range Picker: TechPanda CRM (vanilla JS, no dependencies)
  *
  * Markup (inside the EXISTING filter form; keep the existing parameter names):
  *   <div class="drp-root" data-from-name="date_from" data-to-name="date_to" data-autosubmit="true"

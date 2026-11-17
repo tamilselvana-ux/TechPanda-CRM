@@ -118,12 +118,9 @@ def generate_next_enrollment_number():
     """
     Generates the next strictly sequential enrollment number starting from 'ENR-001'.
     Finds the highest existing sequence suffix across all enrollments and adds 1.
-    Locks the latest enrollment record within an atomic block to prevent concurrent collisions.
     """
     from .models_enrollment import Enrollment
     import re
-    # Row lock on the latest enrollment to serialize concurrent numbering
-    Enrollment.objects.select_for_update().order_by('-id').first()
     max_seq = 0
     for enr_num in Enrollment.objects.values_list('enrollment_number', flat=True):
         if not enr_num:
@@ -471,21 +468,6 @@ def record_payment(
     if payment_proof:
         validate_payment_proof(payment_proof)
 
-    # Financial Duplicate UTR Shield: Prevent duplicate transaction reference entries across active payments
-    clean_ref = str(transaction_reference or '').strip()
-    if clean_ref and payment_method != PaymentMethod.CASH:
-        existing_dup = PaymentTransaction.objects.filter(
-            transaction_reference__iexact=clean_ref
-        ).exclude(
-            status=PaymentTransactionStatus.REJECTED
-        ).select_related('enrollment').first()
-        if existing_dup:
-            st_name = existing_dup.enrollment.student_name if existing_dup.enrollment else 'Another student'
-            dt_str = existing_dup.payment_date.strftime('%d-%b-%Y') if existing_dup.payment_date else 'earlier'
-            raise ValidationError(
-                f"Duplicate Transaction Reference! UTR / Ref '{clean_ref}' was already recorded for student '{st_name}' on {dt_str} (Receipt #{existing_dup.receipt_number}, Status: {existing_dup.status}). Please enter a unique transaction reference."
-            )
-
     # Generate unique receipt number
     now = timezone.now()
     timestamp_str = now.strftime('%Y%m%d%H%M%S')
@@ -709,22 +691,7 @@ def resubmit_payment(payment_or_id, counselor_user, data=None, new_proof=None):
         update_fields.append('payment_method')
 
     if 'transaction_reference' in data:
-        new_ref = str(data['transaction_reference']).strip()
-        if new_ref and payment.payment_method != PaymentMethod.CASH:
-            existing_dup = PaymentTransaction.objects.filter(
-                transaction_reference__iexact=new_ref
-            ).exclude(
-                id=payment.id
-            ).exclude(
-                status=PaymentTransactionStatus.REJECTED
-            ).select_related('enrollment').first()
-            if existing_dup:
-                st_name = existing_dup.enrollment.student_name if existing_dup.enrollment else 'Another student'
-                dt_str = existing_dup.payment_date.strftime('%d-%b-%Y') if existing_dup.payment_date else 'earlier'
-                raise ValidationError(
-                    f"Duplicate Transaction Reference! UTR / Ref '{new_ref}' was already recorded for student '{st_name}' on {dt_str} (Receipt #{existing_dup.receipt_number}, Status: {existing_dup.status})."
-                )
-        payment.transaction_reference = new_ref
+        payment.transaction_reference = str(data['transaction_reference']).strip()
         update_fields.append('transaction_reference')
 
     if 'notes' in data:

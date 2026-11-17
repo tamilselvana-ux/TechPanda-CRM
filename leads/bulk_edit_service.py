@@ -1,5 +1,5 @@
 """
-Advanced Bulk Edit & Reassignment Service for iTechPanda CRM.
+Advanced Bulk Edit & Reassignment Service for DigiPanda CRM.
 Handles:
 1. Role-scoped authorized lead queryset resolution (from IDs or active filters).
 2. Deterministic percentage-based and single-assignee lead redistribution.

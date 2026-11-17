@@ -314,9 +314,9 @@ def start_desktop_oauth_flow(port=0, timeout_seconds=120):
 
         prompt='consent',
 
-        authorization_prompt_message="Please visit this URL to authorize iTechPanda CRM: {url}",
+        authorization_prompt_message="Please visit this URL to authorize DigiPanda CRM: {url}",
 
-        success_message="iTechPanda CRM: Google Sheets authentication completed successfully. You may close this window and return to the CRM."
+        success_message="DigiPanda CRM: Google Sheets authentication completed successfully. You may close this window and return to the CRM."
 
     )
 

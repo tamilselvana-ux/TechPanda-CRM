@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tax Invoice {{ invoice_number }} — Official Student Fee Receipt — iTechPanda</title>
+  <title>Tax Invoice {{ invoice_number }} — Official Student Fee Receipt — TechPanda</title>
   {% load static %}
   <style>
     * {
@@ -323,7 +323,7 @@
     <!-- Header -->
     <div class="invoice-header">
       <div>
-        <img src="{% static 'images/itechpanda_logo.png' %}" alt="iTechPanda" class="company-logo" onerror="this.onerror=null; this.src='/static/images/itechpanda_logo.png';" />
+        <img src="{% static 'images/techpanda_logo.png' %}" alt="TechPanda" class="company-logo" onerror="this.onerror=null; this.src='/static/images/techpanda_logo.png';" />
         <div class="company-title">{{ invoice_config.company_name }}</div>
         <div class="company-info">
           {{ invoice_config.address_lines.0 }}<br/>

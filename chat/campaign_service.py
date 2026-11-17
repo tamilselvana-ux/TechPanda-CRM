@@ -1,5 +1,5 @@
 """
-Bulk WhatsApp Campaign Service for iTechPanda CRM.
+Bulk WhatsApp Campaign Service for DigiPanda CRM.
 Handles sender resolution, recipient normalization, consent & compliance validation,
 deterministic placeholder rendering, rate-limited batch submission, and webhook status progression.
 """
@@ -55,7 +55,7 @@ def ensure_default_senders_and_templates():
     if not WhatsAppSender.objects.filter(is_active=True).exists():
         phone_id = getattr(settings, 'WHATSAPP_PHONE_NUMBER_ID', '') or 'default_waba_phone_id'
         WhatsAppSender.objects.create(
-            name="iTechPanda Official Admissions Line",
+            name="DIGIPANDA Official Admissions Line",
             phone_number_id=phone_id,
             display_phone_number="+91 84382 39448",
             is_active=True,
@@ -85,8 +85,8 @@ def ensure_default_senders_and_templates():
                 category="MARKETING",
                 status="APPROVED",
                 header_type="NONE",
-                body_text="Hi {{1}}, thank you for your interest in iTechPanda. Regarding your inquiry for {{2}} at our {{3}} center, your academic advisor {{4}} is ready to share the syllabus and upcoming batch dates. Reply YES to connect or call us directly.",
-                footer_text="iTechPanda Academy - Career Growth",
+                body_text="Hi {{1}}, thank you for your interest in DIGIPANDA. Regarding your inquiry for {{2}} at our {{3}} center, your academic advisor {{4}} is ready to share the syllabus and upcoming batch dates. Reply YES to connect or call us directly.",
+                footer_text="DIGIPANDA Academy - Career Growth",
                 parameter_mapping=["lead_name", "course", "branch", "assigned_telecaller"],
                 is_active=True,
             ),
@@ -97,8 +97,8 @@ def ensure_default_senders_and_templates():
                 category="MARKETING",
                 status="APPROVED",
                 header_type="NONE",
-                body_text="Hello {{1}}, welcome to iTechPanda! We have received your application for {{2}}. Our team at {{3}} branch will assist you with counseling and demo session schedules.",
-                footer_text="iTechPanda Learning",
+                body_text="Hello {{1}}, welcome to DIGIPANDA! We have received your application for {{2}}. Our team at {{3}} branch will assist you with counseling and demo session schedules.",
+                footer_text="DIGIPANDA Learning",
                 parameter_mapping=["lead_name", "course", "branch"],
                 is_active=True,
             ),
@@ -110,7 +110,7 @@ def ensure_default_senders_and_templates():
                 status="APPROVED",
                 header_type="NONE",
                 body_text="Dear {{1}}, you are warmly invited to visit our {{2}} campus this week for a one-on-one session with our senior trainer. Please let us know your preferred day and time.",
-                footer_text="iTechPanda Admissions",
+                footer_text="DIGIPANDA Admissions",
                 parameter_mapping=["lead_name", "branch"],
                 is_active=True,
             ),
@@ -609,7 +609,7 @@ def dispatch_campaign_batch(campaign_id: int, batch_size: int = 50) -> Tuple[int
 def record_campaign_message_in_inbox(recipient: WhatsAppCampaignRecipient, client: WhatsAppClient):
     """
     Creates an agent Message inside the existing Conversation for this recipient's phone number.
-    Ensures that incoming customer replies automatically appear in the existing iTechPanda WhatsApp Inbox.
+    Ensures that incoming customer replies automatically appear in the existing DigiPanda WhatsApp Inbox.
     """
     phone = f"+{recipient.phone_number}" if not recipient.phone_number.startswith('+') else recipient.phone_number
     biz_account = recipient.resolved_sender.business_account if recipient.resolved_sender else None

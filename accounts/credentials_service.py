@@ -1,5 +1,5 @@
 """
-Credentials Service for iTechPanda CRM.
+Credentials Service for TechPanda CRM.
 Handles cryptographically secure random password generation, automated account credential onboarding,
 and one-time credential flash alerts with required password changes.
 """

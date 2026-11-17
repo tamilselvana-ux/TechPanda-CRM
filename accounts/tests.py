@@ -45,7 +45,8 @@ class AccountsAndAuthTests(TestCase):
         self.assertRedirects(response, reverse('admin_dashboard'))
 
     def test_manager_registration_and_login(self):
-        # Registration
+        # Registration requires admin
+        self.client.login(username='testadmin', password='adminpassword123')
         reg_response = self.client.post(reverse('manager_register'), {
             'first_name': 'John',
             'last_name': 'Manager',
@@ -55,11 +56,13 @@ class AccountsAndAuthTests(TestCase):
             'password': 'safePassword123!',
             'confirm_password': 'safePassword123!'
         })
-        self.assertRedirects(reg_response, reverse('manager_login'))
+        self.assertEqual(reg_response.status_code, 302)
+        self.assertEqual(reg_response.url, reverse('manager_login'))
         new_mgr = User.objects.get(username='newmanager')
         self.assertEqual(new_mgr.role, UserRole.SALES_HEAD)
 
         # Login
+        self.client.logout()
         login_response = self.client.post(reverse('manager_login'), {
             'username': 'newmanager',
             'password': 'safePassword123!'
@@ -67,7 +70,8 @@ class AccountsAndAuthTests(TestCase):
         self.assertRedirects(login_response, reverse('manager_dashboard'))
 
     def test_telecaller_registration_and_login(self):
-        # Registration
+        # Registration requires admin
+        self.client.login(username='testadmin', password='adminpassword123')
         reg_response = self.client.post(reverse('telecaller_register'), {
             'first_name': 'Alice',
             'last_name': 'Caller',
@@ -77,11 +81,13 @@ class AccountsAndAuthTests(TestCase):
             'password': 'safePassword123!',
             'confirm_password': 'safePassword123!'
         })
-        self.assertRedirects(reg_response, reverse('telecaller_login'))
+        self.assertEqual(reg_response.status_code, 302)
+        self.assertEqual(reg_response.url, reverse('telecaller_login'))
         new_tc = User.objects.get(username='newcaller')
         self.assertEqual(new_tc.role, UserRole.TELECALLER)
 
         # Login
+        self.client.logout()
         login_response = self.client.post(reverse('telecaller_login'), {
             'username': 'newcaller',
             'password': 'safePassword123!'
@@ -235,10 +241,11 @@ class LeadPermissionFunctionsTests(TestCase):
         # Admin can create anyone anywhere.
         self.assertTrue(can_create_user(self.admin, UserRole.SALES_HEAD, self.branch_a))
 
-        # Sales Head can create a Branch Head only in an accessible branch.
-        self.assertTrue(can_create_user(self.sales_head_a, UserRole.BRANCH_HEAD, self.branch_a))
-        self.assertFalse(can_create_user(self.sales_head_a, UserRole.BRANCH_HEAD, self.branch_b))
-        self.assertFalse(can_create_user(self.sales_head_a, UserRole.COUNSELOR, self.branch_a))
+        # Sales Head can create Counselors and Telecallers in accessible branches, but cannot create Branch Heads.
+        self.assertTrue(can_create_user(self.sales_head_a, UserRole.COUNSELOR, self.branch_a))
+        self.assertTrue(can_create_user(self.sales_head_a, UserRole.TELECALLER, self.branch_a))
+        self.assertFalse(can_create_user(self.sales_head_a, UserRole.COUNSELOR, self.branch_b))
+        self.assertFalse(can_create_user(self.sales_head_a, UserRole.BRANCH_HEAD, self.branch_a))
 
         # Branch Head can create Counselors/Telecallers only in their own branch.
         self.assertTrue(can_create_user(self.branch_head_a, UserRole.COUNSELOR, self.branch_a))
@@ -257,8 +264,10 @@ class LeadPermissionFunctionsTests(TestCase):
     def test_can_manage_user_scoping(self):
         from accounts.permissions import can_manage_user
 
-        self.assertTrue(can_manage_user(self.sales_head_a, self.branch_head_a))
-        self.assertFalse(can_manage_user(self.sales_head_a, self.branch_head_b))
+        self.assertTrue(can_manage_user(self.sales_head_a, self.counselor_a))
+        self.assertTrue(can_manage_user(self.sales_head_a, self.telecaller_a))
+        self.assertFalse(can_manage_user(self.sales_head_a, self.telecaller_b))
+        self.assertFalse(can_manage_user(self.sales_head_a, self.branch_head_a))
         self.assertTrue(can_manage_user(self.branch_head_a, self.telecaller_a))
         self.assertFalse(can_manage_user(self.branch_head_a, self.telecaller_b))
         self.assertFalse(can_manage_user(self.telecaller_a, self.telecaller_b))

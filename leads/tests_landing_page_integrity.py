@@ -41,7 +41,7 @@ class LandingPageIntegrityTests(TestCase):
         """Title must reflect Enterprise TechPanda CRM branding."""
         self.assertIn('<title>TechPanda CRM | Next-Gen Admissions &amp; Sales Management Platform</title>', self.content)
         self.assertIn('TechPanda CRM', self.content)
-        self.assertIn('iTechPanda', self.content)
+        self.assertIn('DigiPanda', self.content)
 
     def test_absence_of_three_js_and_cyberpunk(self):
         """Heavyweight Three.js WebGL canvas and dark cyberpunk patterns must be completely removed."""

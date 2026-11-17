@@ -70,15 +70,13 @@ class StrictHierarchyAndTelecallerTests(TestCase):
             branch=self.branch_a, assigned_telecaller=self.telecaller_a, assigned_counselor=self.counselor_a
         )
 
-    def test_telecaller_creation_without_counselor_raises_validation_error(self):
-        """A telecaller cannot exist without a counselor assigned."""
+    def test_telecaller_creation_without_counselor_passes_validation(self):
+        """A telecaller can exist without a counselor assigned (Unassigned)."""
         orphan_tc = User(
             username="orphan_tc", email="orphan@crm.com",
             role=UserRole.TELECALLER, branch=self.branch_a
         )
-        with self.assertRaises(ValidationError) as ctx:
-            orphan_tc.clean()
-        self.assertIn("counselor", ctx.exception.message_dict)
+        orphan_tc.clean()
 
     def test_telecaller_with_counselor_passes_validation(self):
         """A telecaller with matching counselor and branch passes model clean."""
@@ -90,7 +88,7 @@ class StrictHierarchyAndTelecallerTests(TestCase):
         valid_tc.clean()
 
     def test_telecaller_counselor_branch_mismatch_raises_validation_error(self):
-        """Counselor must belong to the same branch as the telecaller."""
+        """Counselor must belong to the same branch as the telecaller if both provided."""
         mismatched_tc = User(
             username="mismatch_tc", email="mismatch@crm.com",
             role=UserRole.TELECALLER, branch=self.branch_a, counselor=self.counselor_b
@@ -99,19 +97,17 @@ class StrictHierarchyAndTelecallerTests(TestCase):
             mismatched_tc.clean()
         self.assertIn("counselor", ctx.exception.message_dict)
 
-    def test_admin_telecaller_create_form_requires_counselor(self):
-        """AdminTelecallerCreateForm strictly marks counselor as required."""
+    def test_admin_telecaller_create_form_does_not_require_counselor(self):
+        """AdminTelecallerCreateForm only requires basic fields (counselor is optional)."""
         form_data = {
-            'username': 'form_tc',
+            'first_name': 'Form',
+            'last_name': 'Telecaller',
             'email': 'form_tc@crm.com',
-            'password': 'Pass12345!',
-            'confirm_password': 'Pass12345!',
-            'branch': self.branch_a.id,
-            # Counselor omitted
+            'phone': '9876543210',
+            'is_active': True,
         }
         form = AdminTelecallerCreateForm(data=form_data)
-        self.assertFalse(form.is_valid())
-        self.assertIn('counselor', form.errors)
+        self.assertTrue(form.is_valid(), f"Form errors: {form.errors}")
 
     def test_hierarchy_level_1_sales_heads_page(self):
         """Level 1 displays ONLY Sales Heads."""

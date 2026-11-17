@@ -104,7 +104,6 @@
         bizPhoneNumber: document.getElementById('bizPhoneNumber'),
         bizPhoneNumberId: document.getElementById('bizPhoneNumberId'),
         bizAccountId: document.getElementById('bizAccountId'),
-        bizBranch: document.getElementById('bizBranch'),
         bizAccessToken: document.getElementById('bizAccessToken'),
         btnDeleteBusinessLine: document.getElementById('btnDeleteBusinessLine'),
 
@@ -218,7 +217,7 @@
             const opt = document.createElement('option');
             opt.value = acc.id;
             const unreadStr = acc.unread_count > 0 ? ` (${acc.unread_count} unread)` : '';
-            opt.textContent = `📱 ${acc.name} ${acc.phone_number ? `(${acc.phone_number})` : ''}${unreadStr}`;
+            opt.textContent = ` ${acc.name} ${acc.phone_number ? `(${acc.phone_number})` : ''}${unreadStr}`;
             elements.businessAccountSelect.appendChild(opt);
 
             // Select default account
@@ -298,7 +297,7 @@
                 updateHandoverPill('active');
                 const conv = state.conversations.find(c => c.id === state.activeConversationId);
                 if (conv) conv.automation_status = 'active';
-                showToast('🤖 Bot automation resumed for this conversation.');
+                showToast('Bot automation resumed for this conversation.');
             }
         } catch (err) {
             console.error('Error resuming automation:', err);
@@ -408,7 +407,7 @@
                     <div class="conv-bottom-row">
                         <span class="conv-preview">${previewText}</span>
                         <div class="conv-badges">
-                            ${conv.is_pinned ? '<span class="pin-indicator" title="Pinned">📌</span>' : ''}
+                            ${conv.is_pinned ? '<span class="pin-indicator"title="Pinned"></span>' : ''}
                             ${conv.unread_count > 0 ? `<span class="unread-badge">${conv.unread_count}</span>` : ''}
                         </div>
                     </div>
@@ -487,9 +486,6 @@
             }
             const messages = await response.json();
             renderMessages(messages);
-            if (typeof updateMetaWindowStatus === 'function') {
-                updateMetaWindowStatus(conversationId);
-            }
             scrollToBottom(false);
         } catch (err) {
             console.error('Error loading messages:', err);
@@ -562,7 +558,7 @@
             const filename = msg.media_filename || 'Document';
             contentHtml += `
                 <a href="${msg.media_url}" target="_blank" download class="message-doc-card">
-                    <span class="doc-icon-badge">📄</span>
+                    <span class="doc-icon-badge"></span>
                     <div class="doc-info">
                         <span class="doc-name">${escapeHtml(filename)}</span>
                         <span class="doc-action">Click to download</span>
@@ -1055,10 +1051,10 @@
             isRecording = !isRecording;
             if (isRecording) {
                 elements.btnMicrophone.classList.add('recording');
-                showToast('🎙️ Recording voice note... Tap mic again to stop.');
+                showToast('Recording voice note... Tap mic again to stop.');
             } else {
                 elements.btnMicrophone.classList.remove('recording');
-                showToast('🎙️ Voice note recorded. Ready to attach.');
+                showToast('Voice note recorded. Ready to attach.');
             }
         });
 
@@ -1282,15 +1278,10 @@
                 const phone = elements.bizPhoneNumber.value.trim();
                 const phoneId = elements.bizPhoneNumberId.value.trim();
                 const accountId = elements.bizAccountId.value.trim();
-                const branchId = elements.bizBranch ? elements.bizBranch.value.trim() : '';
                 const token = elements.bizAccessToken.value.trim();
 
                 if (!name || !phone || !phoneId) {
                     showToast('Please fill all required fields.');
-                    return;
-                }
-                if (!branchId) {
-                    showToast('Branch assignment is required. Please select a branch for this WhatsApp number.');
                     return;
                 }
 
@@ -1306,8 +1297,6 @@
                             phone_number: phone,
                             phone_number_id: phoneId,
                             business_account_id: accountId,
-                            crm_branch: branchId,
-                            crm_branch_id: branchId,
                             access_token: token,
                             is_active: true
                         }),
@@ -1473,64 +1462,3 @@ window.onAudioEnded = function(audio) {
         if (pauseIcon) pauseIcon.style.display = 'none';
     }
 };
-
-
-// ==========================================
-// 24-HOUR META WINDOW & COURSE KIT HANDLERS
-// ==========================================
-async function updateMetaWindowStatus(conversationId) {
-    const badge = document.getElementById('metaWindowBadge');
-    const kitBtn = document.getElementById('btnSendCourseKit');
-    if (!badge) return;
-    try {
-        const res = await fetch(`/api/conversations/${conversationId}/meta-window/`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.success && data.meta_window) {
-            const w = data.meta_window;
-            badge.style.display = 'inline-flex';
-            badge.style.background = w.bg_color;
-            badge.style.color = w.badge_color;
-            badge.style.border = `1px solid ${w.border_color}`;
-            badge.textContent = w.text;
-            if (kitBtn) kitBtn.style.display = 'inline-flex';
-        }
-    } catch(e) {
-        console.warn("Failed to check meta window:", e);
-    }
-}
-
-async function sendCourseKitAction() {
-    if (!state.activeConversationId) return;
-    const kitBtn = document.getElementById('btnSendCourseKit');
-    if (kitBtn) {
-        kitBtn.disabled = true;
-        kitBtn.textContent = 'Sending Kit...';
-    }
-    try {
-        const res = await fetch(`/api/conversations/${state.activeConversationId}/send-course-kit/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': window.CRM_CONFIG ? window.CRM_CONFIG.csrfToken : ''
-            },
-            body: JSON.stringify({ course_name: 'Full Stack Development' })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showToast('📚 Course Kit & Syllabus dispatched to WhatsApp!');
-            if (typeof loadMessages === 'function') {
-                loadMessages(state.activeConversationId);
-            }
-        } else {
-            showToast(data.error || 'Failed to send Course Kit', 'error');
-        }
-    } catch(e) {
-        showToast('Error dispatching Course Kit', 'error');
-    } finally {
-        if (kitBtn) {
-            kitBtn.disabled = false;
-            kitBtn.innerHTML = '📚 Send Course Kit';
-        }
-    }
-}

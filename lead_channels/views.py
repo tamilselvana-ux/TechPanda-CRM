@@ -147,7 +147,7 @@ def admin_channel_edit(request, pk):
 def ensure_default_lead_connections():
     """
     Ensures default connections exist:
-    1. Meta / Facebook (Page: DigiPanda Academy, Lead Source: Meta, Last Sync: 12:58 PM)
+    1. Meta / Facebook (Page: TechPanda Academy, Lead Source: Meta, Last Sync: 12:58 PM)
     2. Website (Source: Website Lead Form, Last Sync: 12:57 PM)
     """
     meta_channel = Channel.objects.filter(name__iexact='Facebook').first() or Channel.objects.filter(name__icontains='Meta').first()
@@ -158,11 +158,11 @@ def ensure_default_lead_connections():
         defaults={
             'connection_type': 'Meta',
             'status': 'Connected',
-            'page_name': 'DigiPanda Academy',
+            'page_name': 'TechPanda Academy',
             'source_name': 'Meta',
             'last_sync_display': '12:58 PM',
             'channel': meta_channel,
-            'webhook_url': 'https://crm.digipanda.academy/api/webhooks/meta-lead-ads/',
+            'webhook_url': 'https://crm.techpanda.academy/api/webhooks/meta-lead-ads/',
         }
     )
 
@@ -175,7 +175,7 @@ def ensure_default_lead_connections():
             'source_name': 'Website Lead Form',
             'last_sync_display': '12:57 PM',
             'channel': website_channel,
-            'webhook_url': 'https://crm.digipanda.academy/api/webhooks/website-lead-form/',
+            'webhook_url': 'https://crm.techpanda.academy/api/webhooks/website-lead-form/',
         }
     )
 
@@ -223,7 +223,7 @@ def admin_configuration_add(request):
         last_sync_display=now_time_str,
         channel_id=channel_id or None,
         branch_id=branch_id or None,
-        webhook_url=webhook_url or f"https://crm.digipanda.academy/api/webhooks/{connection_type.lower()}-leads/",
+        webhook_url=webhook_url or f"https://crm.techpanda.academy/api/webhooks/{connection_type.lower()}-leads/",
     )
 
     log_activity(
@@ -415,20 +415,20 @@ def admin_meta_manage_view(request, pk):
     config = conn.config_details or {}
 
     available_pages = [
-        {"id": "page_101", "name": "DigiPanda Academy"},
-        {"id": "page_102", "name": "DigiPanda Training & Certifications"},
-        {"id": "page_103", "name": "DigiPanda Global Learning"},
+        {"id": "page_101", "name": "TechPanda Academy"},
+        {"id": "page_102", "name": "TechPanda Training & Certifications"},
+        {"id": "page_103", "name": "TechPanda Global Learning"},
     ]
 
     available_forms = [
-        {"id": "form_201", "name": "DigiPanda - Data Science Course Lead Form"},
-        {"id": "form_202", "name": "DigiPanda - Full Stack Web Dev Lead Form"},
-        {"id": "form_203", "name": "DigiPanda - Python & AI Lead Form"},
-        {"id": "form_204", "name": "DigiPanda - Digital Marketing Masterclass Form"},
+        {"id": "form_201", "name": "TechPanda - Data Science Course Lead Form"},
+        {"id": "form_202", "name": "TechPanda - Full Stack Web Dev Lead Form"},
+        {"id": "form_203", "name": "TechPanda - Python & AI Lead Form"},
+        {"id": "form_204", "name": "TechPanda - Digital Marketing Masterclass Form"},
     ]
 
     # Pre-select page if not set
-    selected_page = conn.page_name or config.get('selected_page', 'DigiPanda Academy')
+    selected_page = conn.page_name or config.get('selected_page', 'TechPanda Academy')
     selected_form = config.get('selected_form', '')
 
     # Webhook URL: use standard endpoint

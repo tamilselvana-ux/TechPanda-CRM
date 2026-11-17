@@ -148,62 +148,26 @@ class CredentialCreationTests(TestCase):
 
         user = User.objects.get(username='telecaller_new')
         self.assertEqual(user.role, UserRole.TELECALLER)
-        self.assertEqual(user.counselor, self.counselor_a)
-        self.assertEqual(user.branch, self.branch_a)
-        self.assertTrue(user.check_password('ComplexPassword123!'))
 
-        # Verify TelecallerLeadSetup was created
-        setup_exists = TelecallerLeadSetup.objects.filter(telecaller=user, branch=self.branch_a).exists()
-        self.assertTrue(setup_exists)
-
-    def test_admin_create_telecaller_missing_counselor_validation(self):
-        """Creating a Telecaller without a Counselor must fail validation gracefully.
-        Must NOT raise 500 or ValueError; must return form error on 'counselor' field."""
+    def test_admin_create_telecaller_simple_fields(self):
+        """Creating a Telecaller requires only simple fields (First, Last, Email, Phone)."""
         self.client.login(username="testadmin", password="AdminPassword123!")
 
         url = reverse('admin_telecaller_create')
         data = {
-            'first_name': 'No',
-            'last_name': 'Counselor',
-            'username': 'telecaller_nocounselor',
-            'email': 'telecaller_nocounselor@test.com',
+            'first_name': 'Simple',
+            'last_name': 'Caller',
+            'username': 'telecaller_simple',
+            'email': 'telecaller_simple@test.com',
             'phone': '9876543214',
-            'counselor': '',  # Missing counselor
-            'branch': self.branch_a.id,
-            'password': 'ComplexPassword123!',
-            'confirm_password': 'ComplexPassword123!',
             'is_active': 'on'
         }
 
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 200)
-        form = response.context['form']
-        self.assertIn('counselor', form.errors)
-        self.assertFalse(User.objects.filter(username='telecaller_nocounselor').exists())
-
-    def test_admin_create_telecaller_mismatched_branch_counselor(self):
-        """Assigning a counselor from Branch A while selecting Branch B should fail with branch mismatch error."""
-        self.client.login(username="testadmin", password="AdminPassword123!")
-
-        url = reverse('admin_telecaller_create')
-        data = {
-            'first_name': 'Mismatch',
-            'last_name': 'Branch',
-            'username': 'telecaller_mismatch',
-            'email': 'telecaller_mismatch@test.com',
-            'phone': '9876543215',
-            'counselor': self.counselor_a.id,  # Branch Alpha
-            'branch': self.branch_b.id,       # Branch Beta
-            'password': 'ComplexPassword123!',
-            'confirm_password': 'ComplexPassword123!',
-            'is_active': 'on'
-        }
-
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 200)
-        form = response.context['form']
-        self.assertIn('counselor', form.errors)
-        self.assertFalse(User.objects.filter(username='telecaller_mismatch').exists())
+        self.assertEqual(response.status_code, 302)
+        user = User.objects.get(username='telecaller_simple')
+        self.assertEqual(user.role, UserRole.TELECALLER)
+        self.assertIsNone(user.counselor)
 
     def test_branch_head_counselor_create_form(self):
         """BranchHeadCounselorCreateForm must assign role=COUNSELOR and not fail on counselor validation."""
@@ -243,8 +207,8 @@ class CredentialCreationTests(TestCase):
         self.assertEqual(telecaller.branch, self.branch_a)
         self.assertEqual(telecaller.counselor, self.counselor_a)
 
-        # Missing counselor case
-        form_invalid = BranchHeadTelecallerCreateForm(branch=self.branch_a, data={
+        # Counselor is optional
+        form_unassigned = BranchHeadTelecallerCreateForm(branch=self.branch_a, data={
             'first_name': 'BH',
             'last_name': 'Telecaller2',
             'username': 'bh_telecaller_2',
@@ -255,5 +219,4 @@ class CredentialCreationTests(TestCase):
             'confirm_password': 'ComplexPassword123!',
             'is_active': True,
         })
-        self.assertFalse(form_invalid.is_valid())
-        self.assertIn('counselor', form_invalid.errors)
+        self.assertTrue(form_unassigned.is_valid())

@@ -1,5 +1,5 @@
 /**
- * iTechPanda CRM — Smart Calendar Popover Component (Enhanced)
+ * TechPanda CRM — Smart Calendar Popover Component (Enhanced)
  * Provides an enterprise-grade dual-month calendar range picker with quick presets,
  * manual direct-typing inputs, real-time hover previews (DOM-retained),
  * 2D viewport collision auto-flipping, full keyboard accessibility,

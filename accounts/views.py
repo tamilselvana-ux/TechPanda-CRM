@@ -126,7 +126,7 @@ def general_login(request):
         request,
         expected_role=None,
         template_name='registration/login.html',
-        portal_title='iTechPanda CRM Login'
+        portal_title='TechPanda CRM Login'
     )
 
 def admin_login(request):
@@ -176,7 +176,7 @@ def manager_register(request):
                 request=request
             )
             messages.success(request, f"Sales Head account for '{user.username}' created successfully!")
-            return redirect('admin_users_list')
+            return redirect('manager_login')
     else:
         form = ManagerRegistrationForm()
 
@@ -200,7 +200,7 @@ def telecaller_register(request):
                 request=request
             )
             messages.success(request, f"Telecaller account for '{user.username}' created successfully!")
-            return redirect('admin_users_list')
+            return redirect('telecaller_login')
     else:
         form = TelecallerRegistrationForm()
 

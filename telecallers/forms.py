@@ -6,22 +6,9 @@ from accounts.models import User, UserRole
 from branches.models import Branch
 
 class AdminTelecallerCreateForm(forms.ModelForm):
-    counselor = forms.ModelChoiceField(
-        queryset=User.objects.filter(role=UserRole.COUNSELOR, is_active=True),
-        required=True,
-        empty_label="-- Select Counselor (Required) --",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    branch = forms.ModelChoiceField(
-        queryset=Branch.objects.filter(status='Active'),
-        required=False,
-        empty_label="-- Select Branch (or inherit from Counselor) --",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email', 'phone', 'counselor', 'branch', 'is_active']
+        fields = ['first_name', 'last_name', 'username', 'email', 'phone', 'is_active']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -33,8 +20,11 @@ class AdminTelecallerCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if 'username' in self.fields:
+            self.fields['username'].required = False
         if not self.instance.pk:
             self.instance.role = UserRole.TELECALLER
+            self.fields['is_active'].initial = True
 
     def clean_username(self):
         username = (self.cleaned_data.get('username') or '').strip()
@@ -56,36 +46,9 @@ class AdminTelecallerCreateForm(forms.ModelForm):
             raise ValidationError("A user with this email address already exists.")
         return email
 
-    def clean(self):
-        cleaned_data = super().clean()
-        counselor = cleaned_data.get('counselor')
-        branch = cleaned_data.get('branch')
-
-        if not counselor:
-            self.add_error('counselor', "Counselor is required. A Telecaller must be created under a Counselor.")
-        else:
-            if counselor.role != UserRole.COUNSELOR:
-                self.add_error('counselor', "Selected user must have the Counselor role.")
-            if not counselor.is_active:
-                self.add_error('counselor', "Assigned counselor must be active.")
-            if not branch and counselor.branch:
-                cleaned_data['branch'] = counselor.branch
-                branch = counselor.branch
-            elif not branch and not counselor.branch:
-                self.add_error('branch', "Branch is required. The assigned counselor does not have a branch.")
-            elif branch and counselor.branch and branch != counselor.branch:
-                self.add_error(
-                    'counselor',
-                    f"Assigned counselor '{counselor.username}' belongs to '{counselor.branch.name}', which does not match selected branch '{branch.name}'."
-                )
-
-        return cleaned_data
-
     def save(self, commit=True):
         user = super().save(commit=False)
         user.role = UserRole.TELECALLER
-        if user.counselor and not user.branch:
-            user.branch = user.counselor.branch
         from accounts.services import generate_unique_username
         if not user.username:
             user.username = generate_unique_username(
@@ -117,14 +80,14 @@ class AdminTelecallerCreateForm(forms.ModelForm):
 class AdminTelecallerEditForm(forms.ModelForm):
     counselor = forms.ModelChoiceField(
         queryset=User.objects.filter(role=UserRole.COUNSELOR),
-        required=True,
-        empty_label="-- Select Counselor (Required) --",
+        required=False,
+        empty_label="— None (Unassigned) —",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     branch = forms.ModelChoiceField(
         queryset=Branch.objects.all(),
         required=False,
-        empty_label="-- Select Branch (or inherit from Counselor) --",
+        empty_label="— None (Unassigned) —",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 
@@ -141,8 +104,6 @@ class AdminTelecallerEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Ensure the counselor field includes active counselors AND the current counselor
-        # so selection persists properly across page refresh and edit
         if self.instance and self.instance.counselor_id:
             self.fields['counselor'].queryset = User.objects.filter(
                 Q(role=UserRole.COUNSELOR, is_active=True) | Q(pk=self.instance.counselor_id)
@@ -158,14 +119,15 @@ class AdminTelecallerEditForm(forms.ModelForm):
         counselor = cleaned_data.get('counselor')
         branch = cleaned_data.get('branch')
 
-        if not counselor:
-            self.add_error('counselor', "Counselor is required. A Telecaller must have an assigned Counselor.")
-        else:
+        if counselor:
             if counselor.role != UserRole.COUNSELOR:
                 self.add_error('counselor', "Selected user must have the Counselor role.")
             if not counselor.is_active and (not self.instance or self.instance.counselor_id != counselor.id):
                 self.add_error('counselor', "Assigned counselor must be active.")
-            if branch and counselor.branch and branch != counselor.branch:
+            if not branch and counselor.branch:
+                cleaned_data['branch'] = counselor.branch
+                branch = counselor.branch
+            elif branch and counselor.branch and branch != counselor.branch:
                 self.add_error(
                     'counselor',
                     f"Assigned counselor '{counselor.username}' belongs to '{counselor.branch.name}', which does not match selected branch '{branch.name}'."
@@ -182,11 +144,11 @@ class AdminTelecallerEditForm(forms.ModelForm):
 
 
 class BranchHeadTelecallerCreateForm(forms.ModelForm):
-    """Branch Head creates a Telecaller - branch is always auto-inherited, counselor is required."""
+    """Branch Head creates a Telecaller - branch is always auto-inherited, counselor is optional."""
     counselor = forms.ModelChoiceField(
         queryset=User.objects.none(),
-        required=True,
-        empty_label="-- Select Counselor (Required) --",
+        required=False,
+        empty_label="— None (Unassigned) —",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 
@@ -204,8 +166,11 @@ class BranchHeadTelecallerCreateForm(forms.ModelForm):
 
     def __init__(self, *args, branch=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if 'username' in self.fields:
+            self.fields['username'].required = False
         if not self.instance.pk:
             self.instance.role = UserRole.TELECALLER
+            self.fields['is_active'].initial = True
         self._branch = branch
         if branch is not None:
             self.fields['counselor'].queryset = User.objects.filter(
@@ -235,12 +200,11 @@ class BranchHeadTelecallerCreateForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         counselor = cleaned_data.get('counselor')
-        if not counselor:
-            self.add_error('counselor', "Counselor is required. A Telecaller must be assigned to a Counselor.")
-        elif self._branch and counselor.branch_id != self._branch.id:
-            self.add_error('counselor', f"Assigned counselor must belong to this branch ({self._branch.name}).")
-        elif not counselor.is_active:
-            self.add_error('counselor', "Assigned counselor must be active.")
+        if counselor:
+            if self._branch and counselor.branch_id != self._branch.id:
+                self.add_error('counselor', f"Assigned counselor must belong to this branch ({self._branch.name}).")
+            elif not counselor.is_active:
+                self.add_error('counselor', "Assigned counselor must be active.")
 
         return cleaned_data
 

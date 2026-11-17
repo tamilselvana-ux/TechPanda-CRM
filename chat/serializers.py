@@ -79,7 +79,6 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
             'phone_number',
             'phone_number_id',
             'business_account_id',
-            'access_token',
             'is_default',
             'is_active',
             'automation_enabled',
@@ -90,8 +89,7 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
             'active_flow_info',
         ]
         extra_kwargs = {
-            'crm_branch': {'required': False, 'allow_null': True},
-            'access_token': {'required': False, 'allow_blank': True, 'write_only': True}
+            'crm_branch': {'required': False, 'allow_null': True}
         }
 
     def get_unread_count(self, obj):

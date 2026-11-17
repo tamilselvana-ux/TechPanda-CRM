@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     # Admin telecaller management
     path('admin/telecallers/', views.admin_telecallers_list, name='admin_telecallers_list'),
+    path('admin/telecallers/bulk-assign/', views.telecaller_bulk_assign, name='telecaller_bulk_assign'),
+    path('telecallers/bulk-assign/', views.telecaller_bulk_assign, name='telecaller_bulk_assign_direct'),
     path('admin/telecallers/create/', views.admin_telecaller_create, name='admin_telecaller_create'),
     path('admin/telecallers/<int:pk>/', views.admin_telecaller_detail, name='admin_telecaller_detail'),
     path('admin/telecallers/<int:pk>/edit/', views.admin_telecaller_edit, name='admin_telecaller_edit'),

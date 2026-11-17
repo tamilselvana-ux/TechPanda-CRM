@@ -252,10 +252,12 @@ def can_manage_user(user, target_user):
     if user.is_admin_user:
         return True
     if user.role == UserRole.SALES_HEAD:
-        return (
-            target_user.role in (UserRole.BRANCH_HEAD, UserRole.COUNSELOR, UserRole.TELECALLER, UserRole.RECEPTIONIST)
-            and target_user.branch_id in get_accessible_branch_ids(user)
-        )
+        if target_user.role not in (UserRole.COUNSELOR, UserRole.TELECALLER):
+            return False
+        accessible = get_accessible_branch_ids(user)
+        if not accessible or not target_user.branch_id:
+            return True
+        return target_user.branch_id in accessible
     if user.role in (UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN):
         return target_user.role in (UserRole.COUNSELOR, UserRole.TELECALLER, UserRole.RECEPTIONIST) and target_user.branch_id == user.branch_id
     return False
@@ -268,7 +270,12 @@ def can_create_user(user, target_role, branch):
     if user.is_admin_user:
         return True
     if user.role == UserRole.SALES_HEAD:
-        return target_role in (UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN) and branch is not None and branch.id in get_accessible_branch_ids(user)
+        if target_role not in (UserRole.TELECALLER, UserRole.COUNSELOR):
+            return False
+        accessible = get_accessible_branch_ids(user)
+        if branch is not None:
+            return not accessible or branch.id in accessible
+        return True
     if user.role in (UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN):
         return target_role in (UserRole.COUNSELOR, UserRole.TELECALLER, UserRole.RECEPTIONIST) and branch is not None and branch.id == user.branch_id
     if user.role == UserRole.COUNSELOR:

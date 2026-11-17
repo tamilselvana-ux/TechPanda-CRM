@@ -162,9 +162,7 @@ class User(AbstractUser):
             if not self.branch_id:
                 raise ValidationError({'branch': "A Receptionist must be assigned to a branch."})
         if self.role == UserRole.TELECALLER:
-            if not getattr(self, '_is_self_registration', False):
-                if not self.counselor_id:
-                    raise ValidationError({'counselor': "A Telecaller must be assigned to a Counselor."})
+            # Counselor is optional for Telecallers (Unassigned until assigned)
             if self.counselor_id:
                 if self.counselor_id == self.id:
                     raise ValidationError({'counselor': "A user cannot be their own counselor."})

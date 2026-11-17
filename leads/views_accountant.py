@@ -336,21 +336,6 @@ def accountant_payment_verification(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    page_refs = [p.transaction_reference.strip() for p in page_obj if p.transaction_reference and p.transaction_reference.strip() and p.payment_method != PaymentMethod.CASH]
-    duplicate_refs = set()
-    if page_refs:
-        from django.db.models import Count
-        duplicate_refs = set(
-            PaymentTransaction.objects.filter(
-                transaction_reference__in=page_refs
-            ).exclude(
-                status=PaymentTransactionStatus.REJECTED
-            ).values('transaction_reference')
-            .annotate(cnt=Count('id'))
-            .filter(cnt__gt=1)
-            .values_list('transaction_reference', flat=True)
-        )
-
     branches = Branch.objects.filter(id__in=get_accessible_branch_ids(request.user), status='Active')
     counselors = User.objects.filter(
         role=UserRole.COUNSELOR,
@@ -374,7 +359,6 @@ def accountant_payment_verification(request):
         'pending_count': pending_count,
         'approved_count': approved_count,
         'rejected_count': rejected_count,
-        'duplicate_refs': duplicate_refs,
         'portal_title': 'Payment Verification Queue',
     }
     return render(request, 'accountant/verification_list.html', context)
@@ -875,7 +859,7 @@ def accountant_monthly_report_excel(request):
     wb.save(output)
     output.seek(0)
 
-    filename = f"iTechPanda_Financial_Report_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.xlsx"
+    filename = f"DigiPanda_Financial_Report_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.xlsx"
     response = HttpResponse(
         output.getvalue(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

@@ -879,7 +879,7 @@ def process_spreadsheet_row_duplicate_rules(row_data, headers=None, connection=N
                 branch=incoming_branch,
                 branch_name=incoming_branch.name if incoming_branch else 'Different Branch',
                 status='DUPLICATE',
-                notes='⚠ Same lead details detected in another branch within 10 days.',
+                notes='Same lead details detected in another branch within 10 days.',
                 source=source_label,
                 data_payload=clean_payload
             )

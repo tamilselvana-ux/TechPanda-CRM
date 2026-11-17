@@ -1,5 +1,5 @@
 """
-Authentication backends for iTechPanda CRM.
+Authentication backends for TechPanda CRM.
 Supports email-based authentication with case-insensitive matching.
 Hardened with schema auto-healing and deferred column fallbacks for production resilience.
 """

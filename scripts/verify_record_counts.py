@@ -22,7 +22,7 @@ from django.utils import timezone
 
 def verify_record_counts():
     print("=" * 70)
-    print("DIGIPANDA CRM — RECORD COUNT EQUALITY TEST (COMPACT DATE PICKER)")
+    print("TECHPANDA CRM — RECORD COUNT EQUALITY TEST (COMPACT DATE PICKER)")
     print("=" * 70)
 
     admin = User.objects.filter(role=UserRole.ADMIN, is_active=True).first()

@@ -145,7 +145,7 @@ def sync_answers(lead, collected_data):
                     lead.product = product
                     fields.add('product')
                 elif lead.product_id != product.id:
-                    timeline.append(f"🔄 New Course Interest: {product.name} (Previous: {lead.product.name})")
+                    timeline.append(f"New Course Interest: {product.name} (Previous: {lead.product.name})")
         elif k in BRANCH_KEYS or 'location' in k:
             branch = intake.resolve_branch(value)
             if branch is not None:
@@ -158,7 +158,7 @@ def sync_answers(lead, collected_data):
                     cf['latest_branch_enquiry'] = branch.name
                     lead.custom_fields = cf
                     fields.add('custom_fields')
-                    timeline.append(f"🏢 Preferred Branch: {branch.name} (Original: {lead.branch.name})")
+                    timeline.append(f"Preferred Branch: {branch.name} (Original: {lead.branch.name})")
         else:
             # Other structured qualification inputs (training mode, current status, timeframe)
             cf = dict(lead.custom_fields or {})

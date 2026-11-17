@@ -46,8 +46,10 @@ def assign_new_lead(lead, branch=None, source="Google Sheet", triggered_by=None,
             branch=target_branch,
             is_active=True,
             telecaller__is_active=True,
-            telecaller__is_on_duty=True,
-            telecaller__role=UserRole.TELECALLER
+            telecaller__role=UserRole.TELECALLER,
+        ).exclude(
+            telecaller__counselor__isnull=True,
+            telecaller__branch__isnull=True
         )
         if exclude_telecaller:
             qs = qs.exclude(telecaller=exclude_telecaller)
@@ -76,6 +78,39 @@ def assign_new_lead(lead, branch=None, source="Google Sheet", triggered_by=None,
         # Strictly percentage-based distribution with mandatory 100% total validation
         valid_setups = [s for s in setups if s.assignment_percentage > 0]
         total_pct = sum(s.assignment_percentage for s in valid_setups)
+
+        # Fallback to Centralized Allocation Hub if target branch is not configured
+        if not valid_setups or total_pct != 100:
+            from branches.models import Branch
+            central_branch = Branch.objects.filter(name='Centralized (All Branches)').first()
+            if central_branch and central_branch.id != target_branch.id:
+                central_qs = TelecallerLeadSetup.objects.select_for_update().filter(
+                    branch=central_branch,
+                    is_active=True,
+                    telecaller__is_active=True,
+                    telecaller__role=UserRole.TELECALLER,
+                ).exclude(
+                    telecaller__counselor__isnull=True,
+                    telecaller__branch__isnull=True
+                )
+                if exclude_telecaller:
+                    central_qs = central_qs.exclude(telecaller=exclude_telecaller)
+
+                central_rule_source = ''
+                if lead_source and central_qs.filter(source=lead_source).exists():
+                    central_qs = central_qs.filter(source=lead_source)
+                    central_rule_source = lead_source
+                else:
+                    central_qs = central_qs.filter(source='', channel__isnull=True)
+                    central_rule_source = 'Centralized General'
+
+                central_setups = list(central_qs.select_related('telecaller', 'telecaller__branch'))
+                central_valid = [s for s in central_setups if s.assignment_percentage > 0]
+                central_pct = sum(s.assignment_percentage for s in central_valid)
+                if central_valid and (exclude_telecaller or central_pct == 100):
+                    valid_setups = central_valid
+                    total_pct = central_pct
+                    rule_source_name = central_rule_source
 
         # Strict 100% check
         src_label = f" for source '{lead_source}'" if (lead_source and rule_source_name == lead_source) else ""
@@ -275,8 +310,10 @@ def apply_branch_lead_distribution(branch, user=None, source=None) -> tuple[int,
             is_active=True,
             assignment_percentage__gt=0,
             telecaller__is_active=True,
-            telecaller__is_on_duty=True,
-            telecaller__role=UserRole.TELECALLER
+            telecaller__role=UserRole.TELECALLER,
+        ).exclude(
+            telecaller__counselor__isnull=True,
+            telecaller__branch__isnull=True
         )
         if norm_source:
             setups_qs = setups_qs.filter(source=norm_source)
@@ -563,8 +600,7 @@ def run_lead_sla_escalation(stale_hours=24, untouched_days=7, triggered_by=None)
             branch=branch,
             is_active=True,
             assignment_percentage__gt=0,
-            telecaller__is_active=True,
-            telecaller__is_on_duty=True
+            telecaller__is_active=True
         ).exclude(telecaller=old_tc)
 
         if other_tcs.exists():
@@ -582,7 +618,7 @@ def run_lead_sla_escalation(stale_hours=24, untouched_days=7, triggered_by=None)
                     try:
                         create_notification(
                             recipient=new_tc,
-                            title="🚨 Escalated Lead Assigned",
+                            title="Escalated Lead Assigned",
                             message=f"Lead {lead.name} escalated to you due to {stale_hours}h response SLA breach.",
                             notification_type='warning',
                             link=reverse('telecaller_lead_detail', args=[lead.id])
@@ -595,7 +631,7 @@ def run_lead_sla_escalation(stale_hours=24, untouched_days=7, triggered_by=None)
             if mgr:
                 create_notification(
                     recipient=mgr,
-                    title="⚠️ SLA Breach Alert",
+                    title="SLA Breach Alert",
                     message=f"Lead {lead.name} has been uncontacted for >{stale_hours}h by {old_tc.username} (no alternate telecaller in {branch.name}).",
                     notification_type='danger',
                     link=reverse('manager_lead_detail', args=[lead.id]) if hasattr(mgr, 'role') and mgr.role == UserRole.SALES_HEAD else ''
@@ -622,8 +658,7 @@ def run_lead_sla_escalation(stale_hours=24, untouched_days=7, triggered_by=None)
             branch=branch,
             is_active=True,
             assignment_percentage__gt=0,
-            telecaller__is_active=True,
-            telecaller__is_on_duty=True
+            telecaller__is_active=True
         ).exclude(telecaller=old_tc)
 
         if other_tcs.exists():
@@ -641,7 +676,7 @@ def run_lead_sla_escalation(stale_hours=24, untouched_days=7, triggered_by=None)
                     try:
                         create_notification(
                             recipient=new_tc,
-                            title="🚨 Neglected Lead Reassigned",
+                            title="Neglected Lead Reassigned",
                             message=f"Lead {lead.name} reassigned to you after remaining untouched for {untouched_days} days.",
                             notification_type='warning',
                             link=reverse('telecaller_lead_detail', args=[lead.id])

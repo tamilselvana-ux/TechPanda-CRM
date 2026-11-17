@@ -1,5 +1,5 @@
 /**
- * iTechPanda CRM - Filter Synchronization & Controlled Search
+ * TechPanda CRM - Filter Synchronization & Controlled Search
  * Automatically applies filter changes upon discrete selection (dropdowns, dates),
  * synchronizes dependent dropdowns (e.g. Branch -> Telecaller / Counselor),
  * preserves pagination & sorting context, and submits search on Enter or button click

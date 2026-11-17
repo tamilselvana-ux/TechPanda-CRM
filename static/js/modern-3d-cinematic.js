@@ -1,5 +1,5 @@
 /**
- * iTechPanda CRM - 3D CINEMATIC INTERACTIVE ENGINE
+ * TechPanda CRM - 3D CINEMATIC INTERACTIVE ENGINE
  * Lightweight, 60fps card specular reflection and perspective tilt micro-interactions
  */
 (function () {
@@ -69,7 +69,7 @@
   }
 
   // Expose global init function for dynamic page updates
-  window.iTechPanda3D = {
+  window.TechPanda3D = {
     init: init3DTilt
   };
 })();

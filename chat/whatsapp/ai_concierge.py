@@ -211,13 +211,13 @@ def generate_concierge_response(intent_data: Dict[str, Any], conversation, lead=
             f"✅ *Admissions Counseling Session Reserved!*\n\n"
             f"Hello {customer_name}! I have priority-booked your 1-on-1 counseling session with our {counselor_name} for tomorrow at *10:30 AM*.\n\n"
             f"📞 *Call Details*: Our advisor will contact you on this number ({phone}).\n"
-            f"📍 *Option*: Would you prefer this session via Google Meet video call, or an in-person visit to our nearest iTechPanda branch?\n\n"
+            f"📍 *Option*: Would you prefer this session via Google Meet video call, or an in-person visit to our nearest TechPanda branch?\n\n"
             f"Reply *'Meet'* or *'Campus'* to let us know!"
         )
 
     elif intent == 'FEES_INSTALLMENTS':
         reply_text = (
-            f"🎓 *iTechPanda Academy — Course Fees & No-Cost EMI Options*\n\n"
+            f"🎓 *TechPanda Academy — Course Fees & No-Cost EMI Options*\n\n"
             f"Hello {customer_name}! Here is our transparent fee structure for our flagship certification programs:\n\n"
             f"• *Full Stack Software Engineering (MERN / Django)*: ₹42,000 (Early scholarship up to ₹10,000 available)\n"
             f"• *Data Science & Applied AI / ML*: ₹48,000\n"
@@ -229,10 +229,10 @@ def generate_concierge_response(intent_data: Dict[str, Any], conversation, lead=
 
     elif intent == 'SYLLABUS_COURSE':
         action_taken = "SENT_BROCHURE"
-        base_url = getattr(settings, 'CRM_BASE_URL', '').rstrip('/') or "https://itechpanda.com"
-        brochure_url = f"{base_url}/static/brochures/itechpanda_course_catalog.pdf"
+        base_url = getattr(settings, 'CRM_BASE_URL', '').rstrip('/') or "https://www.techpanda.com"
+        brochure_url = f"{base_url}/static/brochures/techpanda_course_catalog.pdf"
         reply_text = (
-            f"📚 *iTechPanda Academy — Course Curriculum & Project Roadmap*\n\n"
+            f"📚 *TechPanda Academy — Course Curriculum & Project Roadmap*\n\n"
             f"Hello {customer_name}! Our curriculum is designed with 100% live production projects:\n\n"
             f"• *Phase 1*: Fundamentals, Clean Code & Data Structures\n"
             f"• *Phase 2*: Full-Stack Web Architecture & REST / GraphQL APIs\n"
@@ -244,7 +244,7 @@ def generate_concierge_response(intent_data: Dict[str, Any], conversation, lead=
 
     elif intent == 'BATCH_TIMINGS':
         reply_text = (
-            f"⏰ *iTechPanda Academy — Flexible Batch Schedules*\n\n"
+            f"⏰ *TechPanda Academy — Flexible Batch Schedules*\n\n"
             f"Hello {customer_name}! We offer both weekday and working professional batches:\n\n"
             f"• *Morning Fast-Track*: 8:00 AM – 10:00 AM (Mon–Fri)\n"
             f"• *Regular Day Immersion*: 10:30 AM – 1:30 PM (Mon–Fri)\n"
@@ -256,7 +256,7 @@ def generate_concierge_response(intent_data: Dict[str, Any], conversation, lead=
 
     else:
         reply_text = (
-            f"👋 *Welcome to iTechPanda Academy!* 🐼\n\n"
+            f"👋 *Welcome to TechPanda Academy!* 🐼\n\n"
             f"Our live admissions desk is currently closed for the night (Office Hours: Mon–Sat 9:00 AM – 7:30 PM), but I am your **24/7 AI Admissions Concierge**.\n\n"
             f"How can I assist you right away?\n"
             f"1️⃣ *Fees & No-Cost EMI* — Reply *'Fees'*\n"

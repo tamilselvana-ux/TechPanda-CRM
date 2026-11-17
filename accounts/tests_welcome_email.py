@@ -113,7 +113,7 @@ class WelcomeEmailAndActivationTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         sent_email = mail.outbox[0]
 
-        self.assertIn("Welcome to iTechPanda CRM", sent_email.subject)
+        self.assertIn("Welcome to TechPanda CRM", sent_email.subject)
         self.assertIn("priya.nair", sent_email.body)
         self.assertIn("Counselor", sent_email.body)
         self.assertIn("Cyber City Branch", sent_email.body)
@@ -134,14 +134,14 @@ class WelcomeEmailAndActivationTests(TestCase):
         msg = mail.outbox[0]
 
         # Plain text body
-        self.assertIn("Welcome to iTechPanda CRM", msg.body)
+        self.assertIn("Welcome to TechPanda CRM", msg.body)
         self.assertIn("Set up your password", msg.body)
         # HTML alternate body
         self.assertEqual(len(msg.alternatives), 1)
         html_content, mimetype = msg.alternatives[0]
         self.assertEqual(mimetype, 'text/html')
         self.assertIn("<!DOCTYPE html>", html_content)
-        self.assertIn("TECHPANDA", html_content)
+        self.assertIn("TechPanda", html_content)
 
     # 5. Unauthorized users cannot create users or resend invitations
     def test_05_unauthorized_users_forbidden(self):
@@ -205,7 +205,7 @@ class WelcomeEmailAndActivationTests(TestCase):
         )
         self.client.login(username="admin_lead", password="AdminPassword123!")
         resend_url = reverse('resend_user_invitation', args=[user.pk])
-        response = self.client.get(resend_url)
+        response = self.client.post(resend_url)
         self.assertEqual(response.status_code, 302)
 
         user.refresh_from_db()

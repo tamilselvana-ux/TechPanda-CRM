@@ -70,7 +70,7 @@ class MultiSpreadsheetLiveConnectionTests(TestCase):
         """
         Section 2 & 3:
         - Direct connection without authentication
-        - Displays status card: '🟢 Live Connected', 'Spreadsheet:', 'Last Refresh:', 'Auto Refresh: Every 10 seconds'
+        - Displays status card: 'Live Connected', 'Spreadsheet:', 'Last Refresh:', 'Auto Refresh: Every 10 seconds'
         - Dynamic table with actual columns
         - Phone number is displayed as actually imported, not masked (master prompt Section 28/52)
         """
@@ -100,7 +100,7 @@ class MultiSpreadsheetLiveConnectionTests(TestCase):
         content = resp.content.decode('utf-8')
 
         # Status card
-        self.assertIn("🟢 Live Connected", content)
+        self.assertIn("Live Connected", content)
         self.assertIn("Student Enquiries – T. Nagar", content)
         self.assertIn("Auto Refresh:", content)
         self.assertIn("Every 10 seconds", content)
@@ -237,7 +237,7 @@ class MultiSpreadsheetLiveConnectionTests(TestCase):
         Section 9 & 11:
         Same lead details submitted from a DIFFERENT BRANCH WITHIN 10 DAYS:
         -> Treat as DUPLICATE.
-        -> Warning: '⚠ Same lead details detected in another branch within 10 days.'
+        ->Warning: 'Same lead details detected in another branch within 10 days.'
         -> Status: DUPLICATE.
         -> Do not create duplicate normal lead in the main Leads list.
         -> Sent to Duplicate Leads section.
@@ -274,7 +274,7 @@ class MultiSpreadsheetLiveConnectionTests(TestCase):
         self.assertEqual(dup_rec.status, 'DUPLICATE')
         self.assertEqual(dup_rec.original_lead, orig_lead)
         self.assertEqual(dup_rec.branch, self.branch_velachery)
-        self.assertIn("⚠ Same lead details detected in another branch within 10 days.", dup_rec.notes)
+        self.assertIn("Same lead details detected in another branch within 10 days.", dup_rec.notes)
         # No extra normal lead created
         self.assertEqual(Lead.objects.count(), 1)
         # Registered under duplicate records
@@ -334,7 +334,7 @@ class MultiSpreadsheetLiveConnectionTests(TestCase):
           * Email
           * Original Branch & Submission Date
           * Duplicate Branch & Submission Date
-          * Warning banner: '⚠ Same lead details detected in another branch within 10 days.'
+          * Warning banner: 'Same lead details detected in another branch within 10 days.'
           * Status: DUPLICATE
           * Button: [ View Original Lead ]
           * Button: [ Keep Single Lead ]
@@ -358,7 +358,7 @@ class MultiSpreadsheetLiveConnectionTests(TestCase):
             branch=self.branch_velachery,
             branch_name="Velachery",
             status="DUPLICATE",
-            notes="⚠ Same lead details detected in another branch within 10 days.",
+            notes="Same lead details detected in another branch within 10 days.",
             source="Student Enquiries – Velachery",
             data_payload={'Name': 'Divya R', 'Phone': '9876522222', 'Branch': 'Velachery'}
         )
@@ -384,7 +384,7 @@ class MultiSpreadsheetLiveConnectionTests(TestCase):
         self.assertIn("T. Nagar", content_dup)
         self.assertIn("Velachery", content_dup)
         self.assertIn("DUPLICATE", content_dup)
-        self.assertIn("⚠ Same lead details detected in another branch within 10 days.", content_dup)
+        self.assertIn("Same lead details detected in another branch within 10 days.", content_dup)
         self.assertIn("[ View Original Lead ]", content_dup)
         self.assertIn(f"/admin/leads/{orig_lead.id}/", content_dup)
         self.assertIn("[ Keep Single Lead ]", content_dup)

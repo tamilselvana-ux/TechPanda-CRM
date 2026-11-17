@@ -107,10 +107,8 @@ class InboxView(LoginRequiredMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
-        from branches.models import Branch
         return render(request, 'chat/inbox.html', {
             'can_manage_automation': crm.can_manage_automation(request.user),
-            'branches': Branch.objects.filter(status=Branch.Status.ACTIVE).order_by('name'),
         })
 
 
@@ -166,26 +164,13 @@ class BusinessAccountListAPI(APIView):
     def post(self, request):
         """
         POST /api/business-accounts/
-        Create a new WhatsApp Business number/account with assigned branch.
+        Create a new WhatsApp Business number/account.
         """
         if not crm.can_manage_automation(request.user):
             raise PermissionDenied("Only Admin and Sales Head can add WhatsApp numbers.")
-        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
-        if 'crm_branch_id' in data and not data.get('crm_branch'):
-            data['crm_branch'] = data['crm_branch_id']
-        serializer = BusinessAccountSerializer(data=data)
+        serializer = BusinessAccountSerializer(data=request.data)
         if serializer.is_valid():
             account = serializer.save()
-            branch_val = data.get('crm_branch') or data.get('crm_branch_id')
-            if branch_val:
-                from branches.models import Branch
-                try:
-                    b_obj = Branch.objects.filter(id=int(branch_val)).first()
-                    if b_obj and account.crm_branch != b_obj:
-                        account.crm_branch = b_obj
-                        account.save(update_fields=['crm_branch'])
-                except (ValueError, TypeError):
-                    pass
             return Response(BusinessAccountSerializer(account).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -491,26 +476,15 @@ class WhatsAppWebhookView(View):
         return HttpResponse("Verification token mismatch", status=403)
 
     def post(self, request):
-        from fb_leads.views import get_configured_fb_app_secrets
-        secrets = get_configured_fb_app_secrets()
-        if not secrets:
-            logger.error("WhatsApp webhook rejected: WHATSAPP_APP_SECRET or FB_APP_SECRET is not configured.")
+        secret = getattr(settings, "WHATSAPP_APP_SECRET", "") or getattr(settings, "FB_APP_SECRET", "")
+        if not secret:
+            logger.error("WhatsApp webhook rejected: WHATSAPP_APP_SECRET is not configured.")
             return HttpResponse("Webhook secret not configured", status=403)
 
         signature = request.headers.get("X-Hub-Signature-256", "")
-        if not signature:
-            logger.warning("WhatsApp webhook rejected: missing X-Hub-Signature-256 header")
-            return HttpResponse("Missing signature", status=403)
-
-        is_valid = any(
-            hmac.compare_digest(
-                signature,
-                "sha256=" + hmac.new(s.encode("utf-8"), request.body, hashlib.sha256).hexdigest()
-            )
-            for s in secrets
-        )
-        if not is_valid:
-            logger.warning("WhatsApp webhook rejected: bad signature")
+        expected = "sha256=" + hmac.new(secret.encode('utf-8'), request.body, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(signature, expected):
+            logger.warning("WhatsApp webhook rejected: bad or missing X-Hub-Signature-256 signature")
             return HttpResponse("Bad signature", status=403)
 
         try:
@@ -1064,11 +1038,11 @@ class AIFlowAssistantAPI(APIView):
 
         # 2. Greeting / Welcome Message
         msg_id = "greeting_1"
-        greeting_text = "👋 Welcome to our WhatsApp service! We are happy to assist you today."
+        greeting_text = "Welcome to our WhatsApp service! We are happy to assist you today."
         if "lead" in prompt_lower or "course" in prompt_lower or "admission" in prompt_lower:
-            greeting_text = "👋 Welcome to our Academy! We provide career-transforming technical training courses. Let's find the best fit for you! 🚀"
+            greeting_text = "Welcome to our Academy! We provide career-transforming technical training courses. Let's find the best fit for you! "
         elif "support" in prompt_lower or "help" in prompt_lower:
-            greeting_text = "👋 Hello! Welcome to Customer Support. How can we assist you today?"
+            greeting_text = "Hello! Welcome to Customer Support. How can we assist you today?"
 
         nodes.append({
             "id": msg_id,
@@ -1119,7 +1093,7 @@ class AIFlowAssistantAPI(APIView):
                 "variable_name": "email",
                 "expected_type": "email",
                 "retry_limit": 3,
-                "invalid_message": "⚠️ Please enter a valid email address (e.g. name@example.com):",
+                "invalid_message": "Please enter a valid email address (e.g. name@example.com):",
                 "position": {"x": x_pos, "y": y_cursor},
                 "x": x_pos,
                 "y": y_cursor,
@@ -1128,7 +1102,7 @@ class AIFlowAssistantAPI(APIView):
                     "variable_name": "email",
                     "expected_type": "email",
                     "retry_limit": 3,
-                    "invalid_message": "⚠️ Please enter a valid email address (e.g. name@example.com):"
+                    "invalid_message": "Please enter a valid email address (e.g. name@example.com):"
                 }
             })
             connect_nodes(prev_node_id, q_email_id)
@@ -1141,7 +1115,7 @@ class AIFlowAssistantAPI(APIView):
                 "id": slot_id,
                 "type": "question",
                 "title": "Preferred Appointment Slot",
-                "body": "📅 What is your preferred *Date & Time* for the counseling session? (e.g. *Tomorrow 11 AM* or *Saturday 3 PM*):",
+                "body": "What is your preferred *Date & Time* for the counseling session? (e.g. *Tomorrow 11 AM* or *Saturday 3 PM*):",
                 "variable_name": "appointment_slot",
                 "expected_type": "text",
                 "retry_limit": 3,
@@ -1149,7 +1123,7 @@ class AIFlowAssistantAPI(APIView):
                 "x": x_pos,
                 "y": y_cursor,
                 "data": {
-                    "text": "📅 What is your preferred *Date & Time* for the counseling session? (e.g. *Tomorrow 11 AM* or *Saturday 3 PM*):",
+                    "text": "What is your preferred *Date & Time* for the counseling session? (e.g. *Tomorrow 11 AM* or *Saturday 3 PM*):",
                     "variable_name": "appointment_slot",
                     "expected_type": "text"
                 }
@@ -1238,11 +1212,11 @@ class AIFlowAssistantAPI(APIView):
                 "id": handover_id,
                 "type": "human_handover",
                 "title": "Transfer to Representative",
-                "body": "Connecting you with our senior representative right now... 👤",
+                "body": "Connecting you with our senior representative right now... ",
                 "position": {"x": x_pos + 160, "y": y_cursor},
                 "x": x_pos + 160,
                 "y": y_cursor,
-                "data": {"text": "Connecting you with our senior representative right now... 👤"}
+                "data": {"text": "Connecting you with our senior representative right now... "}
             })
             connect_nodes(cond_id, handover_id, "YES")
 
@@ -1270,13 +1244,13 @@ class AIFlowAssistantAPI(APIView):
                 "type": "media",
                 "title": "Send Curriculum Brochure",
                 "source": "selected_course_brochure",
-                "caption": "📄 Here is your curriculum brochure and course details.",
+                "caption": "Here is your curriculum brochure and course details.",
                 "position": {"x": x_pos, "y": y_cursor},
                 "x": x_pos,
                 "y": y_cursor,
                 "data": {
                     "source": "selected_course_brochure",
-                    "caption": "📄 Here is your curriculum brochure and course details."
+                    "caption": "Here is your curriculum brochure and course details."
                 }
             })
             connect_nodes(prev_node_id, brochure_id)
@@ -1307,11 +1281,11 @@ class AIFlowAssistantAPI(APIView):
                 "id": handover_id,
                 "type": "human_handover",
                 "title": "Handover to Human Agent",
-                "body": "Connecting you with an agent now. Please hold on! 👤",
+                "body": "Connecting you with an agent now. Please hold on! ",
                 "position": {"x": x_pos, "y": y_cursor},
                 "x": x_pos,
                 "y": y_cursor,
-                "data": {"text": "Connecting you with an agent now. Please hold on! 👤"}
+                "data": {"text": "Connecting you with an agent now. Please hold on! "}
             })
             connect_nodes(prev_node_id, handover_id)
             prev_node_id = handover_id
@@ -1323,12 +1297,12 @@ class AIFlowAssistantAPI(APIView):
             "id": end_id,
             "type": "end",
             "title": "Session Completed",
-            "body": "Thank you for reaching out! Feel free to message us again anytime. Have a great day! 🌟",
+            "body": "Thank you for reaching out! Feel free to message us again anytime. Have a great day! ",
             "position": {"x": x_pos, "y": y_cursor},
             "x": x_pos,
             "y": y_cursor,
             "data": {
-                "text": "Thank you for reaching out! Feel free to message us again anytime. Have a great day! 🌟"
+                "text": "Thank you for reaching out! Feel free to message us again anytime. Have a great day! "
             }
         })
         connect_nodes(prev_node_id, end_id)
@@ -1468,9 +1442,9 @@ def api_telecaller_send_whatsapp(request, lead_id):
         custom_text = data.get('message_text', '').strip()
 
         preset_templates = {
-            'welcome': f"Hello {lead.name}, welcome to iTechPanda! Thank you for inquiring about our programs. How can we assist you with your career goals today?",
-            'followup': f"Hi {lead.name}, following up on our previous conversation regarding your course inquiry at iTechPanda. Are you available for a brief discussion today?",
-            'course_details': f"Hello {lead.name}, here are the comprehensive details for our training & placement programs at iTechPanda. We offer industry-standard curriculum and hands-on projects.",
+            'welcome': f"Hello {lead.name}, welcome to DigiPanda! Thank you for inquiring about our programs. How can we assist you with your career goals today?",
+            'followup': f"Hi {lead.name}, following up on our previous conversation regarding your course inquiry at DigiPanda. Are you available for a brief discussion today?",
+            'course_details': f"Hello {lead.name}, here are the comprehensive details for our training & placement programs at DigiPanda. We offer industry-standard curriculum and hands-on projects.",
             'brochure': f"Hi {lead.name}, please find our latest course catalog and syllabus overview. Feel free to reply here if you have any questions!",
         }
 
@@ -1587,89 +1561,3 @@ def api_whatsapp_voice_capability(request, lead_id):
         'recommended_action': 'tel_dial' if not meta_voice_configured else 'meta_voip'
     })
 
-
-
-class ConversationMetaWindowAPI(APIView):
-    """
-    GET /api/conversations/<id>/meta-window/
-    Returns the real-time Meta 24-hour service policy window status.
-    """
-    def get(self, request, pk):
-        conversation = _conversation_or_403(request.user, pk)
-        return Response({
-            'success': True,
-            'meta_window': conversation.meta_window_info
-        }, status=status.HTTP_200_OK)
-
-
-class SendCourseKitAPI(APIView):
-    """
-    POST /api/conversations/<id>/send-course-kit/
-    1-Click Course Kit & Syllabus PDF brochure dispatch for WhatsApp.
-    """
-    def post(self, request, pk):
-        conversation = _conversation_or_403(request.user, pk)
-        course_name = request.data.get('course_name') or request.POST.get('course_name') or 'Full Stack Development'
-        
-        brochure_text = (
-            f"Hello {conversation.customer_name}! 🎓 Here is your official Course Kit & Curriculum Syllabus for "
-            f"*{course_name}* from iTechPanda Academy.\n\n"
-            f"📄 Complete Syllabus PDF: https://itechpanda.com/brochures/{course_name.lower().replace(' ', '-')}.pdf\n"
-            f"🕒 Next Batch: Upcoming Monday\n"
-            f"💡 100% Practical Training with Live Capstone Projects & Placement Support.\n\n"
-            f"Reply with *1* to speak with a Counselor, or *2* to register for a Free Demo Class!"
-        )
-
-        msg = Message.objects.create(
-            conversation=conversation,
-            sender=Message.SENDER_AGENT,
-            message_type=Message.TYPE_TEXT,
-            message_text=brochure_text,
-            status='sent',
-            timestamp=timezone.now()
-        )
-        conversation.last_message = f"📚 Course Kit sent ({course_name})"
-        conversation.last_message_time = timezone.now()
-        conversation.save(update_fields=['last_message', 'last_message_time'])
-
-        return Response({
-            'success': True,
-            'message': 'Course Kit dispatched successfully via WhatsApp!',
-            'message_id': msg.id,
-            'course_name': course_name
-        }, status=status.HTTP_200_OK)
-
-
-class AIConciergeSimulateAPI(APIView):
-    """
-    POST /api/chat/concierge/simulate/
-    Simulates incoming WhatsApp message against the 24/7 AI Admissions Concierge Bot.
-    """
-    def post(self, request):
-        conversation_id = request.data.get('conversation_id') or request.POST.get('conversation_id')
-        message_text = request.data.get('message_text') or request.POST.get('message_text') or ''
-        force_off_hours = request.data.get('force_off_hours', True)
-        if isinstance(force_off_hours, str):
-            force_off_hours = force_off_hours.lower() in ('1', 'true', 'yes')
-
-        if not conversation_id:
-            return Response({'error': 'conversation_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        conversation = Conversation.objects.filter(pk=conversation_id).first()
-        if not conversation:
-            return Response({'error': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        from chat.whatsapp.ai_concierge import evaluate_and_respond_concierge
-        result = evaluate_and_respond_concierge(
-            conversation=conversation,
-            incoming_message=None,
-            text_content=message_text,
-            force_run=force_off_hours
-        )
-
-        return Response({
-            'success': True,
-            'simulated': True,
-            'conversation_id': conversation.id,
-            'result': result
-        }, status=status.HTTP_200_OK)
