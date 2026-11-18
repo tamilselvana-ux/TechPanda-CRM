@@ -12,11 +12,25 @@ load_dotenv(BASE_DIR / '.env', override=True)
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-techpanda-crm-default-key-change-in-prod')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*').split(',') if h.strip()]
-# Browser logins/forms over https through ngrok or the live domain (comma-separated, with https://)
+
+# Support SSL termination behind Nginx / Cloudflare reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+# Browser logins/forms over https or http through ngrok or the live domain (comma-separated)
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv(
-    'CSRF_TRUSTED_ORIGINS', 'https://*.ngrok-free.app,https://*.ngrok.app,https://itechpandacrm.in,https://www.itechpandacrm.in,https://techpandacrm.in,https://www.techpandacrm.in,https://www.techpanda.com,https://crm.techpanda.academy'
+    'CSRF_TRUSTED_ORIGINS',
+    'https://*.ngrok-free.app,https://*.ngrok.app,https://itechpandacrm.in,https://www.itechpandacrm.in,https://techpandacrm.in,https://www.techpandacrm.in,https://www.techpanda.com,https://crm.techpanda.academy'
 ).split(',') if o.strip()]
-for origin in ['https://itechpandacrm.in', 'https://www.itechpandacrm.in', 'https://techpandacrm.in', 'https://www.techpandacrm.in', 'https://www.techpanda.com']:
+
+for origin in [
+    'https://itechpandacrm.in', 'https://www.itechpandacrm.in',
+    'http://itechpandacrm.in', 'http://www.itechpandacrm.in',
+    'https://techpandacrm.in', 'https://www.techpandacrm.in',
+    'http://techpandacrm.in', 'http://www.techpandacrm.in',
+    'https://www.techpanda.com', 'http://www.techpanda.com',
+    'https://crm.techpanda.academy', 'http://crm.techpanda.academy'
+]:
     if origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(origin)
 

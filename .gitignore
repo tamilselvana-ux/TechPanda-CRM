@@ -12,3 +12,6 @@ credentials/token.json
 credentials/*.json
 private_media/
 scratch/
+
+*.env.save
+.env.save
