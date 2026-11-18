@@ -16,6 +16,10 @@
     </p>
   </div>
   <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="{% url 'receptionist_dashboard' %}" class="btn btn-secondary tp-btn-secondary" style="font-weight: 600; border-color: #bbf7d0; background: #ecfdf5; color: #166534; display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <span>Walk-in Desk</span>
+    </a>
     <a href="{% url 'branch_head_counselors_list' %}" class="btn btn-secondary tp-btn-secondary">Counselors</a>
     <a href="{% url 'branch_head_telecallers_list' %}" class="btn btn-secondary tp-btn-secondary">Telecallers</a>
     <a href="{% url 'branch_head_leads_list' %}" class="btn btn-primary tp-btn-primary">Branch Leads</a>
@@ -106,6 +110,37 @@
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
     </div>
   </a>
+</div>
+
+<!-- FRONT DESK & WALK-IN ARRIVALS INTEGRATION -->
+<div class="tp-card" style="padding: 16px 20px; margin-bottom: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+  <div style="display: flex; align-items: center; gap: 14px;">
+    <div style="width: 44px; height: 44px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb; flex-shrink: 0;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </div>
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">Branch Front Desk &amp; Walk-in Visitors</h4>
+        <span class="badge" style="background: {% if has_receptionist %}#f1f5f9; color: #475569;{% else %}#eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;{% endif %} font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 9999px;">
+          {% if has_receptionist %}Dedicated Receptionist Active{% else %}Front Desk: Managed by Branch Admin{% endif %}
+        </span>
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 0.84rem; color: #64748b;">
+        <strong>{{ walkin_leads_today }}</strong> walk-in{{ walkin_leads_today|pluralize }} registered today &bull; 
+        <strong style="color: {% if walkin_awaiting_counselor > 0 %}#b45309{% else %}#059669{% endif %};">{{ walkin_awaiting_counselor }}</strong> awaiting counselor assignment
+      </p>
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <a href="{% url 'receptionist_qr_standee' %}" target="_blank" class="btn btn-secondary tp-btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      <span>Tablet Kiosk / Standee</span>
+    </a>
+    <a href="{% url 'receptionist_dashboard' %}" class="btn btn-primary tp-btn-primary" style="font-size: 0.82rem; padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+      <span>Open Walk-in Desk</span>
+    </a>
+  </div>
 </div>
 
 <!-- DETAILED PERFORMANCE TABLES -->

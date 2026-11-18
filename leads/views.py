@@ -69,7 +69,7 @@ from .models import (
 
     GoogleFormConnection, LeadSetupConfig, TelecallerLeadSetup,
 
-    DuplicateLeadRecord, AssignmentMethod
+    DuplicateLeadRecord, AssignmentMethod, SavedLeadView
 
 )
 
@@ -119,16 +119,266 @@ from .handoff_service import change_lead_status
 
 
 
-# ==========================================
+def _parse_filter_datetime(val_str, is_end=False):
+    """
+    Parses datetime string (YYYY-MM-DDTHH:MM or YYYY-MM-DD) into timezone-aware datetime.
+    """
+    if not val_str:
+        return None
+    val_str = val_str.strip()
+    try:
+        if 'T' in val_str:
+            parts = val_str.split('T')
+            d = datetime.strptime(parts[0], '%Y-%m-%d').date()
+            t_parts = parts[1].split(':')
+            hour = int(t_parts[0])
+            minute = int(t_parts[1]) if len(t_parts) > 1 else 0
+            second = int(t_parts[2]) if len(t_parts) > 2 else (59 if is_end else 0)
+            naive = datetime.combine(d, time(hour, minute, second))
+        else:
+            d = datetime.strptime(val_str, '%Y-%m-%d').date()
+            naive = datetime.combine(d, time.max if is_end else time.min)
+        return timezone.make_aware(naive) if timezone.is_naive(naive) else naive
+    except Exception:
+        return None
 
+
+def _apply_telecrm_dynamic_filters(leads_qs, request):
+    """
+    Applies TeleCRM Create View dynamic condition filters and operators ('is', 'is_not', 'contains', 'not_contains', 'before', 'after', 'starts_with').
+    Returns a tuple of (filtered_queryset, context_dict).
+    """
+    from .models import LeadStatus
+
+    # 1. Status
+    status_filter = request.GET.get('status', '').strip()
+    op_status = request.GET.get('op_status', 'is').strip()
+    if status_filter:
+        if status_filter.lower() == 'active':
+            if op_status == 'is_not':
+                leads_qs = leads_qs.filter(status__in=[LeadStatus.LOST, LeadStatus.CONVERTED])
+            else:
+                leads_qs = leads_qs.exclude(status__in=[LeadStatus.LOST, LeadStatus.CONVERTED])
+        else:
+            if op_status == 'is_not':
+                leads_qs = leads_qs.exclude(status=status_filter)
+            else:
+                leads_qs = leads_qs.filter(status=status_filter)
+
+    # 2. Branch
+    branch_val = request.GET.get('branch', '').strip()
+    op_branch = request.GET.get('op_branch', 'is').strip()
+    if branch_val:
+        if branch_val.isdigit():
+            if op_branch == 'is_not':
+                leads_qs = leads_qs.exclude(branch_id=int(branch_val))
+            else:
+                leads_qs = leads_qs.filter(branch_id=int(branch_val))
+        else:
+            if op_branch == 'is_not':
+                leads_qs = leads_qs.exclude(branch__name__icontains=branch_val)
+            else:
+                leads_qs = leads_qs.filter(branch__name__icontains=branch_val)
+
+    # 3. Assignee (Telecaller)
+    telecaller_id = request.GET.get('telecaller', '').strip() or request.GET.get('assignee', '').strip()
+    op_telecaller = request.GET.get('op_telecaller', 'is').strip()
+    if telecaller_id:
+        if telecaller_id.isdigit():
+            if op_telecaller == 'is_not':
+                leads_qs = leads_qs.exclude(assigned_telecaller_id=int(telecaller_id))
+            else:
+                leads_qs = leads_qs.filter(assigned_telecaller_id=int(telecaller_id))
+        else:
+            q_assignee = Q(assigned_telecaller__username__icontains=telecaller_id) | Q(assigned_telecaller__first_name__icontains=telecaller_id)
+            if op_telecaller == 'is_not':
+                leads_qs = leads_qs.exclude(q_assignee)
+            else:
+                leads_qs = leads_qs.filter(q_assignee)
+
+    # 4. Rating
+    rating_filter = request.GET.get('rating', '').strip()
+    op_rating = request.GET.get('op_rating', 'is').strip()
+    if rating_filter and rating_filter.isdigit():
+        if op_rating == 'is_not':
+            leads_qs = leads_qs.exclude(priority_rating=int(rating_filter))
+        else:
+            leads_qs = leads_qs.filter(priority_rating=int(rating_filter))
+
+    # 5. Status Last Updated On
+    status_updated_from = request.GET.get('status_updated_from', '').strip()
+    status_updated_to = request.GET.get('status_updated_to', '').strip()
+    op_status_updated = request.GET.get('op_status_updated', 'is').strip()
+    dt_up_from = _parse_filter_datetime(status_updated_from, is_end=False) if status_updated_from else None
+    dt_up_to = _parse_filter_datetime(status_updated_to, is_end=True) if status_updated_to else None
+
+    if op_status_updated == 'is_not':
+        if dt_up_from and dt_up_to:
+            leads_qs = leads_qs.exclude(
+                Q(updated_at__gte=dt_up_from, updated_at__lte=dt_up_to) |
+                Q(status_history__created_at__gte=dt_up_from, status_history__created_at__lte=dt_up_to)
+            ).distinct()
+        elif dt_up_from:
+            leads_qs = leads_qs.exclude(Q(updated_at__gte=dt_up_from) | Q(status_history__created_at__gte=dt_up_from)).distinct()
+        elif dt_up_to:
+            leads_qs = leads_qs.exclude(Q(updated_at__lte=dt_up_to) | Q(status_history__created_at__lte=dt_up_to)).distinct()
+    elif op_status_updated == 'before':
+        dt_target = dt_up_from or dt_up_to
+        if dt_target:
+            leads_qs = leads_qs.filter(Q(updated_at__lte=dt_target) | Q(status_history__created_at__lte=dt_target)).distinct()
+    elif op_status_updated == 'after':
+        dt_target = dt_up_from or dt_up_to
+        if dt_target:
+            leads_qs = leads_qs.filter(Q(updated_at__gte=dt_target) | Q(status_history__created_at__gte=dt_target)).distinct()
+    else:
+        if dt_up_from:
+            leads_qs = leads_qs.filter(Q(updated_at__gte=dt_up_from) | Q(status_history__created_at__gte=dt_up_from)).distinct()
+        if dt_up_to:
+            leads_qs = leads_qs.filter(Q(updated_at__lte=dt_up_to) | Q(status_history__created_at__lte=dt_up_to)).distinct()
+
+    # 6. Created On
+    created_from_val = request.GET.get('created_from', '').strip()
+    created_to_val = request.GET.get('created_to', '').strip()
+    op_created_on = request.GET.get('op_created_on', 'is').strip()
+    dt_cr_from = _parse_filter_datetime(created_from_val, is_end=False) if created_from_val else None
+    dt_cr_to = _parse_filter_datetime(created_to_val, is_end=True) if created_to_val else None
+
+    if op_created_on == 'is_not':
+        if dt_cr_from and dt_cr_to:
+            leads_qs = leads_qs.exclude(created_at__gte=dt_cr_from, created_at__lte=dt_cr_to)
+        elif dt_cr_from:
+            leads_qs = leads_qs.exclude(created_at__gte=dt_cr_from)
+        elif dt_cr_to:
+            leads_qs = leads_qs.exclude(created_at__lte=dt_cr_to)
+    elif op_created_on == 'before':
+        dt_target = dt_cr_from or dt_cr_to
+        if dt_target:
+            leads_qs = leads_qs.filter(created_at__lte=dt_target)
+    elif op_created_on == 'after':
+        dt_target = dt_cr_from or dt_cr_to
+        if dt_target:
+            leads_qs = leads_qs.filter(created_at__gte=dt_target)
+    else:
+        if dt_cr_from:
+            leads_qs = leads_qs.filter(created_at__gte=dt_cr_from)
+        if dt_cr_to:
+            leads_qs = leads_qs.filter(created_at__lte=dt_cr_to)
+
+    def _filter_text_field(qs, lookup_key, val, op):
+        if not val:
+            return qs
+        if op == 'not_contains':
+            return qs.exclude(**{f"{lookup_key}__icontains": val})
+        elif op == 'is':
+            return qs.filter(**{f"{lookup_key}__iexact": val})
+        elif op == 'is_not':
+            return qs.exclude(**{f"{lookup_key}__iexact": val})
+        elif op == 'starts_with':
+            return qs.filter(**{f"{lookup_key}__istartswith": val})
+        else:
+            return qs.filter(**{f"{lookup_key}__icontains": val})
+
+    # 7. Name / Search
+    search = request.GET.get('search', '').strip()
+    op_name = request.GET.get('op_name', 'contains').strip()
+    if search:
+        leads_qs = _filter_text_field(leads_qs, 'name', search, op_name)
+
+    # 8. Phone
+    phone_val = request.GET.get('phone', '').strip()
+    op_phone = request.GET.get('op_phone', 'contains').strip()
+    if phone_val:
+        leads_qs = _filter_text_field(leads_qs, 'phone', phone_val, op_phone)
+
+    # 9. Preferred Branch
+    preferred_branch = request.GET.get('preferred_branch', '').strip()
+    op_preferred_branch = request.GET.get('op_preferred_branch', 'contains').strip()
+    if preferred_branch:
+        if op_preferred_branch == 'not_contains':
+            leads_qs = leads_qs.exclude(
+                Q(branch__name__icontains=preferred_branch) |
+                Q(custom_fields__preferred_branch__icontains=preferred_branch)
+            )
+        elif op_preferred_branch == 'is':
+            leads_qs = leads_qs.filter(
+                Q(branch__name__iexact=preferred_branch) |
+                Q(custom_fields__preferred_branch__iexact=preferred_branch)
+            )
+        elif op_preferred_branch == 'is_not':
+            leads_qs = leads_qs.exclude(
+                Q(branch__name__iexact=preferred_branch) |
+                Q(custom_fields__preferred_branch__iexact=preferred_branch)
+            )
+        elif op_preferred_branch == 'starts_with':
+            leads_qs = leads_qs.filter(
+                Q(branch__name__istartswith=preferred_branch) |
+                Q(custom_fields__preferred_branch__istartswith=preferred_branch)
+            )
+        else:
+            leads_qs = leads_qs.filter(
+                Q(branch__name__icontains=preferred_branch) |
+                Q(custom_fields__preferred_branch__icontains=preferred_branch)
+            )
+
+    # 10. Created By
+    created_by_val = request.GET.get('created_by', '').strip()
+    op_created_by = request.GET.get('op_created_by', 'contains').strip()
+    if created_by_val:
+        if created_by_val.isdigit():
+            if op_created_by in ['is_not', 'not_contains']:
+                leads_qs = leads_qs.exclude(Q(created_by_id=int(created_by_val)) | Q(custom_fields__created_by=created_by_val))
+            else:
+                leads_qs = leads_qs.filter(Q(created_by_id=int(created_by_val)) | Q(custom_fields__created_by=created_by_val))
+        else:
+            q_cr = (
+                Q(created_by__username__icontains=created_by_val) |
+                Q(created_by__first_name__icontains=created_by_val) |
+                Q(created_by__last_name__icontains=created_by_val) |
+                Q(custom_fields__created_by__icontains=created_by_val)
+            )
+            if op_created_by in ['not_contains', 'is_not']:
+                leads_qs = leads_qs.exclude(q_cr)
+            else:
+                leads_qs = leads_qs.filter(q_cr)
+
+    # 11. Custom demographic fields
+    for field_name in ['degree', 'passed_out', 'working_status', 'purpose', 'college']:
+        field_val = request.GET.get(field_name, '').strip() or request.GET.get(f'filter_{field_name}', '').strip()
+        op_field = request.GET.get(f'op_{field_name}', 'contains').strip()
+        if field_val:
+            leads_qs = _filter_text_field(leads_qs, f"custom_fields__{field_name}", field_val, op_field)
+
+    filter_context = {
+        'status_updated_from': status_updated_from,
+        'status_updated_to': status_updated_to,
+        'op_status_updated': op_status_updated,
+        'created_from': created_from_val,
+        'created_to': created_to_val,
+        'op_created_on': op_created_on,
+        'preferred_branch': preferred_branch,
+        'op_preferred_branch': op_preferred_branch,
+        'created_by': created_by_val,
+        'op_created_by': op_created_by,
+        'op_status': op_status,
+        'op_branch': op_branch,
+        'op_telecaller': op_telecaller,
+        'op_rating': op_rating,
+        'op_name': op_name,
+        'op_phone': op_phone,
+        'op_degree': request.GET.get('op_degree', 'contains'),
+        'op_passed_out': request.GET.get('op_passed_out', 'contains'),
+        'op_working_status': request.GET.get('op_working_status', 'contains'),
+        'op_purpose': request.GET.get('op_purpose', 'contains'),
+    }
+
+    return leads_qs, filter_context
+
+
+# ==========================================
 # ADMIN: LEAD MANAGEMENT
-
 # ==========================================
-
-
 
 @admin_required
-
 def admin_leads_list(request):
 
     active_view = request.GET.get('view', 'all_active').strip()
@@ -446,10 +696,10 @@ def admin_leads_list(request):
 
 
     if next_followup_date:
-
         leads_qs = leads_qs.filter(followups__follow_up_date=next_followup_date, followups__status='Pending').distinct()
 
-
+    # Dynamic TeleCRM filter builder parameters & condition operators
+    leads_qs, telecrm_filter_ctx = _apply_telecrm_dynamic_filters(leads_qs, request)
 
     # Sorting (TeleCRM Multi-Metric Sort with Deterministic Secondary Sort)
 
@@ -578,13 +828,101 @@ def admin_leads_list(request):
         'view_counts': view_counts,
 
         'rating_filter': rating_filter,
-
         'status_group': status_group,
         'kpi_label': kpi_label,
         'page_size': page_size,
         'allowed_page_sizes': ALLOWED_PAGE_SIZES,
-
+        'saved_views': list(SavedLeadView.objects.filter(Q(user=request.user) | Q(is_shared=True))) if request.user.is_authenticated else [],
+        'saved_view_id': request.GET.get('saved_view_id', '').strip(),
+        **telecrm_filter_ctx,
     })
+
+
+@login_required
+def api_filter_lead_count(request):
+    """
+    Returns live count of leads matching current TeleCRM Create View filter conditions and operators.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'count': 0, 'status': 'error'}, status=401)
+
+    leads_qs = Lead.objects.all()
+    leads_qs, _ = _apply_telecrm_dynamic_filters(leads_qs, request)
+    return JsonResponse({'status': 'success', 'count': leads_qs.count()})
+
+
+@login_required
+def api_save_lead_view(request):
+    """
+    Saves the active dynamic filter view combination as a named view for the user.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST method required'}, status=405)
+
+    try:
+        import json
+        from .models import SavedLeadView
+        data = json.loads(request.body.decode('utf-8'))
+        name = data.get('name', '').strip()
+        query_string = data.get('query_string', '').strip()
+        filters = data.get('filters', {})
+
+        if not name:
+            return JsonResponse({'status': 'error', 'message': 'View name is required'}, status=400)
+
+        saved_view = SavedLeadView.objects.create(
+            user=request.user,
+            name=name,
+            query_string=query_string,
+            filters=filters,
+            is_shared=False
+        )
+        return JsonResponse({
+            'status': 'success',
+            'view_id': saved_view.id,
+            'name': saved_view.name
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+def api_delete_saved_view(request, view_id):
+    """
+    Deletes a user's saved lead view tab.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST method required'}, status=405)
+
+    from .models import SavedLeadView
+    view = SavedLeadView.objects.filter(id=view_id, user=request.user).first()
+    if not view and request.user.is_admin_user:
+        view = SavedLeadView.objects.filter(id=view_id).first()
+
+    if not view:
+        return JsonResponse({'status': 'error', 'message': 'Saved view not found or access denied.'}, status=404)
+
+    view.delete()
+    return JsonResponse({'status': 'success'})
+
+
+@login_required
+def leads_root_redirect(request):
+    """
+    Smart router redirecting authenticated users from generic /leads/ to their role-specific lead view.
+    """
+    user = request.user
+    if user.is_admin_user:
+        return redirect('admin_leads_list')
+    elif user.is_telecaller_user:
+        return redirect('telecaller_leads_list')
+    elif user.is_counselor_user:
+        return redirect('counselor_leads_list')
+    elif user.is_branch_head_user or user.is_branch_admin_user:
+        return redirect('branch_head_leads_list')
+    elif user.is_sales_head_user:
+        return redirect('manager_leads_list')
+    return redirect('login_redirect')
 
 
 
@@ -9043,7 +9381,7 @@ def receptionist_dashboard(request):
 
     user = request.user
 
-    if not (user.is_admin_user or user.role in (UserRole.RECEPTIONIST, UserRole.BRANCH_HEAD)):
+    if not (user.is_admin_user or user.role in (UserRole.RECEPTIONIST, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN)):
 
         raise PermissionDenied("You do not have permission to access the Receptionist dashboard.")
 
@@ -9051,7 +9389,7 @@ def receptionist_dashboard(request):
 
     # Determine branch
 
-    if user.is_receptionist_user or user.is_branch_head_user:
+    if user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user:
 
         branch = user.branch
 
@@ -9415,7 +9753,8 @@ def receptionist_dashboard(request):
 
     products = list(Product.objects.filter(status='Active').order_by('name'))
 
-
+    is_acting_receptionist = user.role in (UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN)
+    has_dedicated_receptionist = User.objects.filter(branch=branch, role=UserRole.RECEPTIONIST, is_active=True).exists() if branch else False
 
     return render(request, 'receptionist/dashboard.html', {
 
@@ -9453,6 +9792,10 @@ def receptionist_dashboard(request):
 
         'has_counselors': len(counselors) > 0,
 
+        'is_acting_receptionist': is_acting_receptionist,
+
+        'has_dedicated_receptionist': has_dedicated_receptionist,
+
     })
 
 
@@ -9485,7 +9828,7 @@ def receptionist_lead_history(request, pk):
 
     user = request.user
 
-    if not (user.is_admin_user or user.is_receptionist_user):
+    if not (user.is_admin_user or user.role in (UserRole.RECEPTIONIST, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN)):
 
         raise PermissionDenied("You do not have permission to view Receptionist lead history.")
 
@@ -9501,7 +9844,7 @@ def receptionist_lead_history(request, pk):
 
 
 
-    if user.is_receptionist_user and lead.branch_id != user.branch_id:
+    if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and lead.branch_id != user.branch_id:
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('format') == 'json':
 
@@ -9955,7 +10298,7 @@ def receptionist_check_existing_lead(request):
 
     user = request.user
 
-    if not (user.is_admin_user or user.is_receptionist_user):
+    if not (user.is_admin_user or user.role in (UserRole.RECEPTIONIST, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN)):
 
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -10273,7 +10616,7 @@ def admin_walkin_create(request):
 
     user = request.user
 
-    if not (user.is_admin_user or user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.COUNSELOR, UserRole.RECEPTIONIST)):
+    if not (user.is_admin_user or user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.COUNSELOR, UserRole.RECEPTIONIST)):
 
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -10331,13 +10674,13 @@ def admin_walkin_create(request):
 
 
 
-        # Enforce branch scope: Receptionists are strictly bound to their assigned branch
+        # Enforce branch scope: Receptionists and Branch Admins are strictly bound to their assigned branch
 
-        if user.is_receptionist_user:
+        if user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user:
 
             if not user.branch:
 
-                return JsonResponse({'success': False, 'error': 'Receptionist must be assigned to a branch.'}, status=400)
+                return JsonResponse({'success': False, 'error': 'Receptionist or Branch Admin must be assigned to a branch.'}, status=400)
 
             branch = user.branch
 
@@ -10369,7 +10712,7 @@ def admin_walkin_create(request):
 
             lead = get_object_or_404(Lead, pk=existing_lead_id)
 
-            if user.is_receptionist_user and lead.branch_id != user.branch_id:
+            if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and lead.branch_id != user.branch_id:
 
                 return JsonResponse({'success': False, 'error': 'Permission denied: Cannot check in lead from another branch.'}, status=403)
 
@@ -10594,15 +10937,15 @@ def admin_walkin_assign_counselor(request, pk):
 
     user = request.user
 
-    if not (user.is_admin_user or user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.COUNSELOR, UserRole.RECEPTIONIST)):
+    if not (user.is_admin_user or user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.COUNSELOR, UserRole.RECEPTIONIST)):
 
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
 
 
-    if user.is_receptionist_user and not user.branch_id:
+    if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and not user.branch_id:
 
-        return JsonResponse({'success': False, 'error': 'Your receptionist account is not assigned to any branch.'}, status=403)
+        return JsonResponse({'success': False, 'error': 'Your account is not assigned to any branch.'}, status=403)
 
 
 
@@ -10644,9 +10987,9 @@ def admin_walkin_assign_counselor(request, pk):
 
 
 
-    # Counselor must belong to the receptionist's branch
+    # Counselor must belong to the user's branch
 
-    if user.is_receptionist_user and counselor.branch_id != user.branch_id:
+    if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and counselor.branch_id != user.branch_id:
 
         return JsonResponse({'success': False, 'error': 'Cannot assign to a counselor outside your branch.'}, status=400)
 
@@ -10666,9 +11009,9 @@ def admin_walkin_assign_counselor(request, pk):
 
 
 
-        # Cross-branch prevention for Receptionists
+        # Cross-branch prevention
 
-        if user.is_receptionist_user and lead.branch_id != user.branch_id:
+        if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and lead.branch_id != user.branch_id:
 
             return JsonResponse({'success': False, 'error': 'Permission denied: Cannot assign leads from another branch.'}, status=403)
 
@@ -10770,15 +11113,15 @@ def admin_walkin_bulk_assign_counselor(request):
 
     user = request.user
 
-    if not (user.is_admin_user or user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.COUNSELOR, UserRole.RECEPTIONIST)):
+    if not (user.is_admin_user or user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.COUNSELOR, UserRole.RECEPTIONIST)):
 
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
 
 
-    if user.is_receptionist_user and not user.branch_id:
+    if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and not user.branch_id:
 
-        return JsonResponse({'success': False, 'error': 'Your receptionist account is not assigned to any branch.'}, status=403)
+        return JsonResponse({'success': False, 'error': 'Your account is not assigned to any branch.'}, status=403)
 
 
 
@@ -10842,9 +11185,9 @@ def admin_walkin_bulk_assign_counselor(request):
 
 
 
-    # Counselor must belong to the receptionist's branch
+    # Counselor must belong to the user's branch
 
-    if user.is_receptionist_user and counselor.branch_id != user.branch_id:
+    if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and counselor.branch_id != user.branch_id:
 
         return JsonResponse({'success': False, 'error': 'Cannot assign to a counselor outside your branch.'}, status=400)
 
@@ -10868,9 +11211,9 @@ def admin_walkin_bulk_assign_counselor(request):
 
         for lead in leads:
 
-            # Cross-branch check for Receptionists
+            # Cross-branch check
 
-            if user.is_receptionist_user and lead.branch_id != user.branch_id:
+            if (user.is_receptionist_user or user.is_branch_head_user or user.is_branch_admin_user) and lead.branch_id != user.branch_id:
 
                 return JsonResponse({
 

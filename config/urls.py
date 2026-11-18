@@ -41,6 +41,8 @@ urlpatterns = [
     path('facebook-leads/', include('fb_leads.urls')),
     # Dedicated Finance Portal Suite
     path('finance/', include('finance.urls')),
+    # Superadmin Local CRM Assistant (Zero-AI, Zero-API)
+    path('admin/superadmin-bot/', include('superadmin_bot.urls')),
 ]
 
 if settings.DEBUG:

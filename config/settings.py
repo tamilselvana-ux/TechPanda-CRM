@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'chat.apps.ChatConfig',
     'fb_leads.apps.FbLeadsConfig',
     'finance.apps.FinanceConfig',
+    'superadmin_bot',
 ]
 
 MIDDLEWARE = [

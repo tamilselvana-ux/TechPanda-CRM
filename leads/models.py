@@ -958,3 +958,23 @@ from .models_enrollment import (
 
 
 from .models_offers import ApprovedOffer, ApprovedOfferCategory
+
+
+class SavedLeadView(models.Model):
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='saved_lead_views')
+    name = models.CharField(max_length=120)
+    view_key = models.SlugField(max_length=120, blank=True, default='')
+    query_string = models.TextField(blank=True, default='', help_text='Full URL query string for this view')
+    filters = models.JSONField(blank=True, default=dict, help_text='Structured filter conditions JSON')
+    is_shared = models.BooleanField(default=False, help_text='Available to other team members in same role/branch')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Saved Lead View'
+        verbose_name_plural = 'Saved Lead Views'
+
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+

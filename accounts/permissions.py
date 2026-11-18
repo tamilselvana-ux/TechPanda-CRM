@@ -159,7 +159,7 @@ def can_assign_lead(user, lead):
         return False
     if user.is_admin_user:
         return True
-    if user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD):
+    if user.role in (UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN):
         if not lead.branch_id:
             return True
         return lead.branch_id in get_accessible_branch_ids(user)

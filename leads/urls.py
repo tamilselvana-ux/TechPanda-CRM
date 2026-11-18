@@ -3,7 +3,11 @@ from . import views, api_google_sheets, views_enrollment, views_bulk, views_acco
 
 urlpatterns = [
     # Admin Lead routes
+    path('leads/', views.leads_root_redirect, name='leads_root'),
     path('admin/leads/', views.admin_leads_list, name='admin_leads_list'),
+    path('admin/leads/api/filter-count/', views.api_filter_lead_count, name='api_filter_lead_count'),
+    path('admin/leads/api/save-view/', views.api_save_lead_view, name='api_save_lead_view'),
+    path('admin/leads/api/delete-view/<int:view_id>/', views.api_delete_saved_view, name='api_delete_saved_view'),
     path('api/leads/check-duplicate/', views.api_check_lead_duplicate, name='api_check_lead_duplicate'),
     path('admin/leads/create/', views.admin_lead_create, name='admin_lead_create'),
     path('admin/leads/<int:pk>/', views.admin_lead_detail, name='admin_lead_detail'),
@@ -137,6 +141,8 @@ urlpatterns = [
     path('enquiry/<int:branch_id>/', views_walkin.public_student_enquiry_form, name='public_student_enquiry_branch'),
     path('enquiry/f/<str:slug>/', views_walkin.public_student_enquiry_form_by_slug, name='public_student_enquiry_slug'),
     path('enquiry/f/<str:slug>/<int:branch_id>/', views_walkin.public_student_enquiry_form_by_slug, name='public_student_enquiry_slug_branch'),
+    path('enquiry/<str:slug>/', views_walkin.public_student_enquiry_form_by_slug, name='public_student_enquiry_slug_direct'),
+    path('enquiry/manifest.json', views_walkin.enquiry_kiosk_manifest, name='enquiry_kiosk_manifest'),
     path('admin/branches/<int:branch_id>/qr-standee/', views_walkin.branch_qr_standee_view, name='branch_qr_standee'),
     path('receptionist/qr-standee/', views_walkin.receptionist_qr_standee_view, name='receptionist_qr_standee'),
 

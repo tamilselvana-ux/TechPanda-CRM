@@ -13,7 +13,7 @@ from accounts.permissions import (
     can_create_user, can_manage_user,
 )
 from branches.models import Branch
-from leads.models import Lead, LeadStatus
+from leads.models import Lead, LeadStatus, VisitorStatus
 from calls.models import CallHistory
 from followups.models import FollowUp, FollowUpStatus
 from activities.models import Activity
@@ -447,6 +447,25 @@ def branch_head_dashboard(request):
         Q(user=branch_head) | Q(user__branch_id=branch_id)
     ).select_related('user')[:8]
 
+    # Walk-in Front Desk metrics for Branch Head / Admin
+    today_start = timezone.make_aware(datetime.combine(today, time.min))
+    today_end = timezone.make_aware(datetime.combine(today, time.max))
+
+    walkin_leads_today = Lead.objects.filter(
+        branch_id=branch_id,
+        source__iexact='Walk-in',
+        created_at__range=(today_start, today_end)
+    ).count()
+
+    walkin_awaiting_counselor = Lead.objects.filter(
+        branch_id=branch_id,
+        source__iexact='Walk-in',
+        assigned_counselor__isnull=True,
+        visitor_status=VisitorStatus.WAITING
+    ).count()
+
+    has_receptionist = User.objects.filter(branch_id=branch_id, role=UserRole.RECEPTIONIST, is_active=True).exists() if branch_id else False
+
     return render(request, 'branch_head_dashboard/dashboard.html', {
         'period': period,
         'start_date': start_date_str,
@@ -464,6 +483,9 @@ def branch_head_dashboard(request):
         'status_dict': status_dict,
         'recent_leads': recent_leads,
         'recent_activities': recent_activities,
+        'walkin_leads_today': walkin_leads_today,
+        'walkin_awaiting_counselor': walkin_awaiting_counselor,
+        'has_receptionist': has_receptionist,
     })
 
 

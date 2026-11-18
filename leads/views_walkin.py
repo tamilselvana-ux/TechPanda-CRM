@@ -425,12 +425,46 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
         }, status=500)
 
 @require_http_methods(["GET", "POST"])
-
 def public_student_enquiry_form_by_slug(request, slug, branch_id=None):
-
     """Route alias to open a specific walk-in form by its slug."""
-
     return public_student_enquiry_form(request, branch_id=branch_id, slug=slug)
+
+
+@require_http_methods(["GET"])
+def enquiry_kiosk_manifest(request):
+    """
+    Web App Manifest for installing the Reception Tablet Enquiry Form as a
+    fullscreen Standalone PWA (no browser address bar) on iPad or Android tablets.
+    """
+    branch_id_raw = (request.GET.get('branch_id') or '').strip()
+    start_url = f"/enquiry/{branch_id_raw}/?kiosk=1" if branch_id_raw.isdigit() else "/enquiry/?kiosk=1"
+    scope_url = f"/enquiry/{branch_id_raw}/" if branch_id_raw.isdigit() else "/enquiry/"
+    manifest = {
+        "name": "TechPanda Enquiry Kiosk",
+        "short_name": "Enquiry Kiosk",
+        "description": "Student Enquiry Form – Training & Placement Walk-in Desk Kiosk",
+        "start_url": start_url,
+        "scope": scope_url,
+        "display": "standalone",
+        "orientation": "any",
+        "theme_color": "#174b89",
+        "background_color": "#f1f5f9",
+        "icons": [
+            {
+                "src": "/static/images/favicon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable",
+            },
+            {
+                "src": "/static/images/techpanda_logo.svg",
+                "sizes": "512x512",
+                "type": "image/svg+xml",
+                "purpose": "any",
+            },
+        ],
+    }
+    return JsonResponse(manifest, content_type="application/manifest+json")
 
 # ==========================================================================
 
@@ -826,7 +860,7 @@ def branch_qr_standee_view(request, branch_id):
 
     })
 
-@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.BRANCH_HEAD, UserRole.RECEPTIONIST)
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.RECEPTIONIST)
 def receptionist_qr_standee_view(request):
 
     """

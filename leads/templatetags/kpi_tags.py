@@ -89,3 +89,55 @@ def build_kpi_url(context, view_name, kpi_field=None, kpi_value=None, **kwargs):
         encoded = urllib.parse.urlencode(query_params)
         return f"{base_url}?{encoded}"
     return base_url
+
+
+@register.filter
+def star_range(value):
+    """Returns range(1, 6) for 5-star ratings."""
+    return range(1, 6)
+
+
+@register.filter
+def user_initials(user):
+    """Returns initials for avatar circle, e.g. 'AK'."""
+    if not user:
+        return 'U'
+    fname = getattr(user, 'first_name', '') or ''
+    lname = getattr(user, 'last_name', '') or ''
+    if fname or lname:
+        return f"{fname[:1]}{lname[:1]}".strip().upper() or 'U'
+    username = getattr(user, 'username', '') or ''
+    return username[:2].upper() if username else 'U'
+
+
+@register.filter
+def short_naturaltime(value):
+    """Formats datetime as short natural time, e.g. '2h ago', '3d ago', 'just now'."""
+    if not value:
+        return ''
+    from datetime import datetime
+    from django.utils import timezone
+    now = timezone.now()
+    try:
+        diff = now - value if (hasattr(value, 'tzinfo') and value.tzinfo) else datetime.now() - value
+        seconds = int(diff.total_seconds())
+    except Exception:
+        return str(value)
+
+    if seconds < 0:
+        return 'just now'
+    if seconds < 60:
+        return 'just now'
+    elif seconds < 3600:
+        return f"{seconds // 60}m ago"
+    elif seconds < 86400:
+        return f"{seconds // 3600}h ago"
+    elif seconds < 604800:
+        return f"{seconds // 86400}d ago"
+    else:
+        try:
+            return value.strftime('%d %b')
+        except Exception:
+            return str(value)
+
+
