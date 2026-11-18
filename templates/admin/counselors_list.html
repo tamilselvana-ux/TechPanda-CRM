@@ -95,7 +95,7 @@
                 Telecallers &rarr;
               </a>
               {% if request.user.is_admin_user %}
-              <a href="{% url 'admin_counselor_change_password' c.pk %}" class="btn btn-secondary btn-sm">Password</a>
+              <a href="{% url 'admin_set_user_password' c.pk %}?next={% url 'admin_counselors_list' %}" class="btn btn-warning btn-sm" title="Reset / Set Password">Password</a>
               {% endif %}
             </div>
           </td>

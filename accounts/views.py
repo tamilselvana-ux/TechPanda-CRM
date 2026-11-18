@@ -666,3 +666,73 @@ def toggle_duty_status(request):
         'status_label': 'On Duty' if user.is_on_duty else 'Out of Office',
         'message': f"Status updated: You are now {'On Duty' if user.is_on_duty else 'Out of Office'}."
     })
+
+
+@admin_required
+def admin_users_list(request):
+    """
+    Centralized directory of all company staff accounts with 1-click password reset and management.
+    Accessible only to SuperAdmin / Admin.
+    """
+    query = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role', '').strip()
+    branch_filter = request.GET.get('branch', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+
+    users_qs = User.objects.select_related('branch').all()
+
+    if query:
+        users_qs = users_qs.filter(
+            Q(username__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(phone__icontains=query)
+        )
+
+    if role_filter:
+        users_qs = users_qs.filter(role=role_filter)
+
+    if branch_filter:
+        if branch_filter == 'central':
+            users_qs = users_qs.filter(branch__isnull=True)
+        else:
+            users_qs = users_qs.filter(branch_id=branch_filter)
+
+    if status_filter:
+        if status_filter == 'active':
+            users_qs = users_qs.filter(is_active=True)
+        elif status_filter == 'inactive':
+            users_qs = users_qs.filter(is_active=False)
+
+    users_qs = users_qs.order_by('role', 'username')
+
+    total_count = users_qs.count()
+    active_count = User.objects.filter(is_active=True).count()
+    inactive_count = User.objects.filter(is_active=False).count()
+    branches = Branch.objects.filter(status='Active').order_by('name')
+
+    roles = [
+        ('SuperAdmin', 'Super Admin'),
+        ('Admin', 'Admin'),
+        ('Sales_Head', 'Sales Head / Manager'),
+        ('Branch_Head', 'Branch Head'),
+        ('Branch_Admin', 'Branch Admin'),
+        ('Counselor', 'Counselor'),
+        ('Telecaller', 'Telecaller'),
+        ('Receptionist', 'Receptionist'),
+        ('Accountant', 'Accountant'),
+    ]
+
+    return render(request, 'admin/users_list.html', {
+        'users': users_qs,
+        'total_count': total_count,
+        'active_count': active_count,
+        'inactive_count': inactive_count,
+        'query': query,
+        'role_filter': role_filter,
+        'branch_filter': branch_filter,
+        'status_filter': status_filter,
+        'branches': branches,
+        'roles': roles,
+    })

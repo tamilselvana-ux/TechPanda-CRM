@@ -1,6 +1,6 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-18 14:35 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-18 15:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
 **Blockers:** 0 · **Warnings:** 106 · **Verdict:** ✅ no stubs found
 
@@ -71,10 +71,10 @@ Run: 2026-11-18 14:35 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | templates\admin\offline_leads.html | 1561 | `alert('Error: ' + err);` |
 | alert() used for UX | templates\admin\status_leads_list.html | 213 | `alert(data.error // 'Failed to update lead status');` |
 | alert() used for UX | templates\admin\status_leads_list.html | 219 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\telecallers_list.html | 399 | `alert('Please select a counselor.');` |
-| alert() used for UX | templates\admin\telecallers_list.html | 443 | `alert('Please select a branch.');` |
-| alert() used for UX | templates\admin\telecallers_list.html | 552 | `alert('Error updating telecallers: ' + (data.error // 'Server error'));` |
-| alert() used for UX | templates\admin\telecallers_list.html | 563 | `alert('Network error while processing bulk update: ' + err.message);` |
+| alert() used for UX | templates\admin\telecallers_list.html | 400 | `alert('Please select a counselor.');` |
+| alert() used for UX | templates\admin\telecallers_list.html | 444 | `alert('Please select a branch.');` |
+| alert() used for UX | templates\admin\telecallers_list.html | 553 | `alert('Error updating telecallers: ' + (data.error // 'Server error'));` |
+| alert() used for UX | templates\admin\telecallers_list.html | 564 | `alert('Network error while processing bulk update: ' + err.message);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 892 | `alert(`Error updating visitor status: ${data.error // 'Failed'}`);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 895 | `alert(`Error: ${err.message}`);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 928 | `alert(`Visitor Token #${data.token_number} generated! Visitor checked in successfully.`);` |

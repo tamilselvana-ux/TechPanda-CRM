@@ -135,7 +135,7 @@
             <a href="{% url 'resend_user_invitation' acc.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" title="Resend Welcome Email & Setup Link">
               Invite
             </a>
-            <a href="{% url 'admin_set_user_password' acc.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" title="Set Password">
+            <a href="{% url 'admin_set_user_password' acc.id %}?next={% url 'admin_accountants_list' %}" class="btn btn-warning" style="font-size: 0.75rem; padding: 4px 8px;" title="Reset / Set Password">
               Password
             </a>
             <form method="POST" action="{% url 'admin_accountant_toggle_status' acc.id %}" style="display: inline-block; margin-left: 4px;">

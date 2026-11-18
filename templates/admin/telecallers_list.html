@@ -126,6 +126,7 @@
               <a href="{% url 'telecaller_leads' t.pk %}" class="btn btn-primary btn-sm" title="View assigned leads">Leads</a>
               <a href="{% url 'admin_telecaller_detail' t.pk %}" class="btn btn-secondary btn-sm" title="View details">Profile</a>
               <a href="{% url 'admin_telecaller_edit' t.pk %}" class="btn btn-secondary btn-sm" title="Edit Telecaller">Edit</a>
+              <a href="{% url 'admin_set_user_password' t.pk %}?next={% url 'admin_telecallers_list' %}" class="btn btn-warning btn-sm" title="Reset / Set Password">Password</a>
               <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal('{{ t.pk }}', '{{ t.get_full_name|default:t.username|escapejs }}', '{{ t.username|escapejs }}')" title="Delete Telecaller">Delete</button>
             </div>
           </td>

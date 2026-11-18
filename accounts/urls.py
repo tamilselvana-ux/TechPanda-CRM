@@ -32,6 +32,7 @@ urlpatterns = [
     path('profile/change-password/', views.user_change_password, name='change_password'),
 
     # Admin Staff Password Operations (Reset Link & Set Password)
+    path('admin/users/', views.admin_users_list, name='admin_users_list'),
     path('admin/users/<int:pk>/send-reset-link/', views.admin_send_password_reset_link, name='admin_send_password_reset_link'),
     path('admin/users/<int:pk>/set-password/', views.admin_set_user_password, name='admin_set_user_password'),
 

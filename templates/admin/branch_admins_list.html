@@ -136,6 +136,7 @@
               {% endif %}
               <a href="{% url 'admin_branch_admin_detail' ba.pk %}" class="btn btn-secondary btn-sm">View</a>
               <a href="{% url 'admin_branch_admin_edit' ba.pk %}" class="btn btn-primary btn-sm">Edit</a>
+              <a href="{% url 'admin_set_user_password' ba.pk %}?next={% url 'admin_branch_admins_list' %}" class="btn btn-warning btn-sm" title="Reset / Set Password">Password</a>
             </div>
           </td>
         </tr>

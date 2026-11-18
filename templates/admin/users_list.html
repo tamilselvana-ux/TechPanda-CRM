@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}All Staff & Password Management - TechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+  <div class="page-title-group">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin: 0;">ALL STAFF &amp; PASSWORD MANAGEMENT</h1>
+      <span class="badge" style="background: #e0e7ff; color: #4338ca; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 9999px;">
+        {{ total_count }} Users
+      </span>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">
+      Centralized staff directory: Directly reset passwords or send secure reset email links to any staff account across all roles and branches.
+    </p>
+  </div>
+  <div class="page-actions" style="display: flex; gap: 8px;">
+    <a href="{% url 'admin_user_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      + Add New Staff Member
+    </a>
+  </div>
+</div>
+
+<!-- KPI SUMMARY CARDS -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <div style="background: #fff; border-radius: 8px; padding: 16px; border: 1px solid var(--border-color, #e5e7eb); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6b7280; letter-spacing: 0.05em;">Total Accounts</div>
+    <div style="font-size: 1.75rem; font-weight: 800; color: #2563eb; margin: 4px 0;">{{ total_count }}</div>
+    <div style="font-size: 0.75rem; color: #6b7280;">All registered staff users</div>
+  </div>
+  <div style="background: #fff; border-radius: 8px; padding: 16px; border: 1px solid var(--border-color, #e5e7eb); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6b7280; letter-spacing: 0.05em;">Active Staff</div>
+    <div style="font-size: 1.75rem; font-weight: 800; color: #059669; margin: 4px 0;">{{ active_count }}</div>
+    <div style="font-size: 0.75rem; color: #6b7280;">Active login enabled</div>
+  </div>
+  <div style="background: #fff; border-radius: 8px; padding: 16px; border: 1px solid var(--border-color, #e5e7eb); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6b7280; letter-spacing: 0.05em;">Deactivated</div>
+    <div style="font-size: 1.75rem; font-weight: 800; color: #dc2626; margin: 4px 0;">{{ inactive_count }}</div>
+    <div style="font-size: 0.75rem; color: #6b7280;">Disabled accounts</div>
+  </div>
+  <div style="background: #fff; border-radius: 8px; padding: 16px; border: 1px solid var(--border-color, #e5e7eb); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #6b7280; letter-spacing: 0.05em;">Active Branches</div>
+    <div style="font-size: 1.75rem; font-weight: 800; color: #7c3aed; margin: 4px 0;">{{ branches|length }}</div>
+    <div style="font-size: 0.75rem; color: #6b7280;">Branch locations covered</div>
+  </div>
+</div>
+
+<!-- SEARCH & FILTERS -->
+<div class="filter-card" style="margin-bottom: 20px; background: #fff; border-radius: 8px; padding: 16px; border: 1px solid var(--border-color, #e5e7eb);">
+  <form method="GET" class="filter-form" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+    <div class="filter-col" style="flex: 2 1 220px;">
+      <label style="display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Search Staff</label>
+      <input type="text" name="q" class="form-control" placeholder="Search name, username, email, phone..." value="{{ query }}">
+    </div>
+
+    <div class="filter-col" style="flex: 1 1 150px;">
+      <label style="display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Role</label>
+      <select name="role" class="form-select">
+        <option value="">All Roles</option>
+        {% for r_code, r_label in roles %}
+        <option value="{{ r_code }}" {% if role_filter == r_code %}selected{% endif %}>{{ r_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col" style="flex: 1 1 150px;">
+      <label style="display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Branch</label>
+      <select name="branch" class="form-select">
+        <option value="">All Branches</option>
+        <option value="central" {% if branch_filter == 'central' %}selected{% endif %}>Central / Unassigned</option>
+        {% for b in branches %}
+        <option value="{{ b.id }}" {% if branch_filter == b.id|stringformat:'s' %}selected{% endif %}>{{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col" style="flex: 1 1 130px;">
+      <label style="display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Status</label>
+      <select name="status" class="form-select">
+        <option value="">All Statuses</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <a href="{% url 'admin_users_list' %}" class="btn btn-secondary">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- USERS DATA TABLE -->
+<div class="crm-card" style="padding: 0; background: #fff; border-radius: 8px; border: 1px solid var(--border-color, #e5e7eb); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+  <div class="table-responsive">
+    <table class="table" style="width: 100%; border-collapse: collapse; text-align: left; margin: 0;">
+      <thead>
+        <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 0.78rem; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em;">
+          <th style="padding: 12px 14px;">Staff Member</th>
+          <th style="padding: 12px 14px;">Role</th>
+          <th style="padding: 12px 14px;">Branch</th>
+          <th style="padding: 12px 14px;">Contact</th>
+          <th style="padding: 12px 14px;">Status</th>
+          <th style="padding: 12px 14px;">Last Login</th>
+          <th style="padding: 12px 14px; text-align: right; min-width: 220px;">Password &amp; Account Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr style="border-bottom: 1px solid #f3f4f6; font-size: 0.85rem;">
+          <td style="padding: 12px 14px; vertical-align: middle;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; border: 1px solid #dbeafe;">
+                {{ u.first_name|default:u.username|slice:":1"|upper }}
+              </div>
+              <div>
+                <strong style="color: var(--text-main); display: block;">{{ u.get_full_name|default:u.username }}</strong>
+                <span style="color: var(--text-muted); font-size: 0.78rem;">@{{ u.username }}</span>
+              </div>
+            </div>
+          </td>
+          <td style="padding: 12px 14px; vertical-align: middle;">
+            <span class="badge" style="
+              {% if u.role == 'SuperAdmin' or u.role == 'Admin' %}background: #fee2e2; color: #b91c1c;
+              {% elif u.role == 'Sales_Head' %}background: #fef3c7; color: #b45309;
+              {% elif u.role == 'Branch_Head' %}background: #e0e7ff; color: #4338ca;
+              {% elif u.role == 'Branch_Admin' %}background: #ede9fe; color: #6d28d9;
+              {% elif u.role == 'Counselor' %}background: #dbeafe; color: #1d4ed8;
+              {% elif u.role == 'Telecaller' %}background: #dcfce7; color: #15803d;
+              {% elif u.role == 'Receptionist' %}background: #fce7f3; color: #be185d;
+              {% elif u.role == 'Accountant' %}background: #ccfbf1; color: #0f766e;
+              {% else %}background: #f3f4f6; color: #4b5563;{% endif %}
+              font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;">
+              {{ u.get_role_display|default:u.role }}
+            </span>
+          </td>
+          <td style="padding: 12px 14px; vertical-align: middle;">
+            {% if u.branch %}
+            <span style="font-weight: 600; color: #374151;">{{ u.branch.name }}</span>
+            {% else %}
+            <span style="color: var(--text-muted); font-style: italic;">Central / All</span>
+            {% endif %}
+          </td>
+          <td style="padding: 12px 14px; vertical-align: middle;">
+            <div><a href="mailto:{{ u.email }}" style="color: var(--primary, #2563eb); text-decoration: none;">{{ u.email|default:"-" }}</a></div>
+            <div style="color: var(--text-muted); font-size: 0.78rem;">{{ u.phone|default:"-" }}</div>
+          </td>
+          <td style="padding: 12px 14px; vertical-align: middle;">
+            {% if u.is_active %}
+            <span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.72rem; padding: 2px 7px; border-radius: 9999px;">Active</span>
+            {% else %}
+            <span class="badge" style="background: #fee2e2; color: #dc2626; font-size: 0.72rem; padding: 2px 7px; border-radius: 9999px;">Deactivated</span>
+            {% endif %}
+          </td>
+          <td style="padding: 12px 14px; vertical-align: middle; color: var(--text-muted); font-size: 0.78rem;">
+            {% if u.last_login %}
+            {{ u.last_login|date:"d M Y, H:i" }}
+            {% else %}
+            Never
+            {% endif %}
+          </td>
+          <td style="padding: 12px 14px; vertical-align: middle; text-align: right; white-space: nowrap;">
+            <div style="display: inline-flex; gap: 6px; align-items: center;">
+              <!-- 1-Click Set Password -->
+              <a href="{% url 'admin_set_user_password' u.pk %}?next={% url 'admin_users_list' %}" class="btn btn-warning btn-sm" style="font-weight: 600; padding: 5px 10px; display: inline-flex; align-items: center; gap: 4px;" title="Directly set new password for this user">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9 3 14v7h7l5-5 1.5-1.5L18 16l1.5-1.5 2-2z"></path></svg>
+                Reset Password
+              </a>
+
+              <!-- Send Reset Email Link -->
+              {% if u.email %}
+              <a href="{% url 'admin_send_password_reset_link' u.pk %}?next={% url 'admin_users_list' %}" class="btn btn-secondary btn-sm" style="padding: 5px 10px;" title="Send password reset link to user email" onclick="return confirm('Send a secure password reset email to {{ u.email|escapejs }}?');">
+                Send Link
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="padding: 32px; text-align: center; color: var(--text-muted);">
+            No staff members found matching the selected filters.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

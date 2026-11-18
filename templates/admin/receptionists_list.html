@@ -141,7 +141,7 @@
             <a href="{% url 'resend_user_invitation' rec.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" title="Resend Welcome Email & Setup Link">
               Invite
             </a>
-            <a href="{% url 'admin_receptionist_change_password' rec.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;">
+            <a href="{% url 'admin_set_user_password' rec.id %}?next={% url 'admin_receptionists_list' %}" class="btn btn-warning" style="font-size: 0.75rem; padding: 4px 8px;" title="Reset / Set Password">
               Password
             </a>
             <form method="POST" action="{% url 'admin_receptionist_toggle_status' rec.id %}" style="display: inline-block; margin-left: 4px;">

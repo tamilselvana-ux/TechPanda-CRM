@@ -95,6 +95,7 @@
               </a>
               {% if request.user.is_admin_user %}
               <a href="{% url 'admin_branch_head_edit' bh.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+              <a href="{% url 'admin_set_user_password' bh.pk %}?next={% url 'admin_branch_heads_list' %}" class="btn btn-warning btn-sm" title="Reset / Set Password">Password</a>
               <a href="{% url 'admin_branch_head_toggle_status' bh.pk %}" class="btn btn-sm {% if bh.is_active %}btn-secondary{% else %}btn-success{% endif %}" data-confirm="Are you sure you want to change this branch head's account status?">
                 {% if bh.is_active %}Deactivate{% else %}Activate{% endif %}
               </a>

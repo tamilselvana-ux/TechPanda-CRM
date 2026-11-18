@@ -75,6 +75,9 @@
  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
  </div>
  <div class="nav-group-children" id="admin-team-nav">
+          <a href="{% url 'admin_users_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_users_list admin_set_user_password' %}active{% endif %}" style="font-weight: 700; color: #2563eb;">
+            <span class="nav-text">All Staff &amp; Passwords</span>
+          </a>
  <!-- <a href="{% url 'admin_user_create' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_user_create' %}active{% endif %}" style="color: var(--primary); font-weight: 600;">
  <span class="nav-text">+ Add Team Member</span>
  </a> -->
