@@ -1,0 +1,15 @@
+services:
+  crm:
+    build: .
+    container_name: techpanda-crm
+    restart: always
+    env_file: .env
+    volumes:
+      - /srv/static/crm:/app/staticfiles:z
+      - /srv/media/crm:/app/media:z
+      - /srv/private/crm:/app/private_media:z
+    networks: [web]
+
+networks:
+  web:
+    external: true
