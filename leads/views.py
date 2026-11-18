@@ -374,6 +374,19 @@ def _apply_telecrm_dynamic_filters(leads_qs, request):
     return leads_qs, filter_context
 
 
+def _get_safe_saved_views(user):
+    """
+    Safely retrieves saved lead views without crashing if migrations have not yet run on the database.
+    """
+    if not user or not user.is_authenticated:
+        return []
+    try:
+        from .models import SavedLeadView
+        return list(SavedLeadView.objects.filter(Q(user=user) | Q(is_shared=True)))
+    except Exception:
+        return []
+
+
 # ==========================================
 # ADMIN: LEAD MANAGEMENT
 # ==========================================
@@ -832,7 +845,7 @@ def admin_leads_list(request):
         'kpi_label': kpi_label,
         'page_size': page_size,
         'allowed_page_sizes': ALLOWED_PAGE_SIZES,
-        'saved_views': list(SavedLeadView.objects.filter(Q(user=request.user) | Q(is_shared=True))) if request.user.is_authenticated else [],
+        'saved_views': _get_safe_saved_views(request.user),
         'saved_view_id': request.GET.get('saved_view_id', '').strip(),
         **telecrm_filter_ctx,
     })
@@ -894,16 +907,19 @@ def api_delete_saved_view(request, view_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'POST method required'}, status=405)
 
-    from .models import SavedLeadView
-    view = SavedLeadView.objects.filter(id=view_id, user=request.user).first()
-    if not view and request.user.is_admin_user:
-        view = SavedLeadView.objects.filter(id=view_id).first()
+    try:
+        from .models import SavedLeadView
+        view = SavedLeadView.objects.filter(id=view_id, user=request.user).first()
+        if not view and request.user.is_admin_user:
+            view = SavedLeadView.objects.filter(id=view_id).first()
 
-    if not view:
-        return JsonResponse({'status': 'error', 'message': 'Saved view not found or access denied.'}, status=404)
+        if not view:
+            return JsonResponse({'status': 'error', 'message': 'Saved view not found or access denied.'}, status=404)
 
-    view.delete()
-    return JsonResponse({'status': 'success'})
+        view.delete()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
 @login_required
