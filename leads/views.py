@@ -69,7 +69,7 @@ from .models import (
 
     GoogleFormConnection, LeadSetupConfig, TelecallerLeadSetup,
 
-    DuplicateLeadRecord, AssignmentMethod, SavedLeadView
+    DuplicateLeadRecord, AssignmentMethod
 
 )
 
@@ -374,17 +374,13 @@ def _apply_telecrm_dynamic_filters(leads_qs, request):
     return leads_qs, filter_context
 
 
-def _get_safe_saved_views(user):
+def _get_safe_saved_views(request_or_user):
     """
-    Safely retrieves saved lead views without crashing if migrations have not yet run on the database.
+    Safely retrieves saved lead views from session storage without requiring database tables or migrations.
     """
-    if not user or not user.is_authenticated:
-        return []
-    try:
-        from .models import SavedLeadView
-        return list(SavedLeadView.objects.filter(Q(user=user) | Q(is_shared=True)))
-    except Exception:
-        return []
+    if hasattr(request_or_user, 'session'):
+        return request_or_user.session.get('saved_lead_views', [])
+    return []
 
 
 # ==========================================
@@ -845,7 +841,7 @@ def admin_leads_list(request):
         'kpi_label': kpi_label,
         'page_size': page_size,
         'allowed_page_sizes': ALLOWED_PAGE_SIZES,
-        'saved_views': _get_safe_saved_views(request.user),
+        'saved_views': _get_safe_saved_views(request),
         'saved_view_id': request.GET.get('saved_view_id', '').strip(),
         **telecrm_filter_ctx,
     })
@@ -867,14 +863,15 @@ def api_filter_lead_count(request):
 @login_required
 def api_save_lead_view(request):
     """
-    Saves the active dynamic filter view combination as a named view for the user.
+    Saves the active dynamic filter view combination as a named view in session storage.
     """
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'POST method required'}, status=405)
 
     try:
         import json
-        from .models import SavedLeadView
+        import time
+        from django.utils import timezone
         data = json.loads(request.body.decode('utf-8'))
         name = data.get('name', '').strip()
         query_string = data.get('query_string', '').strip()
@@ -883,17 +880,24 @@ def api_save_lead_view(request):
         if not name:
             return JsonResponse({'status': 'error', 'message': 'View name is required'}, status=400)
 
-        saved_view = SavedLeadView.objects.create(
-            user=request.user,
-            name=name,
-            query_string=query_string,
-            filters=filters,
-            is_shared=False
-        )
+        saved_views = request.session.get('saved_lead_views', [])
+        view_id = int(time.time() * 1000)
+        saved_view = {
+            'id': view_id,
+            'name': name,
+            'query_string': query_string,
+            'filters': filters,
+            'is_shared': False,
+            'created_at': timezone.now().strftime('%d %b %Y %H:%M')
+        }
+        saved_views.append(saved_view)
+        request.session['saved_lead_views'] = saved_views
+        request.session.modified = True
+
         return JsonResponse({
             'status': 'success',
-            'view_id': saved_view.id,
-            'name': saved_view.name
+            'view_id': view_id,
+            'name': name
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -902,21 +906,16 @@ def api_save_lead_view(request):
 @login_required
 def api_delete_saved_view(request, view_id):
     """
-    Deletes a user's saved lead view tab.
+    Deletes a user's saved lead view tab from session storage.
     """
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'POST method required'}, status=405)
 
     try:
-        from .models import SavedLeadView
-        view = SavedLeadView.objects.filter(id=view_id, user=request.user).first()
-        if not view and request.user.is_admin_user:
-            view = SavedLeadView.objects.filter(id=view_id).first()
-
-        if not view:
-            return JsonResponse({'status': 'error', 'message': 'Saved view not found or access denied.'}, status=404)
-
-        view.delete()
+        saved_views = request.session.get('saved_lead_views', [])
+        new_views = [sv for sv in saved_views if str(sv.get('id')) != str(view_id)]
+        request.session['saved_lead_views'] = new_views
+        request.session.modified = True
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
