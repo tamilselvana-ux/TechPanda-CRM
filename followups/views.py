@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils import timezone
 from accounts.models import User, UserRole
-from accounts.permissions import admin_required, sales_head_required, counselor_required, telecaller_required, get_accessible_branch_ids
+from accounts.permissions import admin_required, sales_head_required, counselor_required, telecaller_required, get_accessible_branch_ids, role_required
 from branches.models import Branch
 from branches.utils import get_admin_selected_branch
 from lead_channels.models import Channel
@@ -291,7 +291,7 @@ def admin_followup_reschedule(request, pk):
 # SALES HEAD: FOLLOW-UPS
 # ==========================================
 
-@sales_head_required
+@role_required(UserRole.SALES_HEAD, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN)
 def manager_followups_list(request):
     manager = request.user
     today = timezone.now().date()

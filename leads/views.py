@@ -38,11 +38,8 @@ from django.contrib.auth.decorators import login_required
 from accounts.models import User, UserRole
 
 from accounts.permissions import (
-
-    admin_required, lead_allocation_setup_required, sales_head_required, telecaller_required, branch_head_required, counselor_required,
-
+    admin_required, role_required, lead_allocation_setup_required, sales_head_required, telecaller_required, branch_head_required, counselor_required,
     can_access_lead, can_view_lead, get_accessible_branch_ids,
-
 )
 
 from .handoff_service import change_lead_status
@@ -1378,17 +1375,18 @@ def admin_lead_create(request):
 
 
 
-@admin_required
-
+@role_required(
+    UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD,
+    UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.ACCOUNTANT, UserRole.FINANCE_HEAD
+)
 def admin_lead_detail(request, pk):
-
     lead = get_object_or_404(
-
         Lead.objects.select_related('channel', 'product', 'branch', 'assigned_sales_head', 'assigned_telecaller'),
-
         pk=pk
-
     )
+    if not can_access_lead(request.user, lead):
+        messages.error(request, "Access denied: You do not have permission to access this resource.")
+        return redirect('root')
 
     followups = FollowUp.objects.filter(lead=lead).order_by('-created_at')
 

@@ -775,7 +775,7 @@ def walkin_form_qr_standee_view(request, pk):
 
     })
 
-@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.BRANCH_HEAD, UserRole.RECEPTIONIST)
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.RECEPTIONIST)
 def branch_qr_standee_view(request, branch_id):
 
     """

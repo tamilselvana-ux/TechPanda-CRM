@@ -101,7 +101,7 @@
   </a>
 
   <!-- Pending Follow-ups -->
-  <a href="{% build_kpi_url 'admin_followups_list' 'status' 'pending' kpi_label='Pending Follow-ups' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view pending follow-ups in active period">
+  <a href="{% build_kpi_url 'manager_followups_list' 'status' 'pending' kpi_label='Pending Follow-ups' %}" class="kpi-card tp-kpi-card tp-hover-lift" style="text-decoration: none; color: inherit; display: flex; cursor: pointer;" title="Click to view pending follow-ups in active period">
     <div class="kpi-info">
       <h4>Pending Follow-ups</h4>
       <div class="kpi-value" style="color: #d97706;">{{ pending_followups_count }}</div>

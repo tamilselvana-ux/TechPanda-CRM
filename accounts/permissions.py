@@ -51,7 +51,7 @@ def branch_admin_required(view_func):
     return role_required(UserRole.BRANCH_ADMIN)(view_func)
 
 def branch_head_required(view_func):
-    return role_required(UserRole.BRANCH_HEAD)(view_func)
+    return role_required(UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN)(view_func)
 
 def counselor_required(view_func):
     return role_required(UserRole.COUNSELOR)(view_func)
