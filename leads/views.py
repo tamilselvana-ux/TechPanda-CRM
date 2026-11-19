@@ -5357,6 +5357,11 @@ def _seed_default_lead_setup_if_needed():
 
     """
 
+    Branch.objects.get_or_create(
+        name='Centralized (All Branches)',
+        defaults={'status': 'Active'}
+    )
+
     if TelecallerLeadSetup.objects.exists():
 
         return
@@ -6484,7 +6489,15 @@ def admin_lead_setup(request):
 
             with transaction.atomic():
 
-                all_branch_tcs = User.objects.filter(role=UserRole.TELECALLER, branch=branch)
+                is_central_branch = (branch.name == 'Centralized (All Branches)')
+
+                if is_central_branch:
+
+                    all_branch_tcs = User.objects.filter(role=UserRole.TELECALLER, is_active=True)
+
+                else:
+
+                    all_branch_tcs = User.objects.filter(role=UserRole.TELECALLER, branch=branch)
 
                 existing_setup_tc_ids = TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values_list('telecaller_id', flat=True)
 
@@ -6821,9 +6834,67 @@ def admin_lead_setup(request):
 
     for branch in branches:
 
-        counselors_count = User.objects.filter(role=UserRole.COUNSELOR, branch=branch).count()
+        is_central = (branch.name == 'Centralized (All Branches)')
 
-        branch_tcs_count = User.objects.filter(role=UserRole.TELECALLER, branch=branch, is_active=True).count()
+        if is_central:
+
+            counselors_count = User.objects.filter(role=UserRole.COUNSELOR, is_active=True).count()
+
+            branch_tcs_count = User.get_telecallers_queryset().filter(is_active=True).count()
+
+            total_avail_leads = Lead.objects.exclude(
+
+                status__in=protected_statuses
+
+            ).exclude(
+
+                calls__isnull=False
+
+            ).exclude(
+
+                followups__isnull=False
+
+            ).filter(
+
+                Q(assigned_telecaller__isnull=True) |
+
+                Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+
+                Q(status=LeadStatus.NEW)
+
+            ).distinct().count()
+
+        else:
+
+            counselors_count = User.objects.filter(role=UserRole.COUNSELOR, branch=branch).count()
+
+            branch_tcs_count = User.objects.filter(role=UserRole.TELECALLER, branch=branch, is_active=True).count()
+
+            total_avail_leads = Lead.objects.filter(
+
+                Q(branch=branch) | Q(branch__isnull=True)
+
+            ).exclude(
+
+                status__in=protected_statuses
+
+            ).exclude(
+
+                calls__isnull=False
+
+            ).exclude(
+
+                followups__isnull=False
+
+            ).filter(
+
+                Q(assigned_telecaller__isnull=True) |
+
+                Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+
+                Q(status=LeadStatus.NEW)
+
+            ).distinct().count()
 
 
 
@@ -6841,39 +6912,11 @@ def admin_lead_setup(request):
 
 
 
-        total_avail_leads = Lead.objects.filter(
-
-            Q(branch=branch) | Q(branch__isnull=True)
-
-        ).exclude(
-
-            status__in=protected_statuses
-
-        ).exclude(
-
-            calls__isnull=False
-
-        ).exclude(
-
-            followups__isnull=False
-
-        ).filter(
-
-            Q(assigned_telecaller__isnull=True) |
-
-            Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
-
-            Q(status=LeadStatus.NEW)
-
-        ).distinct().count()
-
-
-
         b_entry = {
 
             'branch': branch,
 
-            'is_centralized': (branch.name == 'Centralized (All Branches)'),
+            'is_centralized': is_central,
 
             'counselors_count': counselors_count,
 
@@ -6897,6 +6940,8 @@ def admin_lead_setup(request):
 
         if selected_branch and branch.id == selected_branch.id:
 
+            is_selected_central = (selected_branch.name == 'Centralized (All Branches)')
+
             # Build Source Tabs with validation status and lead counts
 
             for src in available_sources:
@@ -6905,31 +6950,61 @@ def admin_lead_setup(request):
 
                 src_total = sum(s.assignment_percentage for s in src_setups)
 
-                src_leads = Lead.objects.filter(branch=selected_branch).filter(
+                if is_selected_central:
 
-                    Q(source__iexact=src) | Q(source__iexact=src.lower())
+                    src_leads = Lead.objects.filter(
 
-                ).exclude(
+                        Q(source__iexact=src) | Q(source__iexact=src.lower())
 
-                    status__in=protected_statuses
+                    ).exclude(
 
-                ).exclude(
+                        status__in=protected_statuses
 
-                    calls__isnull=False
+                    ).exclude(
 
-                ).exclude(
+                        calls__isnull=False
 
-                    followups__isnull=False
+                    ).exclude(
 
-                ).filter(
+                        followups__isnull=False
 
-                    Q(assigned_telecaller__isnull=True) |
+                    ).filter(
 
-                    Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+                        Q(assigned_telecaller__isnull=True) |
 
-                    Q(status=LeadStatus.NEW)
+                        Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
 
-                ).distinct().count()
+                        Q(status=LeadStatus.NEW)
+
+                    ).distinct().count()
+
+                else:
+
+                    src_leads = Lead.objects.filter(branch=selected_branch).filter(
+
+                        Q(source__iexact=src) | Q(source__iexact=src.lower())
+
+                    ).exclude(
+
+                        status__in=protected_statuses
+
+                    ).exclude(
+
+                        calls__isnull=False
+
+                    ).exclude(
+
+                        followups__isnull=False
+
+                    ).filter(
+
+                        Q(assigned_telecaller__isnull=True) |
+
+                        Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+
+                        Q(status=LeadStatus.NEW)
+
+                    ).distinct().count()
 
 
 
@@ -6955,37 +7030,73 @@ def admin_lead_setup(request):
 
             setup_by_tc = {s.telecaller_id: s for s in current_src_setups}
 
-            branch_tcs = User.get_telecallers_queryset().filter(Q(branch=selected_branch) | Q(id__in=setup_by_tc.keys())).distinct()
+            if is_selected_central:
+
+                branch_tcs = User.get_telecallers_queryset().filter(is_active=True).select_related('branch', 'counselor').order_by('branch__name', 'first_name', 'username')
+
+            else:
+
+                branch_tcs = User.get_telecallers_queryset().filter(Q(branch=selected_branch) | Q(id__in=setup_by_tc.keys())).distinct()
 
 
 
             # Available unallocated leads for this branch and source
 
-            current_source_leads_count = Lead.objects.filter(branch=selected_branch).filter(
+            if is_selected_central:
 
-                Q(source__iexact=selected_source) | Q(source__iexact=selected_source.lower())
+                current_source_leads_count = Lead.objects.filter(
 
-            ).exclude(
+                    Q(source__iexact=selected_source) | Q(source__iexact=selected_source.lower())
 
-                status__in=protected_statuses
+                ).exclude(
 
-            ).exclude(
+                    status__in=protected_statuses
 
-                calls__isnull=False
+                ).exclude(
 
-            ).exclude(
+                    calls__isnull=False
 
-                followups__isnull=False
+                ).exclude(
 
-            ).filter(
+                    followups__isnull=False
 
-                Q(assigned_telecaller__isnull=True) |
+                ).filter(
 
-                Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+                    Q(assigned_telecaller__isnull=True) |
 
-                Q(status=LeadStatus.NEW)
+                    Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
 
-            ).distinct().count()
+                    Q(status=LeadStatus.NEW)
+
+                ).distinct().count()
+
+            else:
+
+                current_source_leads_count = Lead.objects.filter(branch=selected_branch).filter(
+
+                    Q(source__iexact=selected_source) | Q(source__iexact=selected_source.lower())
+
+                ).exclude(
+
+                    status__in=protected_statuses
+
+                ).exclude(
+
+                    calls__isnull=False
+
+                ).exclude(
+
+                    followups__isnull=False
+
+                ).filter(
+
+                    Q(assigned_telecaller__isnull=True) |
+
+                    Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+
+                    Q(status=LeadStatus.NEW)
+
+                ).distinct().count()
 
 
 
@@ -7023,53 +7134,89 @@ def admin_lead_setup(request):
 
 
 
-            # Group by Counselor for this branch
+            if is_selected_central:
 
-            counselors = User.objects.filter(role=UserRole.COUNSELOR, branch=selected_branch).order_by('first_name', 'username')
+                # Group by Home Branch across organization
 
-            counselor_groups = []
+                branch_map = {}
 
-            handled_tc_ids = set()
+                for item in tc_items:
 
+                    b_name = item['telecaller'].branch.name if item['telecaller'].branch else 'No Branch Assigned'
 
+                    if b_name not in branch_map:
 
-            for c in counselors:
+                        branch_map[b_name] = []
 
-                c_tcs = [item for item in tc_items if getattr(item['telecaller'], 'counselor_id', None) == c.id]
-
-                for c_item in c_tcs:
-
-                    handled_tc_ids.add(c_item['telecaller'].id)
-
-                counselor_groups.append({
-
-                    'counselor': c,
-
-                    'name': c.get_full_name() or c.username,
-
-                    'email': c.email,
-
-                    'telecallers': c_tcs,
-
-                })
+                    branch_map[b_name].append(item)
 
 
 
-            other_tcs = [item for item in tc_items if item['telecaller'].id not in handled_tc_ids]
+                counselor_groups = []
 
-            if other_tcs:
+                for b_name in sorted(branch_map.keys()):
 
-                counselor_groups.append({
+                    counselor_groups.append({
 
-                    'counselor': None,
+                        'counselor': None,
 
-                    'name': 'Direct / Branch Telecallers',
+                        'name': b_name,
 
-                    'email': '',
+                        'email': '',
 
-                    'telecallers': other_tcs,
+                        'telecallers': branch_map[b_name],
 
-                })
+                    })
+
+            else:
+
+                # Group by Counselor for this branch
+
+                counselors = User.objects.filter(role=UserRole.COUNSELOR, branch=selected_branch).order_by('first_name', 'username')
+
+                counselor_groups = []
+
+                handled_tc_ids = set()
+
+
+
+                for c in counselors:
+
+                    c_tcs = [item for item in tc_items if getattr(item['telecaller'], 'counselor_id', None) == c.id]
+
+                    for c_item in c_tcs:
+
+                        handled_tc_ids.add(c_item['telecaller'].id)
+
+                    counselor_groups.append({
+
+                        'counselor': c,
+
+                        'name': c.get_full_name() or c.username,
+
+                        'email': c.email,
+
+                        'telecallers': c_tcs,
+
+                    })
+
+
+
+                other_tcs = [item for item in tc_items if item['telecaller'].id not in handled_tc_ids]
+
+                if other_tcs:
+
+                    counselor_groups.append({
+
+                        'counselor': None,
+
+                        'name': 'Direct / Branch Telecallers',
+
+                        'email': '',
+
+                        'telecallers': other_tcs,
+
+                    })
 
 
 
@@ -7113,6 +7260,8 @@ def admin_lead_setup(request):
 
 
 
+    central_b_id = Branch.objects.filter(name='Centralized (All Branches)').values_list('id', flat=True).first()
+
     return render(request, 'admin/lead_setup.html', {
 
         'config': config,
@@ -7134,6 +7283,8 @@ def admin_lead_setup(request):
         'source_tabs': source_tabs,
 
         'recent_audits': recent_audits,
+
+        'centralized_branch_id': central_b_id,
 
     })
 

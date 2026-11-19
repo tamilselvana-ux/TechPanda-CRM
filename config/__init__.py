@@ -3,6 +3,13 @@ Config initialization and Python 3.15+ compatibility patches.
 """
 import sys
 
+# PyMySQL integration for Django MySQL backend
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except Exception:
+    pass
+
 # Python 3.15 compatibility fix for Django template BaseContext.__copy__
 # In Python 3.15+, copy(super()) returns a super proxy object without __dict__.
 try:

@@ -27,6 +27,16 @@ def assign_new_lead(lead, branch=None, source="Google Sheet", triggered_by=None,
             lead.save(update_fields=['assignment_status', 'pending_assignment_reason', 'assigned_telecaller', 'updated_at'])
         else:
             lead.save()
+        LeadAssignmentHistory.objects.create(
+            lead=lead,
+            from_user=None,
+            to_user=None,
+            from_role='',
+            to_role='',
+            branch=None,
+            reason="Pending Assignment: Missing branch.",
+            assigned_by=triggered_by if getattr(triggered_by, 'is_authenticated', False) else None,
+        )
         log_activity(
             user=triggered_by,
             action="Lead Assignment Pending",
@@ -123,6 +133,16 @@ def assign_new_lead(lead, branch=None, source="Google Sheet", triggered_by=None,
                 lead.save(update_fields=['branch', 'assignment_status', 'pending_assignment_reason', 'assigned_telecaller', 'updated_at'])
             else:
                 lead.save()
+            LeadAssignmentHistory.objects.create(
+                lead=lead,
+                from_user=None,
+                to_user=None,
+                from_role='',
+                to_role='',
+                branch=target_branch,
+                reason=f"Pending Assignment: {lead.pending_assignment_reason}",
+                assigned_by=triggered_by if getattr(triggered_by, 'is_authenticated', False) else None,
+            )
             log_activity(
                 user=triggered_by,
                 action="Lead Assignment Pending",
@@ -143,6 +163,16 @@ def assign_new_lead(lead, branch=None, source="Google Sheet", triggered_by=None,
                 lead.save(update_fields=['branch', 'assignment_status', 'pending_assignment_reason', 'assigned_telecaller', 'updated_at'])
             else:
                 lead.save()
+            LeadAssignmentHistory.objects.create(
+                lead=lead,
+                from_user=None,
+                to_user=None,
+                from_role='',
+                to_role='',
+                branch=target_branch,
+                reason=f"Pending Assignment: {lead.pending_assignment_reason}",
+                assigned_by=triggered_by if getattr(triggered_by, 'is_authenticated', False) else None,
+            )
             log_activity(
                 user=triggered_by,
                 action="Lead Assignment Pending",
@@ -305,16 +335,19 @@ def apply_branch_lead_distribution(branch, user=None, source=None) -> tuple[int,
     src_display = f" (Source: '{norm_source}')" if norm_source else ""
 
     with transaction.atomic():
+        is_central = (branch.name == 'Centralized (All Branches)')
         setups_qs = TelecallerLeadSetup.objects.select_for_update().filter(
             branch=branch,
             is_active=True,
             assignment_percentage__gt=0,
             telecaller__is_active=True,
             telecaller__role=UserRole.TELECALLER,
-        ).exclude(
-            telecaller__counselor__isnull=True,
-            telecaller__branch__isnull=True
         )
+        if not is_central:
+            setups_qs = setups_qs.exclude(
+                telecaller__counselor__isnull=True,
+                telecaller__branch__isnull=True
+            )
         if norm_source:
             setups_qs = setups_qs.filter(source=norm_source)
         else:
@@ -322,9 +355,18 @@ def apply_branch_lead_distribution(branch, user=None, source=None) -> tuple[int,
 
         valid_setups = list(setups_qs.select_related('telecaller', 'telecaller__branch').order_by('id'))
 
-        leads_scope = Q(branch=branch) | Q(branch__isnull=True)
-        if norm_source:
-            leads_scope = leads_scope & (Q(source__iexact=norm_source) | Q(source__iexact=source))
+        if is_central:
+            leads_scope = (
+                Q(assigned_telecaller__isnull=True) |
+                Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+                Q(status=LeadStatus.NEW)
+            )
+            if norm_source:
+                leads_scope = leads_scope & (Q(source__iexact=norm_source) | Q(source__iexact=source))
+        else:
+            leads_scope = Q(branch=branch) | Q(branch__isnull=True)
+            if norm_source:
+                leads_scope = leads_scope & (Q(source__iexact=norm_source) | Q(source__iexact=source))
 
         if not valid_setups:
             unassigned_qs = Lead.objects.filter(leads_scope).filter(
@@ -405,7 +447,17 @@ def apply_branch_lead_distribution(branch, user=None, source=None) -> tuple[int,
             ).first()
 
             previous_telecaller = lead.assigned_telecaller
-            lead.branch = branch
+            if not lead.branch or is_central:
+                if not lead.branch:
+                    lead.branch = selected_tc.branch or branch
+            else:
+                lead.branch = branch
+
+            target_lead_branch = lead.branch or branch
+            selected_mgr = User.objects.filter(
+                role=UserRole.SALES_HEAD, branch_access__branch=target_lead_branch, is_active=True
+            ).first() or User.objects.filter(role=UserRole.SALES_HEAD, is_active=True).first()
+
             lead.assigned_telecaller = selected_tc
             lead.assigned_sales_head = selected_mgr
             lead.current_owner_type = LeadOwnerType.TELECALLER
@@ -429,8 +481,8 @@ def apply_branch_lead_distribution(branch, user=None, source=None) -> tuple[int,
                 to_user=selected_tc,
                 from_role=UserRole.TELECALLER if previous_telecaller else '',
                 to_role=UserRole.TELECALLER,
-                branch=branch,
-                reason='Batch Lead Distribution',
+                branch=lead.branch,
+                reason='Centralized Lead Distribution' if is_central else 'Batch Lead Distribution',
                 assigned_by=user if getattr(user, 'is_authenticated', False) else None,
             )
 

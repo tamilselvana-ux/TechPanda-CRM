@@ -10,7 +10,10 @@ from leads.models import Lead, VisitorStatus, LeadStatus, LeadCategory
 class QRWalkinStudentEnquiryTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.branch = Branch.objects.create(name='Velachery', status='Active', phone='9876543210', address='123 Bypass Road, Velachery, Chennai')
+        self.branch, _ = Branch.objects.get_or_create(
+            name='Velachery Test',
+            defaults={'status': 'Active', 'phone': '9876543210', 'address': '123 Bypass Road, Velachery, Chennai'}
+        )
         self.walkin_channel, _ = Channel.objects.get_or_create(name='Walk-in', defaults={'status': 'Active'})
 
         self.admin = User.objects.create_user(
@@ -36,6 +39,7 @@ class QRWalkinStudentEnquiryTests(TestCase):
             'name': 'Karthik Subramanian',
             'phone': '9840123456',
             'email': 'karthik@example.com',
+            'emergency_contact': '9840112233',
             'branch_id': self.branch.id,
             'dob': '2001-05-15',
             'gender': 'Male',
@@ -95,6 +99,7 @@ class QRWalkinStudentEnquiryTests(TestCase):
             'name': 'Priya Raman',
             'phone': '9791000111',
             'email': 'priya@example.com',
+            'emergency_contact': '9840112233',
             'branch_id': self.branch.id,
             'ug_degree': 'B.Tech IT',
             'ug_year': '2023',

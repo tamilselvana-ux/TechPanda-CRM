@@ -110,8 +110,8 @@
      <span class="badge tp-badge" style="background: var(--tp-surface-card); color: var(--tp-text-secondary); border: 1px solid var(--tp-surface-border); font-size: 0.72rem; font-weight: 700;">
       {{ b.branch.code|default:"BRANCH" }}
      </span>
-     <span class="badge tp-badge" style="{% if b.is_valid %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% else %}background: #fffbeb; color: #b45309; border: 1px solid #fde68a;{% endif %} font-size: 0.75rem; font-weight: 700; padding: 3px 8px;">
-      {% if b.is_valid %} 100% Configured ({{ b.valid_sources_count }}/{{ b.total_sources_count }} Sources){% else %} {{ b.valid_sources_count }}/{{ b.total_sources_count }} Sources Configured{% endif %}
+     <span class="badge tp-badge" style="{% if b.is_valid %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% elif b.telecallers_count == 0 %}background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;{% else %}background: #fffbeb; color: #b45309; border: 1px solid #fde68a;{% endif %} font-size: 0.75rem; font-weight: 700; padding: 3px 8px;">
+      {% if b.is_valid %} 100% Configured ({{ b.valid_sources_count }}/{{ b.total_sources_count }} Sources){% elif b.telecallers_count == 0 %} Centralized Pool Managed{% else %} {{ b.valid_sources_count }}/{{ b.total_sources_count }} Sources Configured{% endif %}
      </span>
     </div>
     <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--tp-text-primary);">
@@ -233,6 +233,27 @@
 
  <!-- Grouped by Counselor -->
  <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+ {% if selected_branch_data.telecallers|length == 0 %}
+ <div class="tp-card" style="padding: 24px; border-radius: 12px; background: #fffbeb; border: 1px solid #fde68a; display: flex; flex-direction: column; gap: 12px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+   <strong style="font-size: 1.05rem; color: #92400e;">No Dedicated Telecallers in {{ selected_branch.name }}</strong>
+  </div>
+  <p style="margin: 0; color: #78350f; font-size: 0.9rem; line-height: 1.5;">
+   There are currently no active telecallers assigned directly to <strong>{{ selected_branch.name }}</strong>. Incoming leads for this branch are automatically pooled into and distributed across organization telecallers by the <strong>Centralized Lead Allocation Hub</strong>.
+  </p>
+  <div style="display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap;">
+   {% if centralized_branch_id %}
+   <a href="?branch_id={{ centralized_branch_id }}&source={{ selected_branch_data.source }}" class="btn btn-primary tp-btn-primary" style="background: #4f46e5; border-color: #4f46e5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+    Configure Centralized Allocation Hub &rarr;
+   </a>
+   {% endif %}
+   <a href="{% url 'admin_users_list' %}?role=telecaller" class="btn btn-secondary" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+    Assign Telecallers to {{ selected_branch.name }} &rarr;
+   </a>
+  </div>
+ </div>
+ {% endif %}
  {% for group in selected_branch_data.counselor_groups %}
  <div style="border: 1px solid var(--tp-surface-border); border-radius: var(--tp-radius-sm); overflow: hidden; background: var(--tp-surface-card);">
  <div style="background: var(--tp-surface-bg); padding: 10px 16px; border-bottom: 1px solid var(--tp-surface-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">

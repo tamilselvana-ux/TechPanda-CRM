@@ -35,6 +35,10 @@ def infer_lead_branch(user=None, manager=None, telecaller=None, request=None, cu
     return Branch.objects.filter(status='Active').first()
 
 class AdminLeadForm(forms.ModelForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@domain.com'})
+    )
     assigned_manager = forms.ModelChoiceField(
         queryset=User.objects.filter(role=UserRole.SALES_HEAD, is_active=True),
         required=False,
@@ -172,6 +176,10 @@ class ManagerLeadForm(forms.ModelForm):
                 is_active=True
             )
 
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@domain.com'})
+    )
     assigned_telecaller = forms.ModelChoiceField(
         queryset=User.objects.none(),
         required=False,
@@ -325,6 +333,10 @@ class ManagerLeadCreateForm(forms.ModelForm):
                 is_active=True
             )
 
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@domain.com'})
+    )
     assigned_telecaller = forms.ModelChoiceField(
         queryset=User.objects.none(),
         required=False,
@@ -402,6 +414,10 @@ class ManagerLeadCreateForm(forms.ModelForm):
         return lead
 
 class TelecallerLeadCreateForm(forms.ModelForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@domain.com'})
+    )
     channel = forms.ModelChoiceField(queryset=Channel.objects.filter(status='Active'), required=False, widget=forms.Select(attrs={'class': 'form-select'}))
     product = forms.ModelChoiceField(queryset=Product.objects.filter(status='Active'), required=False, widget=forms.Select(attrs={'class': 'form-select'}))
 

@@ -520,8 +520,8 @@
 
       <div class="form-row" style="grid-template-columns: 1fr;">
         <div class="form-group">
-          <label class="form-label" for="email">Email</label>
-          <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email address" value="{{ form_data.email|default:'' }}">
+          <label class="form-label" for="email"><span>Email Address <span class="required-star">*</span></span></label>
+          <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email address" value="{{ form_data.email|default:'' }}" required>
         </div>
       </div>
 
@@ -543,8 +543,8 @@
 
       <div class="form-row" style="grid-template-columns: 1fr;">
         <div class="form-group">
-          <label class="form-label" for="emergency_contact">Emergency Contact Number</label>
-          <input type="tel" name="emergency_contact" id="emergency_contact" inputmode="tel" class="form-control" placeholder="Parent / Guardian / Emergency contact number" value="{{ form_data.emergency_contact|default:'' }}" maxlength="15">
+          <label class="form-label" for="emergency_contact"><span>Emergency Contact Number <span class="required-star">*</span></span></label>
+          <input type="tel" name="emergency_contact" id="emergency_contact" inputmode="tel" class="form-control" placeholder="Parent / Guardian / Emergency contact number" value="{{ form_data.emergency_contact|default:'' }}" required maxlength="15">
         </div>
       </div>
 
@@ -601,9 +601,9 @@
             </label>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="years_of_experience">Years of Experience</label>
-          <input type="text" name="years_of_experience" id="years_of_experience" class="form-control" placeholder="e.g. 0 / 2.5 Years" value="{{ form_data.years_of_experience|default:'' }}">
+        <div class="form-group" id="yearsOfExpGroup" style="display: none;">
+          <label class="form-label" for="years_of_experience">Years of Experience <span class="required-star">*</span></label>
+          <input type="text" name="years_of_experience" id="years_of_experience" class="form-control" placeholder="e.g. 1 Year / 2.5 Years" value="{{ form_data.years_of_experience|default:'' }}">
         </div>
       </div>
 
@@ -629,8 +629,8 @@
         </div>
       </div>
 
-      <div class="form-row row-2col" style="align-items: center;">
-        <div class="form-group">
+      <div class="form-row row-2col" style="align-items: center;" id="backlogsAndHighestEduRow">
+        <div class="form-group" id="backlogsGroup">
           <label class="form-label">Backlogs</label>
           <div class="inline-options">
             <label class="choice-box">
@@ -647,109 +647,111 @@
             </label>
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="highestEduGroup">
           <label class="form-label" for="highest_education">Highest Education</label>
           <input type="text" name="highest_education" id="highest_education" class="form-control" placeholder="Highest qualification completed" value="{{ form_data.highest_education|default:'' }}">
         </div>
       </div>
 
-      <!-- 4. WORK EXPERIENCE -->
-      <div class="section-tag">Work Experience</div>
+      <!-- 4. WORK EXPERIENCE (Only shown for Experienced candidates) -->
+      <div id="workExperienceSection" style="display: none;">
+        <div class="section-tag">Work Experience</div>
 
-      <div class="work-exp-panel" id="workExpPanel">
-        <div class="form-row" style="grid-template-columns: 1fr;">
-          <div class="form-group">
-            <label class="form-label">Do you have work experience</label>
-            <div class="inline-options">
-              <label class="choice-box">
-                <input type="radio" name="has_work_experience" value="Yes" {% if form_data.has_work_experience == 'Yes' %}checked{% endif %}>
-                <span>Yes</span>
-              </label>
-              <label class="choice-box">
-                <input type="radio" name="has_work_experience" value="No" {% if form_data.has_work_experience != 'Yes' %}checked{% endif %}>
-                <span>No</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div id="workExpDetails">
-          <div class="form-row row-2col">
+        <div class="work-exp-panel" id="workExpPanel">
+          <div class="form-row" style="grid-template-columns: 1fr; display: none;">
             <div class="form-group">
-              <label class="form-label" for="company_name">Company's Name</label>
-              <input type="text" name="company_name" id="company_name" class="form-control" placeholder="Previous / Current company name" value="{{ form_data.company_name|default:'' }}">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="designation">Designation</label>
-              <input type="text" name="designation" id="designation" class="form-control" placeholder="Job title / role" value="{{ form_data.designation|default:'' }}">
-            </div>
-          </div>
-
-          <div class="form-row row-3col">
-            <div class="form-group">
-              <label class="form-label" for="work_start_date">Start Date</label>
-              <input type="date" name="work_start_date" id="work_start_date" class="form-control" value="{{ form_data.work_start_date|default:'' }}">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="work_end_date">End Date</label>
-              <input type="date" name="work_end_date" id="work_end_date" class="form-control" value="{{ form_data.work_end_date|default:'' }}">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="current_ctc">Current CTC</label>
-              <input type="text" name="current_ctc" id="current_ctc" class="form-control" placeholder="e.g. 4.5 LPA" value="{{ form_data.current_ctc|default:'' }}">
-            </div>
-          </div>
-
-          <div class="form-row row-3col" style="align-items: center;">
-            <div class="form-group">
-              <label class="form-label">IT Experience</label>
+              <label class="form-label">Do you have work experience</label>
               <div class="inline-options">
                 <label class="choice-box">
-                  <input type="radio" name="it_experience" value="Yes" {% if form_data.it_experience == 'Yes' %}checked{% endif %}>
+                  <input type="radio" name="has_work_experience" value="Yes" {% if form_data.has_work_experience == 'Yes' %}checked{% endif %}>
                   <span>Yes</span>
                 </label>
                 <label class="choice-box">
-                  <input type="radio" name="it_experience" value="No" {% if form_data.it_experience == 'No' or not form_data.it_experience %}checked{% endif %}>
-                  <span>No</span>
-                </label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Absconded</label>
-              <div class="inline-options">
-                <label class="choice-box">
-                  <input type="radio" name="absconded" value="Yes" {% if form_data.absconded == 'Yes' %}checked{% endif %}>
-                  <span>Yes</span>
-                </label>
-                <label class="choice-box">
-                  <input type="radio" name="absconded" value="No" {% if form_data.absconded == 'No' or not form_data.absconded %}checked{% endif %}>
-                  <span>No</span>
-                </label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Do You have PF or UAN ID</label>
-              <div class="inline-options">
-                <label class="choice-box">
-                  <input type="radio" name="has_pf_uan" value="Yes" {% if form_data.has_pf_uan == 'Yes' %}checked{% endif %}>
-                  <span>Yes</span>
-                </label>
-                <label class="choice-box">
-                  <input type="radio" name="has_pf_uan" value="No" {% if form_data.has_pf_uan == 'No' or not form_data.has_pf_uan %}checked{% endif %}>
+                  <input type="radio" name="has_work_experience" value="No" {% if form_data.has_work_experience != 'Yes' %}checked{% endif %}>
                   <span>No</span>
                 </label>
               </div>
             </div>
           </div>
 
-          <div class="form-row row-2col">
-            <div class="form-group">
-              <label class="form-label" for="expected_ctc">Expected CTC</label>
-              <input type="text" name="expected_ctc" id="expected_ctc" class="form-control" placeholder="e.g. 6.0 LPA" value="{{ form_data.expected_ctc|default:'' }}">
+          <div id="workExpDetails">
+            <div class="form-row row-2col">
+              <div class="form-group">
+                <label class="form-label" for="company_name">Company's Name</label>
+                <input type="text" name="company_name" id="company_name" class="form-control" placeholder="Previous / Current company name" value="{{ form_data.company_name|default:'' }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="designation">Designation</label>
+                <input type="text" name="designation" id="designation" class="form-control" placeholder="Job title / role" value="{{ form_data.designation|default:'' }}">
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="reason_for_leaving">Reason for Leaving</label>
-              <input type="text" name="reason_for_leaving" id="reason_for_leaving" class="form-control" placeholder="Brief reason" value="{{ form_data.reason_for_leaving|default:'' }}">
+
+            <div class="form-row row-3col">
+              <div class="form-group">
+                <label class="form-label" for="work_start_date">Start Date</label>
+                <input type="date" name="work_start_date" id="work_start_date" class="form-control" value="{{ form_data.work_start_date|default:'' }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="work_end_date">End Date</label>
+                <input type="date" name="work_end_date" id="work_end_date" class="form-control" value="{{ form_data.work_end_date|default:'' }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="current_ctc">Current CTC</label>
+                <input type="text" name="current_ctc" id="current_ctc" class="form-control" placeholder="e.g. 4.5 LPA" value="{{ form_data.current_ctc|default:'' }}">
+              </div>
+            </div>
+
+            <div class="form-row row-3col" style="align-items: center;">
+              <div class="form-group">
+                <label class="form-label">IT Experience</label>
+                <div class="inline-options">
+                  <label class="choice-box">
+                    <input type="radio" name="it_experience" value="Yes" {% if form_data.it_experience == 'Yes' %}checked{% endif %}>
+                    <span>Yes</span>
+                  </label>
+                  <label class="choice-box">
+                    <input type="radio" name="it_experience" value="No" {% if form_data.it_experience == 'No' or not form_data.it_experience %}checked{% endif %}>
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Absconded</label>
+                <div class="inline-options">
+                  <label class="choice-box">
+                    <input type="radio" name="absconded" value="Yes" {% if form_data.absconded == 'Yes' %}checked{% endif %}>
+                    <span>Yes</span>
+                  </label>
+                  <label class="choice-box">
+                    <input type="radio" name="absconded" value="No" {% if form_data.absconded == 'No' or not form_data.absconded %}checked{% endif %}>
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Do You have PF or UAN ID</label>
+                <div class="inline-options">
+                  <label class="choice-box">
+                    <input type="radio" name="has_pf_uan" value="Yes" {% if form_data.has_pf_uan == 'Yes' %}checked{% endif %}>
+                    <span>Yes</span>
+                  </label>
+                  <label class="choice-box">
+                    <input type="radio" name="has_pf_uan" value="No" {% if form_data.has_pf_uan == 'No' or not form_data.has_pf_uan %}checked{% endif %}>
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row row-2col">
+              <div class="form-group">
+                <label class="form-label" for="expected_ctc">Expected CTC</label>
+                <input type="text" name="expected_ctc" id="expected_ctc" class="form-control" placeholder="e.g. 6.0 LPA" value="{{ form_data.expected_ctc|default:'' }}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="reason_for_leaving">Reason for Leaving</label>
+                <input type="text" name="reason_for_leaving" id="reason_for_leaving" class="form-control" placeholder="Brief reason" value="{{ form_data.reason_for_leaving|default:'' }}">
+              </div>
             </div>
           </div>
         </div>
@@ -879,29 +881,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Work experience visual state toggle
-  const workExpPanel = document.getElementById('workExpPanel');
-  function syncWorkExpVisual() {
+  // Profile Type & Work Experience dynamic visibility toggle (Fresher vs Experienced)
+  const workExpSection = document.getElementById('workExperienceSection');
+  const yearsGroup = document.getElementById('yearsOfExpGroup');
+  const backlogsGroup = document.getElementById('backlogsGroup');
+  const yearsInput = document.getElementById('years_of_experience');
+
+  function syncProfileVisibility() {
+    const isExpRadio = document.querySelector('input[name="experience_type"][value="Experienced"]:checked');
+    const isExp = Boolean(isExpRadio);
     const yesRadio = document.querySelector('input[name="has_work_experience"][value="Yes"]');
-    if (workExpPanel && yesRadio) {
-      workExpPanel.classList.toggle('is-fresher-dimmed', !yesRadio.checked);
+    const noRadio = document.querySelector('input[name="has_work_experience"][value="No"]');
+
+    if (isExp) {
+      if (yearsGroup) yearsGroup.style.display = 'block';
+      if (backlogsGroup) backlogsGroup.style.display = 'none';
+      if (workExpSection) workExpSection.style.display = 'block';
+      if (yesRadio) { yesRadio.checked = true; updateChoiceVisual(yesRadio); }
+    } else {
+      if (yearsGroup) yearsGroup.style.display = 'none';
+      if (yearsInput) yearsInput.value = '';
+      if (backlogsGroup) backlogsGroup.style.display = 'block';
+      if (workExpSection) workExpSection.style.display = 'none';
+      if (noRadio) { noRadio.checked = true; updateChoiceVisual(noRadio); }
     }
   }
-  document.querySelectorAll('input[name="has_work_experience"]').forEach(r => {
-    r.addEventListener('change', syncWorkExpVisual);
-  });
+
   document.querySelectorAll('input[name="experience_type"]').forEach(r => {
-    r.addEventListener('change', function() {
-      if (this.value === 'Experienced' && this.checked) {
-        const y = document.querySelector('input[name="has_work_experience"][value="Yes"]');
-        if (y) { y.checked = true; updateChoiceVisual(y); syncWorkExpVisual(); }
-      } else if (this.value === 'Fresher' && this.checked) {
-        const n = document.querySelector('input[name="has_work_experience"][value="No"]');
-        if (n) { n.checked = true; updateChoiceVisual(n); syncWorkExpVisual(); }
-      }
-    });
+    r.addEventListener('change', syncProfileVisibility);
   });
-  syncWorkExpVisual();
+  syncProfileVisibility();
 
   // "Others" course input toggle
   const othersCb = document.getElementById('courseOthersCb');

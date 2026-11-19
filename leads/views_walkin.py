@@ -177,22 +177,72 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
 
         # Standard Student Enquiry Form Fields Extraction
         custom_payload['dob'] = (request.POST.get('dob') or '').strip()
-        custom_payload['home_address'] = (request.POST.get('home_address') or request.POST.get('address') or '').strip()
+        custom_payload['home_address'] = (request.POST.get('home_address') or request.POST.get('current_address') or request.POST.get('address') or '').strip()
+        custom_payload['current_address'] = custom_payload['home_address']
         custom_payload['city'] = (request.POST.get('city') or '').strip()
         custom_payload['state'] = (request.POST.get('state') or '').strip()
         custom_payload['zip_code'] = (request.POST.get('zip_code') or '').strip()
         custom_payload['gender'] = (request.POST.get('gender') or '').strip()
         custom_payload['preferred_contact'] = (request.POST.get('preferred_contact') or '').strip()
+        custom_payload['preferred_training_mode'] = (request.POST.get('preferred_training_mode') or 'Offline').strip()
+        custom_payload['whatsapp_number'] = (request.POST.get('whatsapp_number') or '').strip()
 
-        # Education Qualifications
-        custom_payload['experience_type'] = (request.POST.get('experience_type') or 'Fresher').strip()
-        custom_payload['years_of_experience'] = (request.POST.get('years_of_experience') or '').strip()
-        custom_payload['ug_qualification'] = (request.POST.get('ug_qualification') or request.POST.get('ug_degree') or '').strip()
-        custom_payload['ug_passed_out_year'] = (request.POST.get('ug_passed_out_year') or request.POST.get('ug_year') or '').strip()
-        custom_payload['pg_qualification'] = (request.POST.get('pg_qualification') or request.POST.get('pg_degree') or '').strip()
-        custom_payload['pg_passed_out_year'] = (request.POST.get('pg_passed_out_year') or request.POST.get('pg_year') or '').strip()
-        custom_payload['backlogs'] = (request.POST.get('backlogs') or 'No').strip()
+        # Emergency Contact extraction
+        emergency_contact_raw = (request.POST.get('emergency_contact') or request.POST.get('emergency_contact_number') or '').strip()
+        emergency_contact_clean = normalize_phone_number(emergency_contact_raw)
+        custom_payload['emergency_contact'] = emergency_contact_raw
+        custom_payload['emergency_contact_number'] = emergency_contact_clean
+
+        # Education Qualifications & Dynamic Profile Type Separation (Fresher vs Experienced)
+        exp_type = (request.POST.get('experience_type') or 'Fresher').strip()
+        if exp_type not in ('Fresher', 'Experienced'):
+            exp_type = 'Fresher'
+        custom_payload['experience_type'] = exp_type
+
+        ug_val = (request.POST.get('ug_qualification') or request.POST.get('ug_degree') or '').strip()
+        ug_yr = (request.POST.get('ug_passed_out_year') or request.POST.get('ug_year') or '').strip()
+        pg_val = (request.POST.get('pg_qualification') or request.POST.get('pg_degree') or '').strip()
+        pg_yr = (request.POST.get('pg_passed_out_year') or request.POST.get('pg_year') or '').strip()
+
+        custom_payload['ug_qualification'] = ug_val
+        custom_payload['ug_degree'] = ug_val
+        custom_payload['ug_passed_out_year'] = ug_yr
+        custom_payload['ug_year'] = ug_yr
+        custom_payload['pg_qualification'] = pg_val
+        custom_payload['pg_degree'] = pg_val
+        custom_payload['pg_passed_out_year'] = pg_yr
+        custom_payload['pg_year'] = pg_yr
         custom_payload['highest_education'] = (request.POST.get('highest_education') or '').strip()
+
+        if exp_type == 'Fresher':
+            custom_payload['years_of_experience'] = '0 Years'
+            custom_payload['has_work_experience'] = 'No'
+            custom_payload['backlogs'] = (request.POST.get('backlogs') or 'No').strip()
+            # Work experience details omitted/cleared for fresher profiles
+            custom_payload['company_name'] = ''
+            custom_payload['designation'] = ''
+            custom_payload['work_start_date'] = ''
+            custom_payload['work_end_date'] = ''
+            custom_payload['current_ctc'] = ''
+            custom_payload['it_experience'] = 'No'
+            custom_payload['absconded'] = 'No'
+            custom_payload['has_pf_uan'] = 'No'
+            custom_payload['expected_ctc'] = (request.POST.get('expected_ctc') or '').strip()
+            custom_payload['reason_for_leaving'] = ''
+        else:
+            custom_payload['years_of_experience'] = (request.POST.get('years_of_experience') or '').strip()
+            custom_payload['has_work_experience'] = 'Yes'
+            custom_payload['backlogs'] = 'No'
+            custom_payload['company_name'] = (request.POST.get('company_name') or '').strip()
+            custom_payload['designation'] = (request.POST.get('designation') or '').strip()
+            custom_payload['work_start_date'] = (request.POST.get('work_start_date') or '').strip()
+            custom_payload['work_end_date'] = (request.POST.get('work_end_date') or '').strip()
+            custom_payload['current_ctc'] = (request.POST.get('current_ctc') or '').strip()
+            custom_payload['it_experience'] = (request.POST.get('it_experience') or 'No').strip()
+            custom_payload['absconded'] = (request.POST.get('absconded') or 'No').strip()
+            custom_payload['has_pf_uan'] = (request.POST.get('has_pf_uan') or 'No').strip()
+            custom_payload['expected_ctc'] = (request.POST.get('expected_ctc') or '').strip()
+            custom_payload['reason_for_leaving'] = (request.POST.get('reason_for_leaving') or '').strip()
 
         # Current Professional Status
         prof_statuses = {}
@@ -210,6 +260,7 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
         if goal_other:
             career_goals.append(f"Other: {goal_other}")
         custom_payload['career_goals'] = career_goals
+        custom_payload['career_objective'] = (request.POST.get('career_objective') or '').strip()
 
         # Prior Digital Marketing Experience
         dm_exp = request.POST.getlist('dm_experience')
@@ -221,8 +272,17 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
         course_track = ', '.join(interested_courses) if interested_courses else (request.POST.get('course_track') or '')
 
         # Student References
-        custom_payload['student_reference_1'] = (request.POST.get('student_reference_1') or request.POST.get('ref_1_name') or '').strip()
-        custom_payload['student_reference_2'] = (request.POST.get('student_reference_2') or request.POST.get('ref_2_name') or '').strip()
+        ref1_name = (request.POST.get('student_reference_1') or request.POST.get('ref_1_name') or '').strip()
+        ref1_phone = (request.POST.get('ref_1_phone') or '').strip()
+        ref2_name = (request.POST.get('student_reference_2') or request.POST.get('ref_2_name') or '').strip()
+        ref2_phone = (request.POST.get('ref_2_phone') or '').strip()
+
+        custom_payload['student_reference_1'] = ref1_name
+        custom_payload['reference_1_name'] = ref1_name
+        custom_payload['reference_1_phone'] = ref1_phone
+        custom_payload['student_reference_2'] = ref2_name
+        custom_payload['reference_2_name'] = ref2_name
+        custom_payload['reference_2_phone'] = ref2_phone
 
         # Form Metadata
         custom_payload['enquiry_date'] = (request.POST.get('enquiry_date') or '').strip()
@@ -275,6 +335,54 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
                 'form_data': form_data_dict,
                 'token_preview': token_preview,
 
+            }, status=400)
+
+        if not email:
+            return render(request, 'public/student_enquiry_form.html', {
+                'form_config': form_config,
+                'schema': schema,
+                'branch': selected_branch,
+                'branches': active_branches,
+                'products': active_products,
+                'error': 'Please enter your Email address.',
+                'form_data': form_data_dict,
+                'token_preview': token_preview,
+            }, status=400)
+
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return render(request, 'public/student_enquiry_form.html', {
+                'form_config': form_config,
+                'schema': schema,
+                'branch': selected_branch,
+                'branches': active_branches,
+                'products': active_products,
+                'error': 'Please enter a valid Email address.',
+                'form_data': form_data_dict,
+                'token_preview': token_preview,
+            }, status=400)
+
+        if not emergency_contact_raw:
+            return render(request, 'public/student_enquiry_form.html', {
+                'form_config': form_config,
+                'schema': schema,
+                'branch': selected_branch,
+                'branches': active_branches,
+                'products': active_products,
+                'error': 'Please enter an Emergency Contact Number (Parent / Guardian).',
+                'form_data': form_data_dict,
+                'token_preview': token_preview,
+            }, status=400)
+
+        if len(emergency_contact_clean) < 10:
+            return render(request, 'public/student_enquiry_form.html', {
+                'form_config': form_config,
+                'schema': schema,
+                'branch': selected_branch,
+                'branches': active_branches,
+                'products': active_products,
+                'error': 'Please enter a valid 10-digit Emergency Contact Number.',
+                'form_data': form_data_dict,
+                'token_preview': token_preview,
             }, status=400)
 
         # Resolve branch
@@ -377,7 +485,14 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
             merged_cf = dict(lead.custom_fields or {})
             merged_cf.update(custom_payload)
             lead.custom_fields = merged_cf
-            lead.save(update_fields=['is_offline', 'category', 'custom_fields', 'updated_at'])
+            update_fields = ['is_offline', 'category', 'custom_fields', 'updated_at']
+            if is_re_enquiry:
+                lead.notes = f"Re-enquiry visit via Walk-in QR Code on {now.strftime('%d-%b-%Y %I:%M %p')}.\n" + (lead.notes or '')
+                update_fields.append('notes')
+            if not lead.alternate_phone and emergency_contact_clean:
+                lead.alternate_phone = emergency_contact_clean
+                update_fields.append('alternate_phone')
+            lead.save(update_fields=update_fields)
 
             # Increment submission count on form
 
