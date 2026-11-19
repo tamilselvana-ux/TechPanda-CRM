@@ -8434,7 +8434,19 @@ def api_lead_quick_details(request, pk):
 
         })
 
-
+    if not recent_calls and ctx.get('telecrm_mirror'):
+        tc_m = ctx['telecrm_mirror']
+        for act in tc_m.actions.filter(type__icontains='CALL').order_by('-occurred_at')[:4]:
+            recent_calls.append({
+                'id': f"tc_{act.id}",
+                'time': act.occurred_at.strftime('%d %b %Y, %I:%M %p') if act.occurred_at else '-',
+                'caller': act.employee_uid or 'Telecaller',
+                'duration': act.display_duration,
+                'outcome': act.display_status or 'TeleCRM Call',
+                'status': act.display_status or 'Completed',
+                'notes': act.display_text or '-',
+                'recording_url': None
+            })
 
     resp_data = {
 
@@ -8486,7 +8498,18 @@ def api_lead_quick_details(request, pk):
 
     resp_data['display_phone'] = ctx.get('phone_display', lead.phone)
 
-
+    if ctx.get('telecrm_actions'):
+        resp_data['telecrm_actions_count'] = len(ctx['telecrm_actions'])
+        resp_data['recent_telecrm_actions'] = [
+            {
+                'id': act.id,
+                'type': act.type,
+                'occurred_at': act.occurred_at.strftime('%d %b %Y, %I:%M %p') if act.occurred_at else '-',
+                'summary': act.display_summary,
+                'employee': act.employee_uid or 'System',
+            }
+            for act in ctx['telecrm_actions'][:10]
+        ]
 
     return JsonResponse(resp_data)
 

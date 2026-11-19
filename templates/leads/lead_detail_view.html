@@ -211,6 +211,15 @@
  <span class="ldm-tab-badge">{{ call_recordings|length }}</span>
  {% endif %}
  </button>
+ {% if telecrm_actions or telecrm_mirror %}
+ <button type="button" class="ldm-tab-btn" data-tab-target="#tab-telecrm" role="tab" aria-selected="false">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+ <span>TeleCRM History</span>
+ {% if telecrm_actions %}
+ <span class="ldm-tab-badge" style="background: #0284c7; color: #ffffff;">{{ telecrm_actions|length }}</span>
+ {% endif %}
+ </button>
+ {% endif %}
  </div>
 
  <!-- Lead Details Body (Two-Column Balanced Grid) -->
@@ -717,7 +726,7 @@
  <span class="ldm-timeline-time">{{ c.call_started_at|date:"d M Y, h:i A" }}</span>
  </div>
  <div class="ldm-timeline-body">
- <div><strong>By:</strong> {{ c.caller.get_full_name|default:c.caller.username|default:"Telecaller" }} &bull; <strong>Outcome:</strong> {{ c.call_outcome|default:c.call_status }}</div>
+ <div><strong>By:</strong> {% if c.caller %}{{ c.caller.get_full_name|default:c.caller.username }}{% else %}Telecaller{% endif %} &bull; <strong>Outcome:</strong> {{ c.call_outcome|default:c.call_status }}</div>
  {% if c.notes %}
  <div style="margin-top: 4px; color: var(--ld-text-main);">{{ c.notes }}</div>
  {% endif %}
@@ -766,7 +775,7 @@
  <div class="ldm-timeline-card">
  <div class="ldm-timeline-header">
  <span class="ldm-timeline-title">
- <span>⏰ Scheduled Follow-Up</span>
+ <span>Scheduled Follow-Up</span>
  <span class="badge" style="background: rgba(236, 72, 153, 0.12); color: #db2777; font-size: 0.72rem;">{{ f.status|default:"Pending" }}</span>
  </span>
  <span class="ldm-timeline-time">{{ f.created_at|date:"d M Y, h:i A" }}</span>
@@ -843,7 +852,7 @@
  {% for c in calls %}
  <tr>
  <td style="white-space: nowrap;">{{ c.call_started_at|date:"d M Y, h:i A" }}</td>
- <td><strong>{{ c.caller.get_full_name|default:c.caller.username|default:"-" }}</strong></td>
+ <td><strong>{% if c.caller %}{{ c.caller.get_full_name|default:c.caller.username }}{% else %}-{% endif %}</strong></td>
  <td>
  <span class="badge" style="background: {% if c.call_status == 'Missed' or c.call_status == 'RNR' %}#fee2e2; color: #991b1b;{% else %}#e0f2fe; color: #0369a1;{% endif %} font-size: 0.75rem;">
  {{ c.call_direction|default:"Outgoing"|title }} &bull; {{ c.call_status|default:"Completed" }}
@@ -869,6 +878,48 @@
  {% endif %}
  </div>
 
+ {% if telecrm_actions %}
+ <div style="margin-top: 28px; padding-top: 20px; border-top: 1px dashed var(--ld-border-subtle);">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+ <h3 style="font-size: 1rem; font-weight: 700; color: #0284c7; margin: 0; display: flex; align-items: center; gap: 8px;">
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+ Imported TeleCRM Activity ({{ telecrm_actions|length }} events)
+ </h3>
+ <a href="javascript:void(0)" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" style="font-size: 0.8rem; font-weight: 600; color: #0284c7; text-decoration: none; padding: 4px 10px; border-radius: 6px; background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.2);">
+ View in Dedicated Tab &rarr;
+ </a>
+ </div>
+ 
+ <div class="ldm-timeline-list">
+ {% for act in telecrm_actions|slice:":5" %}
+ <div class="ldm-timeline-item">
+ <div class="ldm-timeline-node" style="background: rgba(2, 132, 199, 0.12); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.3);">
+ <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+ </div>
+ <div class="ldm-timeline-card">
+ <div class="ldm-timeline-header">
+ <span class="ldm-timeline-title">
+ <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.72rem; font-weight: 700;">TeleCRM &bull; {{ act.type }}</span>
+ {% if act.employee_uid %}<span style="font-size: 0.78rem; color: #64748b;">by {{ act.employee_uid }}</span>{% endif %}
+ </span>
+ <span class="ldm-timeline-time">{{ act.occurred_at|date:"d M Y, h:i A" }}</span>
+ </div>
+ <div class="ldm-timeline-body" style="font-size: 0.82rem; color: #334155;">
+ <div>{{ act.display_summary|default:act.type }}</div>
+ </div>
+ </div>
+ </div>
+ {% endfor %}
+ {% if telecrm_actions|length > 5 %}
+ <div style="text-align: center; padding: 8px 0;">
+ <a href="javascript:void(0)" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" style="font-size: 0.82rem; font-weight: 600; color: #0284c7; text-decoration: underline;">
+ + {{ telecrm_actions|length|add:"-5" }} more TeleCRM historical actions available in the TeleCRM History tab
+ </a>
+ </div>
+ {% endif %}
+ </div>
+ </div>
+ {% endif %}
  </div>
  </div><!-- End #tab-timeline -->
 
@@ -902,7 +953,7 @@
  {% for r in call_recordings %}
  <tr>
  <td style="white-space: nowrap;">{{ r.recording_date|default:r.created_at|date:"d M Y, h:i A" }}</td>
- <td><strong>{{ r.telecaller.get_full_name|default:r.telecaller.username|default:"Telecaller" }}</strong></td>
+ <td><strong>{% if r.telecaller %}{{ r.telecaller.get_full_name|default:r.telecaller.username }}{% else %}Telecaller{% endif %}</strong></td>
  <td><code>{{ r.duration|default:"-" }}</code></td>
  <td style="min-width: 200px;">
  <audio controls preload="none" src="{% url 'drive_stream_recording' r.id %}" style="height: 32px; width: 220px; vertical-align: middle;">
@@ -931,6 +982,147 @@
 
  </div>
  </div><!-- End #tab-documents -->
+
+ <!-- TAB 4: TELECRM HISTORY -->
+ <div id="tab-telecrm" class="ldm-tab-pane" role="tabpanel">
+ <div style="padding: 24px;">
+
+ {% if telecrm_mirror %}
+ <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+ <div style="display: flex; align-items: center; gap: 14px;">
+ <div style="width: 42px; height: 42px; border-radius: 8px; background: #0284c7; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(2,132,199,0.25);">
+ <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+ </div>
+ <div>
+ <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #0369a1; margin-bottom: 2px;">
+ Linked TeleCRM Lead Mirror
+ </div>
+ <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">
+ ID: <code>{{ telecrm_mirror.telecrm_id }}</code>
+ {% if telecrm_mirror.phone %}<span style="color: #64748b; font-weight: 500; font-size: 0.9rem; margin-left: 8px;">({{ telecrm_mirror.phone }})</span>{% endif %}
+ </div>
+ </div>
+ </div>
+
+ <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+ <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; text-align: right;">
+ <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Created in TeleCRM</div>
+ <div style="font-size: 0.82rem; font-weight: 700; color: #1e293b;">
+ {% if telecrm_mirror.telecrm_created_at %}{{ telecrm_mirror.telecrm_created_at|date:"d M Y, h:i A" }}{% else %}-{% endif %}
+ </div>
+ </div>
+ <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; text-align: right;">
+ <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Last Synced</div>
+ <div style="font-size: 0.82rem; font-weight: 700; color: #1e293b;">
+ {% if telecrm_mirror.synced_at %}{{ telecrm_mirror.synced_at|date:"d M Y, h:i A" }}{% else %}-{% endif %}
+ </div>
+ </div>
+ <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; text-align: right;">
+ <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Actions Imported</div>
+ <div style="font-size: 0.82rem; font-weight: 700; color: #0284c7;">{{ telecrm_actions|length }}</div>
+ </div>
+ </div>
+ </div>
+ {% endif %}
+
+ <div id="telecrmActionsSection">
+ <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--ld-text-main); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+ <span>Imported Actions &amp; Timeline Events ({{ telecrm_actions|length }})</span>
+ </h3>
+
+ {% if telecrm_actions %}
+ <div class="ldm-timeline-list" style="position: relative; padding-left: 20px;">
+ {% for act in telecrm_actions %}
+ <div class="ldm-timeline-item" style="margin-bottom: 18px;">
+ <div class="ldm-timeline-node" style="{% if 'CALL' in act.type %}background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd;{% elif 'WHATSAPP' in act.type %}background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0;{% elif 'STATUS' in act.type %}background: #f3e8ff; color: #7c3aed; border: 1px solid #e9d5ff;{% elif 'ASSIGN' in act.type %}background: #fef3c7; color: #d97706; border: 1px solid #fde68a;{% else %}background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;{% endif %}">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+ </div>
+ <div class="ldm-timeline-card" style="border: 1px solid var(--ld-border-subtle); border-radius: 8px; background: var(--ld-bg-card); padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+ <div class="ldm-timeline-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+ <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+ <span class="badge" style="{% if 'CALL' in act.type %}background: #e0f2fe; color: #0284c7;{% elif 'WHATSAPP' in act.type %}background: #dcfce7; color: #16a34a;{% elif 'STATUS' in act.type %}background: #f3e8ff; color: #7c3aed;{% elif 'ASSIGN' in act.type %}background: #fef3c7; color: #d97706;{% else %}background: #f1f5f9; color: #475569;{% endif %} font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+ {{ act.type }}
+ </span>
+ {% if act.mapped_ok %}
+ <span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.7rem; font-weight: 600;">Mapped to {{ act.crm_object_type }} #{{ act.crm_object_id }}</span>
+ {% else %}
+ <span class="badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.7rem; font-weight: 600;">Unmapped{% if act.error %}: {{ act.error|truncatechars:40 }}{% endif %}</span>
+ {% endif %}
+ {% if act.employee_uid %}
+ <span style="font-size: 0.78rem; color: #64748b;">
+ By UID: <code>{{ act.employee_uid }}</code>
+ </span>
+ {% endif %}
+ </div>
+ <span class="ldm-timeline-time" style="font-size: 0.78rem; color: #64748b;">{{ act.occurred_at|date:"d M Y, h:i A" }}</span>
+ </div>
+
+ <div class="ldm-timeline-body" style="font-size: 0.85rem; color: #334155; line-height: 1.5;">
+ {% if 'CALL' in act.type %}
+ <div>
+ <strong>Call Event:</strong>
+ Duration: <code>{{ act.display_duration }}</code>
+ {% if act.display_status %} &bull; Outcome: <strong>{{ act.display_status }}</strong>{% endif %}
+ {% if act.display_text %}<div style="margin-top: 6px; padding: 6px 10px; background: #f8fafc; border-left: 3px solid #0284c7; border-radius: 4px;">{{ act.display_text }}</div>{% endif %}
+ </div>
+ {% elif 'WHATSAPP' in act.type %}
+ <div>
+ <strong>WhatsApp Message:</strong>
+ <div style="margin-top: 6px; padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #16a34a; border-radius: 4px;">
+ {{ act.display_text|default:"-" }}
+ </div>
+ </div>
+ {% elif 'NOTE' in act.type %}
+ <div>
+ <strong>Note:</strong>
+ <div style="margin-top: 6px; padding: 8px 12px; background: #f8fafc; border-left: 3px solid #64748b; border-radius: 4px;">
+ {{ act.display_text|default:"-" }}
+ </div>
+ </div>
+ {% elif 'STATUS' in act.type %}
+ <div>
+ <strong>Status Update:</strong>
+ From <code>{{ act.display_old_status }}</code> to <strong>{{ act.display_new_status }}</strong>
+ </div>
+ {% elif 'ASSIGN' in act.type %}
+ <div>
+ <strong>Lead Assignment:</strong>
+ Assigned to UID <code>{{ act.display_assigned_to }}</code>
+ </div>
+ {% elif 'FACEBOOK' in act.type or 'META' in act.type %}
+ <div>
+ <strong>Meta Ad / Facebook Intake:</strong>
+ {% if act.campaign_name %}<div>Campaign / Page: <strong>{{ act.campaign_name }}</strong></div>{% endif %}
+ {% if act.form_name %}<div>Form: <strong>{{ act.form_name }}</strong></div>{% endif %}
+ </div>
+ {% else %}
+ <div>
+ {% if act.display_text %}
+ {{ act.display_text }}
+ {% else %}
+ {{ act.display_summary }}
+ {% endif %}
+ </div>
+ {% endif %}
+
+ <details style="margin-top: 8px; font-size: 0.75rem;">
+ <summary style="cursor: pointer; color: #0284c7; font-weight: 600;">View Raw TeleCRM Action Payload</summary>
+ <pre style="margin-top: 6px; padding: 8px; background: #0f172a; color: #f8fafc; border-radius: 6px; overflow-x: auto; font-size: 0.72rem;">{{ act.raw }}</pre>
+ </details>
+ </div>
+ </div>
+ </div>
+ {% endfor %}
+ </div>
+ {% else %}
+ <div style="background: var(--ld-bg-card); border: 1px dashed var(--ld-border-subtle); padding: 24px; text-align: center; border-radius: 8px; color: var(--ld-text-muted); font-size: 0.875rem;">
+ No individual TeleCRM timeline actions recorded for this lead mirror yet.
+ </div>
+ {% endif %}
+ </div>
+
+ </div>
+ </div><!-- End #tab-telecrm -->
 
  </div>
 </div>

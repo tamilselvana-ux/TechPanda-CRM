@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     # WhatsApp inbox + no-code automation (WhatsApp leads) and Facebook Lead Ads (Facebook leads)
     'chat.apps.ChatConfig',
     'fb_leads.apps.FbLeadsConfig',
+    'telecrm_sync.apps.TelecrmSyncConfig',
     'finance.apps.FinanceConfig',
     'superadmin_bot',
 ]
@@ -346,6 +347,13 @@ GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '').strip()
 
 # GST & Tax Configuration
 DEFAULT_GST_RATE = os.getenv('DEFAULT_GST_RATE', '18.00')
+
+# TeleCRM Integration & Live Sync Configuration
+TELECRM_TOKEN = os.getenv('TELECRM_TOKEN', '').strip()
+TELECRM_ENTERPRISE_ID = os.getenv('TELECRM_ENTERPRISE_ID', '681848fb55c90e360f77494c').strip()
+TELECRM_SYNC_ENABLED = os.getenv('TELECRM_SYNC_ENABLED', 'False').strip().lower() in ('true', '1', 'yes')
+TELECRM_SYNC_INTERVAL_MIN = int(os.getenv('TELECRM_SYNC_INTERVAL_MIN', '5'))
+TELECRM_MAX_WORKERS = int(os.getenv('TELECRM_MAX_WORKERS', '5'))
 
 
 # ==============================================================================

@@ -133,6 +133,9 @@
  <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' and request.resolver_match.url_name == 'facebook_leads' %}active{% endif %}">
  <span class="nav-text">Facebook Leads</span>
  </a>
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if 'telecrm' in request.resolver_match.url_name %}active{% endif %}">
+ <span class="nav-text">TeleCRM Sync</span>
+ </a>
  <a href="{% url 'telecaller_rnr_report' %}" class="nav-item {% if request.resolver_match.url_name == 'telecaller_rnr_report' %}active{% endif %}">
  <span class="nav-text">Telecaller RNR Report</span>
  </a>

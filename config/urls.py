@@ -39,6 +39,8 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     # Facebook Lead Ads: list + sync (/facebook-leads/), webhook (/facebook-leads/webhook/)
     path('facebook-leads/', include('fb_leads.urls')),
+    # TeleCRM Import & Live Sync Administration Portal
+    path('admin/telecrm-sync/', include('telecrm_sync.urls')),
     # Dedicated Finance Portal Suite
     path('finance/', include('finance.urls')),
     # Superadmin Local CRM Assistant (Zero-AI, Zero-API)

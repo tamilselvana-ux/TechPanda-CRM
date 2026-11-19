@@ -213,10 +213,12 @@ class Lead(models.Model):
         help_text="Reception token / visitor pass number"
     )
     rating = models.PositiveSmallIntegerField(
-        default=1,
+        null=True,
+        blank=True,
+        default=None,
         choices=[(i, f"{i} Star{'s' if i > 1 else ''}") for i in range(1, 6)],
         db_index=True,
-        help_text="Priority rating from 1 to 5 stars"
+        help_text="Priority rating from 1 to 5 stars (empty if unrated)"
     )
     tags = models.ManyToManyField(
         'LeadTag',

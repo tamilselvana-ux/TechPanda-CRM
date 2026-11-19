@@ -678,6 +678,12 @@ def build_lead_detail_context(lead, user=None):
     from .qualification import generate_smart_precall_pitch
     smart_pitch = generate_smart_precall_pitch(lead)
 
+    # 12. TeleCRM Mirror & Action History
+    tc_mirror = lead.telecrm_mirrors.first()
+    telecrm_actions = list(tc_mirror.actions.order_by('-occurred_at')) if tc_mirror else []
+    if telecrm_actions:
+        timeline_count = (timeline_count or 0) + len(telecrm_actions)
+
     return {
         'lead': lead,
         'assignee_name': assignee_name,
@@ -696,6 +702,8 @@ def build_lead_detail_context(lead, user=None):
         'call_status_choices': CallStatus.choices,
         'nav': nav,
         'smart_pitch': smart_pitch,
+        'telecrm_mirror': tc_mirror,
+        'telecrm_actions': telecrm_actions,
     }
 
 

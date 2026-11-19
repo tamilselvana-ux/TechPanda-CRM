@@ -6,6 +6,12 @@ def create_notification(recipient, title, message, notification_type='info', lin
     """
     if not recipient:
         return None
+    try:
+        from telecrm_sync.mapper import is_sync_suppressed
+        if is_sync_suppressed():
+            return None
+    except ImportError:
+        pass
     return Notification.objects.create(
         recipient=recipient,
         title=title,

@@ -482,6 +482,9 @@
  <div class="cv-field-item {% if telecaller_filter %}active-field{% endif %}" data-field="telecaller" onclick="activateConditionCard('telecaller')">
  <span class="cv-field-icon"></span> <span class="cv-field-name">Assignee</span>
  </div>
+ <div class="cv-field-item {% if source_filter %}active-field{% endif %}" data-field="source" onclick="activateConditionCard('source')">
+ <span class="cv-field-icon">#</span> <span class="cv-field-name">Lead Source</span>
+ </div>
  </div>
  </div>
 
@@ -776,6 +779,31 @@
  <input type="text" name="working_status" value="{{ request.GET.working_status }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. Student, Working Professional, Job Seeker..." style="font-size: 0.82rem;">
  </div>
 
+ <!-- CARD: Lead Source -->
+ <div class="active-condition-card" id="card_source" style="display: {% if source_filter %}block{% else %}none{% endif %};">
+ <div class="card-head">
+ <span class="card-icon-title">
+ Lead Source
+ <select name="op_source" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+ <option value="is" {% if op_source == 'is' or not op_source %}selected{% endif %}>Is</option>
+ <option value="contains" {% if op_source == 'contains' %}selected{% endif %}>Contains</option>
+ </select>
+ </span>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('source')" title="Remove condition"></button>
+ </div>
+ <select name="source" class="form-select form-select-sm condition-input" onchange="fetchLiveFilteredCount()" style="font-size: 0.82rem; background: #ffffff;">
+ <option value="">All Sources</option>
+ <option value="TeleCRM" {% if source_filter == 'TeleCRM' %}selected{% endif %}>TeleCRM</option>
+ <option value="Facebook" {% if source_filter == 'Facebook' %}selected{% endif %}>Facebook</option>
+ <option value="WhatsApp" {% if source_filter == 'WhatsApp' %}selected{% endif %}>WhatsApp</option>
+ <option value="Meta Ads" {% if source_filter == 'Meta Ads' %}selected{% endif %}>Meta Ads</option>
+ <option value="Phone" {% if source_filter == 'Phone' %}selected{% endif %}>Phone</option>
+ <option value="Manual" {% if source_filter == 'Manual' %}selected{% endif %}>Manual</option>
+ <option value="Walk-in" {% if source_filter == 'Walk-in' %}selected{% endif %}>Walk-in</option>
+ <option value="Website" {% if source_filter == 'Website' %}selected{% endif %}>Website</option>
+ </select>
+ </div>
+
  </div>
 
  <!-- Panel Footer Actions -->
@@ -1009,7 +1037,7 @@
  {% if ld.channel %}
  <span style="background: #eef2ff; color: #4338ca; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem;">{{ ld.channel.name }}</span>
  {% elif ld.source and ld.source != 'Manual Entry' and ld.source != 'Telecaller Entry' and ld.source != 'Manual' %}
- <span style="background: #f8fafc; color: #64748b; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem;">{{ ld.source }}</span>
+ <span style="background: {% if ld.source == 'TeleCRM' %}#e0f2fe; color: #0284c7; font-weight: 600; border: 1px solid #bae6fd{% else %}#f8fafc; color: #64748b{% endif %}; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem;">{{ ld.source }}</span>
  {% endif %}
  {% if ld.has_duplicate_attempts %}
  <button type="button" onclick="openDuplicateModal('{{ ld.pk }}')" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; border-radius: 4px; font-size: 0.7rem; padding: 1px 5px; cursor: pointer; font-weight: 600;" title="Duplicate attempt detected">Dup</button>
