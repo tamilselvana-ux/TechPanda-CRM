@@ -4,9 +4,11 @@ TechPanda
 ======================================================================
 
 TechPanda
-{{ invoice_config.address_lines.0 }}
+{% if branch_name and branch_name != invoice_config.company_name %}{{ branch_name }}
+{% endif %}{% if branch_address_lines %}{% for line in branch_address_lines %}{{ line }}
+{% endfor %}{% else %}{{ invoice_config.address_lines.0 }}
 {{ invoice_config.address_lines.1 }}
-Mobile: {{ invoice_config.mobile }}
+{% endif %}Mobile: {{ branch_phone|default:invoice_config.mobile }}
 GSTIN: {{ invoice_config.gstin }} | PAN: {{ invoice_config.pan }}
 Email: {{ invoice_config.email }} | Website: {{ invoice_config.website }}
 

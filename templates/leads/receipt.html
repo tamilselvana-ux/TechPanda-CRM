@@ -325,10 +325,17 @@
       <div>
         <img src="{% static 'images/techpanda_logo.png' %}" alt="TechPanda" class="company-logo" onerror="this.onerror=null; this.src='/static/images/techpanda_logo.png';" />
         <div class="company-title">{{ invoice_config.company_name }}</div>
+        {% if branch_name and branch_name != invoice_config.company_name %}
+        <div style="font-size: 13px; font-weight: 600; color: #2563EB; margin-top: 1px;">{{ branch_name }}</div>
+        {% endif %}
         <div class="company-info">
-          {{ invoice_config.address_lines.0 }}<br/>
-          {{ invoice_config.address_lines.1 }}<br/>
-          Mobile: {{ invoice_config.mobile }}<br/>
+          {% if branch_address_lines %}
+            {% for line in branch_address_lines %}{{ line }}<br/>{% endfor %}
+          {% else %}
+            {{ invoice_config.address_lines.0 }}<br/>
+            {{ invoice_config.address_lines.1 }}<br/>
+          {% endif %}
+          Mobile: {{ branch_phone|default:invoice_config.mobile }}<br/>
           GSTIN: {{ invoice_config.gstin }}<br/>
           Email: {{ invoice_config.email }}<br/>
           Website: {{ invoice_config.website }}

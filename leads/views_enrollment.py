@@ -41,7 +41,7 @@ from xhtml2pdf import pisa
 
 import os
 
-from .constants import DIGIPANDA_INVOICE_CONFIG, DIGIPANDA_INVOICE_CONFIG
+from .constants import DIGIPANDA_INVOICE_CONFIG, resolve_branch_address, TECHPANDA_BRANCH_ADDRESSES
 
 from .utils_currency import amount_to_inr_words
 
@@ -1364,13 +1364,11 @@ def get_receipt_context(request, txn):
 
 
 
-    branch_name = enrollment.branch.name if enrollment.branch else "Main Campus / Corporate HQ"
-
-    branch_address = getattr(enrollment.branch, 'address', '') if enrollment.branch else ''
-
-    if not branch_address:
-
-        branch_address = "DigiPanda Towers, Knowledge Park, OMR, Chennai, Tamil Nadu - 600096"
+    branch_info = resolve_branch_address(enrollment.branch)
+    branch_name = branch_info['branch_name']
+    branch_address_lines = branch_info['address_lines']
+    branch_address = branch_info['full_address']
+    branch_phone = branch_info['phone']
 
 
 
@@ -1539,8 +1537,9 @@ def get_receipt_context(request, txn):
         'verification_url': verification_url,
 
         'branch_name': branch_name,
-
         'branch_address': branch_address,
+        'branch_address_lines': branch_address_lines,
+        'branch_phone': branch_phone,
 
         'institution_name': DIGIPANDA_INVOICE_CONFIG['company_name'],
 

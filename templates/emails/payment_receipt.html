@@ -37,9 +37,16 @@
                       </a>
                     </div>
                     <div style="font-size: 11px; color: #4B5563; margin-top: 4px; line-height: 1.4;">
-                      {{ invoice_config.address_lines.0 }}<br/>
-                      {{ invoice_config.address_lines.1 }}<br/>
-                      Mobile: {{ invoice_config.mobile }}<br/>
+                      {% if branch_name and branch_name != invoice_config.company_name %}
+                      <strong style="color: #2563EB;">{{ branch_name }}</strong><br/>
+                      {% endif %}
+                      {% if branch_address_lines %}
+                        {% for line in branch_address_lines %}{{ line }}<br/>{% endfor %}
+                      {% else %}
+                        {{ invoice_config.address_lines.0 }}<br/>
+                        {{ invoice_config.address_lines.1 }}<br/>
+                      {% endif %}
+                      Mobile: {{ branch_phone|default:invoice_config.mobile }}<br/>
                       GSTIN: {{ invoice_config.gstin }}<br/>
                       Email: {{ invoice_config.email }}<br/>
                       Website: {{ invoice_config.website }}
