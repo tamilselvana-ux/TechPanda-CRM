@@ -19,7 +19,7 @@
         <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Selected Agent</div>
         <div style="font-size: 1.1rem; font-weight: 700;">{{ telecaller.get_full_name|default:telecaller.username }} (@{{ telecaller.username }})</div>
         <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
-          Current Counselor: <strong>{{ old_manager.get_full_name|default:old_manager.username|default:"Unassigned" }}</strong>
+          Current Counselor: <strong>{% if old_manager %}{{ old_manager.get_full_name|default:old_manager.username }}{% else %}Unassigned{% endif %}</strong>
         </div>
       </div>
 

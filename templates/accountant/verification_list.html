@@ -232,7 +232,7 @@
 
  {% elif p.is_pending_verification %}
  <span style="background: #fef3c7; color: #b45309; padding: 3px 9px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;">
- ⏳ Pending
+ Pending
  </span>
 
  {% elif p.is_rejected %}
@@ -267,7 +267,7 @@
  PDF
  </a>
  {% elif p.is_rejected %}
- <button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" onclick="alert('Rejection Reason: {{ p.rejection_comment|escapejs }}\nReviewed by: {{ p.reviewed_by.get_full_name|default:p.reviewed_by.username|escapejs }}\nDate: {{ p.reviewed_at|date:"d-M-Y H:i" }}')">
+ <button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" onclick="alert('Rejection Reason: {{ p.rejection_comment|escapejs }}\nReviewed by: {% if p.reviewed_by %}{{ p.reviewed_by.get_full_name|default:p.reviewed_by.username|escapejs }}{% else %}System{% endif %}\nDate: {{ p.reviewed_at|date:"d-M-Y H:i" }}')">
  View Reason
  </button>
  {% endif %}
