@@ -41,11 +41,10 @@ def admin_receptionists_list(request):
 
     receptionists_qs = receptionists_qs.order_by('-date_joined')
 
-    # Counters
-    all_recs = User.objects.filter(role=UserRole.RECEPTIONIST)
-    total_receptionists = all_recs.count()
-    active_count = all_recs.filter(is_active=True).count()
-    inactive_count = all_recs.filter(is_active=False).count()
+    # Counters (dynamically scoped to filtered queryset)
+    total_receptionists = receptionists_qs.count()
+    active_count = receptionists_qs.filter(is_active=True).count()
+    inactive_count = receptionists_qs.filter(is_active=False).count()
 
     paginator = Paginator(receptionists_qs, 15)
     page_obj = paginator.get_page(request.GET.get('page'))

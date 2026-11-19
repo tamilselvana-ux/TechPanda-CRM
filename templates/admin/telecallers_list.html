@@ -4,14 +4,74 @@
 {% block content %}
 <div class="page-header">
   <div class="page-title-group">
-    <h1>Telecallers &amp; Agents</h1>
-    <p>Manage calling agents, supervise team assignments, and track work activity</p>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h1 style="margin: 0;">Telecallers &amp; Agents</h1>
+      <span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px;">
+        {{ total_count }} Telecaller{{ total_count|pluralize }}
+      </span>
+    </div>
+    <p style="margin: 4px 0 0 0;">Manage calling agents, supervise team assignments, and track work activity</p>
   </div>
   <div class="page-actions">
     <a href="{% url 'admin_telecaller_create' %}" class="btn btn-primary">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       Add Telecaller
     </a>
+  </div>
+</div>
+
+<!-- TEAM & STAFF ROLE TABS BAR -->
+<div style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; border-bottom: 1px solid var(--border-color, #e5e7eb);">
+  <a href="{% url 'admin_users_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    All Staff <span class="badge" style="background: #e5e7eb; color: #1f2937; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.total }}</span>
+  </a>
+  <a href="{% url 'admin_telecallers_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; text-decoration: none; background: #dcfce7; color: #15803d; border-bottom: 2px solid #15803d;">
+    Telecallers <span class="badge" style="background: #15803d; color: #ffffff; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.telecallers }}</span>
+  </a>
+  <a href="{% url 'admin_counselors_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Counselors <span class="badge" style="background: #fce7f3; color: #be185d; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.counselors }}</span>
+  </a>
+  <a href="{% url 'admin_managers_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Sales Heads <span class="badge" style="background: #ede9fe; color: #6d28d9; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.sales_heads }}</span>
+  </a>
+  <a href="{% url 'admin_branch_heads_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Branch Heads <span class="badge" style="background: #fef3c7; color: #b45309; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.branch_heads }}</span>
+  </a>
+  <a href="{% url 'admin_branch_admins_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Branch Admins <span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.branch_admins }}</span>
+  </a>
+  <a href="{% url 'admin_receptionists_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Receptionists <span class="badge" style="background: #fee2e2; color: #b91c1c; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.receptionists }}</span>
+  </a>
+  <a href="{% url 'admin_accountants_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Accountants <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.accountants }}</span>
+  </a>
+</div>
+
+<!-- NOTICE BANNER FOR TELECALLERS SCOPE -->
+<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+  <div style="font-size: 0.85rem; color: #1e40af;">
+    Currently viewing: <strong>Telecallers (Calling Staff &amp; Agents)</strong> &bull; Total <strong>{{ total_count }} telecaller{{ total_count|pluralize }}</strong> listed.
+    Looking for other team members? Click <a href="{% url 'admin_users_list' %}" style="color: #2563eb; font-weight: 700; text-decoration: underline;">All Staff</a> above to see all <strong>{{ staff_counts.total }} organization staff</strong> across all roles.
+  </div>
+</div>
+
+<!-- KPI SUMMARY CARDS -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+  <div style="background: #fff; border-radius: 8px; padding: 14px; border: 1px solid var(--border-color, #e5e7eb);">
+    <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #6b7280;">Total Telecallers</div>
+    <div style="font-size: 1.5rem; font-weight: 800; color: #15803d; margin: 2px 0;">{{ total_count }}</div>
+    <div style="font-size: 0.72rem; color: #6b7280;">Accounts matching filters</div>
+  </div>
+  <div style="background: #fff; border-radius: 8px; padding: 14px; border: 1px solid var(--border-color, #e5e7eb);">
+    <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #6b7280;">Active</div>
+    <div style="font-size: 1.5rem; font-weight: 800; color: #059669; margin: 2px 0;">{{ active_count }}</div>
+    <div style="font-size: 0.72rem; color: #6b7280;">Active login enabled</div>
+  </div>
+  <div style="background: #fff; border-radius: 8px; padding: 14px; border: 1px solid var(--border-color, #e5e7eb);">
+    <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #6b7280;">Inactive</div>
+    <div style="font-size: 1.5rem; font-weight: 800; color: #dc2626; margin: 2px 0;">{{ inactive_count }}</div>
+    <div style="font-size: 0.72rem; color: #6b7280;">Deactivated accounts</div>
   </div>
 </div>
 
@@ -56,6 +116,23 @@
 </div>
 
 <div class="crm-card">
+  <!-- TABLE HEADER SUMMARY & PAGE SIZE -->
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color, #e5e7eb); flex-wrap: wrap; gap: 8px;">
+    <div style="font-size: 0.85rem; color: #4b5563; font-weight: 600;">
+      Showing <span style="color: #15803d; font-weight: 700;">{{ page_obj.start_index }} - {{ page_obj.end_index }}</span> of <span style="color: #111827; font-weight: 700;">{{ total_count }}</span> Telecallers
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem;">
+      <label for="tcPageSizeSelect" style="color: #6b7280; font-weight: 500;">Per page:</label>
+      <select id="tcPageSizeSelect" class="form-select" style="padding: 2px 24px 2px 8px; font-size: 0.82rem; width: auto;" onchange="changePageSize(this.value)">
+        <option value="15" {% if page_size == '15' %}selected{% endif %}>15</option>
+        <option value="25" {% if page_size == '25' %}selected{% endif %}>25</option>
+        <option value="50" {% if page_size == '50' or not page_size %}selected{% endif %}>50</option>
+        <option value="100" {% if page_size == '100' %}selected{% endif %}>100</option>
+        <option value="all" {% if page_size == 'all' %}selected{% endif %}>All ({{ total_count }})</option>
+      </select>
+    </div>
+  </div>
+
   <div class="table-responsive">
     <table class="crm-table">
       <thead>
@@ -63,7 +140,7 @@
           <th style="width: 36px; text-align: center;">
             <input type="checkbox" id="selectAllTelecallers" class="form-check-input" title="Select all on this page">
           </th>
-          <th style="width: 50px;">ID</th>
+          <th style="width: 45px; text-align: center;">#</th>
           <th>Telecaller</th>
           <th>Counselor</th>
           <th>Email</th>
@@ -81,8 +158,8 @@
           <td style="text-align: center;">
             <input type="checkbox" class="form-check-input tc-checkbox" value="{{ t.id }}" data-id="{{ t.id }}" data-name="{{ t.get_full_name|default:t.username|escapejs }}" data-counselor="{% if t.counselor %}{{ t.counselor.get_full_name|default:t.counselor.username|escapejs }}{% else %}Unassigned{% endif %}" data-branch="{{ t.branch.name|default:'Unassigned'|escapejs }}">
           </td>
-          <td>
-            <span style="font-family: monospace; font-weight: 600; color: #64748b;">{{ t.id|stringformat:"02d" }}</span>
+          <td style="text-align: center;">
+            <span style="font-weight: 700; color: #64748b; font-size: 0.85rem;">{{ page_obj.start_index|add:forloop.counter0 }}</span>
           </td>
           <td>
             <strong><a href="{% url 'admin_telecaller_detail' t.pk %}">{{ t.get_full_name|default:t.username }}</a></strong>
@@ -147,7 +224,35 @@
       </tbody>
     </table>
   </div>
+
+  {% if page_obj.has_other_pages %}
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border-color, #e5e7eb); background: #f9fafb; flex-wrap: wrap; gap: 10px;">
+    <div style="font-size: 0.82rem; color: #6b7280;">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ total_count }} telecallers total)
+    </div>
+    <div style="display: flex; gap: 4px;">
+      {% if page_obj.has_previous %}
+      <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if manager_filter %}&manager={{ manager_filter }}{% endif %}{% if branch_filter %}&branch={{ branch_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px;">&laquo; First</a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if manager_filter %}&manager={{ manager_filter }}{% endif %}{% if branch_filter %}&branch={{ branch_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px;">Previous</a>
+      {% endif %}
+      <span class="btn btn-primary btn-sm" style="padding: 3px 10px; cursor: default;">{{ page_obj.number }}</span>
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if manager_filter %}&manager={{ manager_filter }}{% endif %}{% if branch_filter %}&branch={{ branch_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px;">Next</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if manager_filter %}&manager={{ manager_filter }}{% endif %}{% if branch_filter %}&branch={{ branch_filter }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px;">Last &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
+
+<script>
+function changePageSize(val) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('page_size', val);
+  url.searchParams.set('page', '1');
+  window.location.href = url.toString();
+}
+</script>
 
 <!-- Sticky Bulk Action Bar -->
 <div id="bulkActionBar" style="display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 12px 24px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4), 0 10px 10px -5px rgba(0,0,0,0.3); z-index: 1050; align-items: center; gap: 16px; border: 1px solid #334155;">

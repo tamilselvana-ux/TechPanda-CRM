@@ -81,7 +81,22 @@ def admin_telecallers_list(request):
         followup_count=Count('telecaller_followups', distinct=True)
     ).order_by('-date_joined')
 
-    paginator = Paginator(telecallers_qs, 15)
+    total_count = telecallers_qs.count()
+    active_count = telecallers_qs.filter(is_active=True).count()
+    inactive_count = telecallers_qs.filter(is_active=False).count()
+
+    page_size_param = request.GET.get('page_size', '50').strip().lower()
+    if page_size_param == 'all':
+        per_page = max(total_count, 1)
+    else:
+        try:
+            per_page = int(page_size_param)
+            if per_page <= 0:
+                per_page = 50
+        except ValueError:
+            per_page = 50
+
+    paginator = Paginator(telecallers_qs, per_page)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     managers = User.objects.filter(role=UserRole.COUNSELOR, is_active=True)
@@ -107,6 +122,10 @@ def admin_telecallers_list(request):
         'status_filter': status_filter,
         'manager_filter': manager_filter,
         'branch_filter': branch_filter,
+        'total_count': total_count,
+        'active_count': active_count,
+        'inactive_count': inactive_count,
+        'page_size': page_size_param,
     })
 
 @role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.SALES_HEAD, UserRole.BRANCH_HEAD)

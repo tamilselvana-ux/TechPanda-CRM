@@ -374,30 +374,46 @@
  <div style="font-size: 0.85rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Team & Branch Headcounts</div>
  <span style="font-size: 0.8rem; color: var(--tp-text-muted);">Capacity snapshot</span>
  </div>
- <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; text-align: center;">
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; text-align: center;">
+ <a href="{% url 'admin_users_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Total Staff">
+ <div style="font-size: 1.4rem; font-weight: 800; color: #4338ca;">{{ total_staff }}</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Total Staff</div>
+ </a>
  <a href="{% url 'admin_branches_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Branches">
  <div style="font-size: 1.4rem; font-weight: 800; color: #059669;">{{ total_branches }}</div>
- <div style="font-size: 0.75rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Branches</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Branches</div>
  </a>
  <a href="{% url 'admin_managers_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Sales Heads">
  <div style="font-size: 1.4rem; font-weight: 800; color: #8b5cf6;">{{ total_managers }}</div>
- <div style="font-size: 0.75rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Sales Heads</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Sales Heads</div>
  </a>
  <a href="{% url 'admin_branch_heads_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Branch Heads">
  <div style="font-size: 1.4rem; font-weight: 800; color: #d97706;">{{ total_branch_heads }}</div>
- <div style="font-size: 0.75rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Branch Heads</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Branch Heads</div>
+ </a>
+ <a href="{% url 'admin_branch_admins_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Branch Admins">
+ <div style="font-size: 1.4rem; font-weight: 800; color: #0284c7;">{{ total_branch_admins }}</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Branch Admins</div>
  </a>
  <a href="{% url 'admin_counselors_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Counselors">
  <div style="font-size: 1.4rem; font-weight: 800; color: #ec4899;">{{ total_counselors }}</div>
- <div style="font-size: 0.75rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Counselors</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Counselors</div>
  </a>
  <a href="{% url 'admin_telecallers_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Telecallers">
  <div style="font-size: 1.4rem; font-weight: 800; color: #10b981;">{{ total_telecallers }}</div>
- <div style="font-size: 0.75rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Telecallers</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Telecallers</div>
+ </a>
+ <a href="{% url 'admin_receptionists_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Receptionists">
+ <div style="font-size: 1.4rem; font-weight: 800; color: #ef4444;">{{ total_receptionists }}</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Receptionists</div>
+ </a>
+ <a href="{% url 'admin_accountants_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Accountants">
+ <div style="font-size: 1.4rem; font-weight: 800; color: #64748b;">{{ total_accountants }}</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Accountants</div>
  </a>
  <a href="{% url 'admin_channels_list' %}" style="text-decoration: none; padding: 10px; border-radius: 8px; background: var(--tp-surface-bg); border: 1px solid var(--tp-surface-border); display: block;" title="Channels">
  <div style="font-size: 1.4rem; font-weight: 800; color: #0284c7;">{{ total_channels }}</div>
- <div style="font-size: 0.75rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Channels</div>
+ <div style="font-size: 0.72rem; font-weight: 600; color: var(--tp-text-muted); text-transform: uppercase; margin-top: 2px;">Channels</div>
  </a>
  </div>
 </div>

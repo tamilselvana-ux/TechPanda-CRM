@@ -93,6 +93,10 @@ def admin_branch_heads_list(request):
     all_branch_ids = Branch.objects.values_list('id', flat=True)
     branch_heads_qs = _list_queryset(all_branch_ids, search_query, status_filter, branch_filter)
 
+    total_count = branch_heads_qs.count()
+    active_count = branch_heads_qs.filter(is_active=True).count()
+    inactive_count = branch_heads_qs.filter(is_active=False).count()
+
     paginator = Paginator(branch_heads_qs, 12)
     page_obj = paginator.get_page(request.GET.get('page'))
 
@@ -102,6 +106,9 @@ def admin_branch_heads_list(request):
         'search_query': search_query,
         'status_filter': status_filter,
         'branch_filter': branch_filter,
+        'total_count': total_count,
+        'active_count': active_count,
+        'inactive_count': inactive_count,
     })
 
 

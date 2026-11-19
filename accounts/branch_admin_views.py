@@ -130,8 +130,9 @@ def admin_branch_admins_list(request):
     paginator = Paginator(qs, 15)
     page_obj = paginator.get_page(request.GET.get('page'))
 
-    total_count = User.objects.filter(role=UserRole.BRANCH_ADMIN).count()
-    active_count = User.objects.filter(role=UserRole.BRANCH_ADMIN, is_active=True).count()
+    total_count = qs.count()
+    active_count = qs.filter(is_active=True).count()
+    inactive_count = qs.filter(is_active=False).count()
 
     return render(request, 'admin/branch_admins_list.html', {
         'page_obj': page_obj,
@@ -141,6 +142,7 @@ def admin_branch_admins_list(request):
         'branch_filter': branch_filter,
         'total_count': total_count,
         'active_count': active_count,
+        'inactive_count': inactive_count,
         'portal_title': 'Branch Admin Management',
     })
 

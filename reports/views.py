@@ -105,18 +105,26 @@ def admin_dashboard(request):
     activities_qs = Activity.objects.select_related('user')
 
     if selected_branch:
-        total_managers = User.objects.filter(role=UserRole.SALES_HEAD, branch_access__branch=selected_branch).count()
+        total_managers = User.objects.filter(role=UserRole.SALES_HEAD, branch_access__branch=selected_branch).distinct().count()
         total_branch_heads = User.objects.filter(role=UserRole.BRANCH_HEAD, branch=selected_branch).count()
+        total_branch_admins = User.objects.filter(role=UserRole.BRANCH_ADMIN, branch=selected_branch).count()
         total_counselors = User.objects.filter(role=UserRole.COUNSELOR, branch=selected_branch).count()
         total_telecallers = User.objects.filter(role=UserRole.TELECALLER, branch=selected_branch).count()
+        total_receptionists = User.objects.filter(role=UserRole.RECEPTIONIST, branch=selected_branch).count()
+        total_accountants = User.objects.filter(role=UserRole.ACCOUNTANT, branch=selected_branch).count()
+        total_staff = User.objects.filter(Q(branch=selected_branch) | Q(branch_access__branch=selected_branch)).distinct().count()
         manager_performance = manager_performance.filter(branch_access__branch=selected_branch).distinct()
         telecaller_performance = telecaller_performance.filter(branch=selected_branch)
         activities_qs = activities_qs.filter(user__branch=selected_branch)
     else:
         total_managers = User.objects.filter(role=UserRole.SALES_HEAD).count()
         total_branch_heads = User.objects.filter(role=UserRole.BRANCH_HEAD).count()
+        total_branch_admins = User.objects.filter(role=UserRole.BRANCH_ADMIN).count()
         total_counselors = User.objects.filter(role=UserRole.COUNSELOR).count()
         total_telecallers = User.objects.filter(role=UserRole.TELECALLER).count()
+        total_receptionists = User.objects.filter(role=UserRole.RECEPTIONIST).count()
+        total_accountants = User.objects.filter(role=UserRole.ACCOUNTANT).count()
+        total_staff = User.objects.count()
 
     pending_followups = followups_qs.filter(status=FollowUpStatus.PENDING, follow_up_date__gte=today).count()
     overdue_followups = followups_qs.filter(
@@ -190,8 +198,12 @@ def admin_dashboard(request):
         'active_leads': active_leads,
         'total_managers': total_managers,
         'total_branch_heads': total_branch_heads,
+        'total_branch_admins': total_branch_admins,
         'total_counselors': total_counselors,
         'total_telecallers': total_telecallers,
+        'total_receptionists': total_receptionists,
+        'total_accountants': total_accountants,
+        'total_staff': total_staff,
         'pending_followups': pending_followups,
         'overdue_followups': overdue_followups,
         'total_calls': total_calls,

@@ -14,12 +14,34 @@
       Centralized staff directory: Directly reset passwords or send secure reset email links to any staff account across all roles and branches.
     </p>
   </div>
-  <div class="page-actions" style="display: flex; gap: 8px;">
-    <a href="{% url 'admin_user_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-      + Add New Staff Member
-    </a>
-  </div>
+</div>
+
+<!-- TEAM & STAFF ROLE TABS BAR -->
+<div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; border-bottom: 1px solid var(--border-color, #e5e7eb);">
+  <a href="{% url 'admin_users_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; text-decoration: none; background: #e0e7ff; color: #4338ca; border-bottom: 2px solid #4338ca;">
+    All Staff <span class="badge" style="background: #4338ca; color: #ffffff; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.total }}</span>
+  </a>
+  <a href="{% url 'admin_telecallers_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Telecallers <span class="badge" style="background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.telecallers }}</span>
+  </a>
+  <a href="{% url 'admin_counselors_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Counselors <span class="badge" style="background: #fce7f3; color: #be185d; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.counselors }}</span>
+  </a>
+  <a href="{% url 'admin_managers_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Sales Heads <span class="badge" style="background: #ede9fe; color: #6d28d9; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.sales_heads }}</span>
+  </a>
+  <a href="{% url 'admin_branch_heads_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Branch Heads <span class="badge" style="background: #fef3c7; color: #b45309; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.branch_heads }}</span>
+  </a>
+  <a href="{% url 'admin_branch_admins_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Branch Admins <span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.branch_admins }}</span>
+  </a>
+  <a href="{% url 'admin_receptionists_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Receptionists <span class="badge" style="background: #fee2e2; color: #b91c1c; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.receptionists }}</span>
+  </a>
+  <a href="{% url 'admin_accountants_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Accountants <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.accountants }}</span>
+  </a>
 </div>
 
 <!-- KPI SUMMARY CARDS -->
@@ -93,10 +115,18 @@
 
 <!-- USERS DATA TABLE -->
 <div class="crm-card" style="padding: 0; background: #fff; border-radius: 8px; border: 1px solid var(--border-color, #e5e7eb); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+  <!-- TABLE HEADER SUMMARY -->
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color, #e5e7eb); flex-wrap: wrap; gap: 8px; background: #f9fafb;">
+    <div style="font-size: 0.85rem; color: #4b5563; font-weight: 600;">
+      Showing <span style="color: #4338ca; font-weight: 700;">{{ users|length }}</span> of <span style="color: #111827; font-weight: 700;">{{ total_count }}</span> Staff Members
+    </div>
+  </div>
+
   <div class="table-responsive">
     <table class="table" style="width: 100%; border-collapse: collapse; text-align: left; margin: 0;">
       <thead>
         <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 0.78rem; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em;">
+          <th style="padding: 12px 14px; width: 45px; text-align: center;">#</th>
           <th style="padding: 12px 14px;">Staff Member</th>
           <th style="padding: 12px 14px;">Role</th>
           <th style="padding: 12px 14px;">Branch</th>
@@ -109,6 +139,9 @@
       <tbody>
         {% for u in users %}
         <tr style="border-bottom: 1px solid #f3f4f6; font-size: 0.85rem;">
+          <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
+            <span style="font-weight: 700; color: #64748b; font-size: 0.85rem;">{{ forloop.counter }}</span>
+          </td>
           <td style="padding: 12px 14px; vertical-align: middle;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div style="width: 34px; height: 34px; border-radius: 50%; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; border: 1px solid #dbeafe;">
@@ -122,14 +155,14 @@
           </td>
           <td style="padding: 12px 14px; vertical-align: middle;">
             <span class="badge" style="
-              {% if u.role == 'SuperAdmin' or u.role == 'Admin' %}background: #fee2e2; color: #b91c1c;
-              {% elif u.role == 'Sales_Head' %}background: #fef3c7; color: #b45309;
-              {% elif u.role == 'Branch_Head' %}background: #e0e7ff; color: #4338ca;
-              {% elif u.role == 'Branch_Admin' %}background: #ede9fe; color: #6d28d9;
-              {% elif u.role == 'Counselor' %}background: #dbeafe; color: #1d4ed8;
-              {% elif u.role == 'Telecaller' %}background: #dcfce7; color: #15803d;
-              {% elif u.role == 'Receptionist' %}background: #fce7f3; color: #be185d;
-              {% elif u.role == 'Accountant' %}background: #ccfbf1; color: #0f766e;
+              {% if u.role == 'SUPERADMIN' or u.role == 'ADMIN' or u.role == 'SuperAdmin' or u.role == 'Admin' %}background: #fee2e2; color: #b91c1c;
+              {% elif u.role == 'SALES_HEAD' or u.role == 'Sales_Head' %}background: #fef3c7; color: #b45309;
+              {% elif u.role == 'BRANCH_HEAD' or u.role == 'Branch_Head' %}background: #e0e7ff; color: #4338ca;
+              {% elif u.role == 'BRANCH_ADMIN' or u.role == 'Branch_Admin' %}background: #ede9fe; color: #6d28d9;
+              {% elif u.role == 'COUNSELOR' or u.role == 'Counselor' %}background: #dbeafe; color: #1d4ed8;
+              {% elif u.role == 'TELECALLER' or u.role == 'Telecaller' %}background: #dcfce7; color: #15803d;
+              {% elif u.role == 'RECEPTIONIST' or u.role == 'Receptionist' %}background: #fce7f3; color: #be185d;
+              {% elif u.role == 'ACCOUNTANT' or u.role == 'Accountant' %}background: #ccfbf1; color: #0f766e;
               {% else %}background: #f3f4f6; color: #4b5563;{% endif %}
               font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;">
               {{ u.get_role_display|default:u.role }}
@@ -179,7 +212,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" style="padding: 32px; text-align: center; color: var(--text-muted);">
+          <td colspan="8" style="padding: 32px; text-align: center; color: var(--text-muted);">
             No staff members found matching the selected filters.
           </td>
         </tr>

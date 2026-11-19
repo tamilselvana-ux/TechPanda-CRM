@@ -68,39 +68,49 @@
  <!-- GROUP: Team & Staff -->
  <div class="nav-group" id="nav-group-admin-team">
  <div class="nav-group-header" data-target="admin-team-nav">
- <div class="nav-group-title">
+ <div class="nav-group-title" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding-right: 8px;">
+ <div style="display: flex; align-items: center; gap: 8px;">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
  <span>Team & Staff</span>
+ </div>
+ {% if staff_counts %}
+ <span class="badge" style="background: rgba(37,99,235,0.12); color: #2563eb; font-size: 0.72rem; padding: 2px 7px; border-radius: 9999px; font-weight: 700;">{{ staff_counts.total }}</span>
+ {% endif %}
  </div>
  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
  </div>
  <div class="nav-group-children" id="admin-team-nav">
-          <a href="{% url 'admin_users_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_users_list admin_set_user_password' %}active{% endif %}" style="font-weight: 700; color: #2563eb;">
+          <a href="{% url 'admin_users_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_users_list admin_set_user_password' %}active{% endif %}" style="font-weight: 700; color: #2563eb; display: flex; justify-content: space-between; align-items: center;">
             <span class="nav-text">All Staff &amp; Passwords</span>
+            {% if staff_counts %}<span class="badge" style="background: #e0e7ff; color: #4338ca; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.total }}</span>{% endif %}
           </a>
- <!-- <a href="{% url 'admin_user_create' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_user_create' %}active{% endif %}" style="color: var(--primary); font-weight: 600;">
- <span class="nav-text">+ Add Team Member</span>
- </a> -->
- <a href="{% url 'admin_managers_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_managers_list admin_manager_create admin_manager_detail admin_manager_edit admin_manager_delete' %}active{% endif %}">
+ <a href="{% url 'admin_managers_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_managers_list admin_manager_create admin_manager_detail admin_manager_edit admin_manager_delete' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
  <span class="nav-text">Sales Heads</span>
+ {% if staff_counts %}<span class="badge" style="background: #ede9fe; color: #6d28d9; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.sales_heads }}</span>{% endif %}
  </a>
- <a href="{% url 'admin_branch_heads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_branch_heads_list admin_branch_head_create admin_branch_head_detail admin_branch_head_edit admin_branch_head_delete' %}active{% endif %}">
+ <a href="{% url 'admin_branch_heads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_branch_heads_list admin_branch_head_create admin_branch_head_detail admin_branch_head_edit admin_branch_head_delete' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
  <span class="nav-text">Branch Heads</span>
+ {% if staff_counts %}<span class="badge" style="background: #fef3c7; color: #b45309; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.branch_heads }}</span>{% endif %}
  </a>
- <a href="{% url 'admin_branch_admins_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_branch_admins_list admin_branch_admin_create admin_branch_admin_detail admin_branch_admin_edit' %}active{% endif %}">
+ <a href="{% url 'admin_branch_admins_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_branch_admins_list admin_branch_admin_create admin_branch_admin_detail admin_branch_admin_edit' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
  <span class="nav-text">Branch Admins</span>
+ {% if staff_counts %}<span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.branch_admins }}</span>{% endif %}
  </a>
- <a href="{% url 'admin_counselors_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_counselors_list admin_counselor_create admin_counselor_detail admin_counselor_change_password' %}active{% endif %}">
+ <a href="{% url 'admin_counselors_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_counselors_list admin_counselor_create admin_counselor_detail admin_counselor_change_password' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
  <span class="nav-text">Counselors</span>
+ {% if staff_counts %}<span class="badge" style="background: #fce7f3; color: #be185d; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.counselors }}</span>{% endif %}
  </a>
- <a href="{% url 'admin_telecallers_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_telecallers_list admin_telecaller_create admin_telecaller_detail admin_telecaller_edit admin_telecaller_assign admin_telecaller_change_password' %}active{% endif %}">
+ <a href="{% url 'admin_telecallers_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_telecallers_list admin_telecaller_create admin_telecaller_detail admin_telecaller_edit admin_telecaller_assign admin_telecaller_change_password' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
  <span class="nav-text">Telecallers</span>
+ {% if staff_counts %}<span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.telecallers }}</span>{% endif %}
  </a>
- <a href="{% url 'admin_receptionists_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_receptionists_list admin_receptionist_create admin_receptionist_change_password' %}active{% endif %}">
+ <a href="{% url 'admin_receptionists_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_receptionists_list admin_receptionist_create admin_receptionist_change_password' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
  <span class="nav-text">Receptionists</span>
+ {% if staff_counts %}<span class="badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.receptionists }}</span>{% endif %}
  </a>
- <a href="{% url 'admin_accountants_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_accountants_list' %}active{% endif %}">
+ <a href="{% url 'admin_accountants_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_accountants_list' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
  <span class="nav-text">Accountants</span>
+ {% if staff_counts %}<span class="badge" style="background: #f1f5f9; color: #475569; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.accountants }}</span>{% endif %}
  </a>
  </div>
  </div>

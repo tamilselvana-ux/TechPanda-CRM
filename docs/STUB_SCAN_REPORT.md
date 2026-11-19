@@ -1,13 +1,14 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-18 15:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-20 05:00 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
-**Blockers:** 0 · **Warnings:** 106 · **Verdict:** ✅ no stubs found
+**Blockers:** 2 · **Warnings:** 106 · **Verdict:** ❌ NOT COMPLETE
 
 ## 🚫 Blockers (must fix before 'done')
 | Rule | File | Line | Code |
 |---|---|---|---|
-| — | — | — | none |
+| Placeholder link | templates\leads\lead_detail_view.html | 888 | `<a href="javascript:void(0)" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" st` |
+| Placeholder link | templates\leads\lead_detail_view.html | 915 | `<a href="javascript:void(0)" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" st` |
 
 ## ⚠️ Warnings (review)
 | Rule | File | Line | Code |
@@ -18,7 +19,7 @@ Run: 2026-11-18 15:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
-| Hard-coded localhost URL | config\settings.py | 324 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
+| Hard-coded localhost URL | config\settings.py | 345 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
 | Hard-coded localhost URL | scratch\add_track_aa_todo.py | 18 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
 | Hard-coded localhost URL | scratch\mark_todo_track_aa_done.py | 14 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
 | Hard-coded localhost URL | scratch\mark_todo_track_z_done.py | 64 | `- Proof: Executed `test_new_enquiry_form.py` against live server (`http://127.0.0.1:8001/enquiry/` -> HTTP 200` |
@@ -38,19 +39,19 @@ Run: 2026-11-18 15:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | static\js\data-tables-enhanced.js | 261 | `alert('No leads selected.');` |
 | alert() used for UX | templates\accountant\dashboard.html | 591 | `alert('Validation Error: From Date cannot be after To Date.');` |
 | alert() used for UX | templates\accountant\verification_list.html | 270 | `<button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" o` |
-| alert() used for UX | templates\admin\leads_list.html | 1576 | `alert(data.error // 'Failed to load duplicate information.');` |
-| alert() used for UX | templates\admin\leads_list.html | 1886 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 1982 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
-| alert() used for UX | templates\admin\leads_list.html | 1994 | `alert("Request failed: " + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2316 | `alert('Please select at least one lead from the table or apply a filter.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2410 | `alert(data.error // 'Failed to evaluate recipients');` |
-| alert() used for UX | templates\admin\leads_list.html | 2434 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2462 | `alert('Please select at least one lead from the table.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2792 | `alert('Please enter a name for your custom view tab.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2838 | `alert(data.message // 'Error saving custom view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2843 | `alert('Failed to save custom view. Please check connection.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2873 | `alert(data.message // 'Error deleting view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2878 | `alert('Failed to delete view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1604 | `alert(data.error // 'Failed to load duplicate information.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1914 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2010 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2022 | `alert("Request failed: " + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2344 | `alert('Please select at least one lead from the table or apply a filter.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2438 | `alert(data.error // 'Failed to evaluate recipients');` |
+| alert() used for UX | templates\admin\leads_list.html | 2462 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2490 | `alert('Please select at least one lead from the table.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2820 | `alert('Please enter a name for your custom view tab.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2866 | `alert(data.message // 'Error saving custom view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2871 | `alert('Failed to save custom view. Please check connection.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2901 | `alert(data.message // 'Error deleting view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2906 | `alert('Failed to delete view.');` |
 | alert() used for UX | templates\admin\lead_queues.html | 423 | `alert("Please select at least one lead from the table to assign.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 744 | `alert("Please select at least one target branch.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 748 | `alert("Please select at least one target telecaller.");` |
@@ -71,10 +72,10 @@ Run: 2026-11-18 15:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | templates\admin\offline_leads.html | 1561 | `alert('Error: ' + err);` |
 | alert() used for UX | templates\admin\status_leads_list.html | 213 | `alert(data.error // 'Failed to update lead status');` |
 | alert() used for UX | templates\admin\status_leads_list.html | 219 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\telecallers_list.html | 400 | `alert('Please select a counselor.');` |
-| alert() used for UX | templates\admin\telecallers_list.html | 444 | `alert('Please select a branch.');` |
-| alert() used for UX | templates\admin\telecallers_list.html | 553 | `alert('Error updating telecallers: ' + (data.error // 'Server error'));` |
-| alert() used for UX | templates\admin\telecallers_list.html | 564 | `alert('Network error while processing bulk update: ' + err.message);` |
+| alert() used for UX | templates\admin\telecallers_list.html | 424 | `alert('Please select a counselor.');` |
+| alert() used for UX | templates\admin\telecallers_list.html | 468 | `alert('Please select a branch.');` |
+| alert() used for UX | templates\admin\telecallers_list.html | 577 | `alert('Error updating telecallers: ' + (data.error // 'Server error'));` |
+| alert() used for UX | templates\admin\telecallers_list.html | 588 | `alert('Network error while processing bulk update: ' + err.message);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 892 | `alert(`Error updating visitor status: ${data.error // 'Failed'}`);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 895 | `alert(`Error: ${err.message}`);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 928 | `alert(`Visitor Token #${data.token_number} generated! Visitor checked in successfully.`);` |
@@ -85,9 +86,9 @@ Run: 2026-11-18 15:03 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | templates\admin\walkin_forms_list.html | 406 | `alert('Public link copied to clipboard: ' + url);` |
 | alert() used for UX | templates\admin\walkin_form_editor.html | 2941 | `alert('Error saving form: ' + (data.error // 'Server error'));` |
 | alert() used for UX | templates\admin\walkin_form_editor.html | 2949 | `alert('Network error saving form. Please try again.');` |
-| alert() used for UX | templates\admin_dashboard\dashboard.html | 617 | `alert(' ' + data.message);` |
-| alert() used for UX | templates\admin_dashboard\dashboard.html | 620 | `alert(' ' + (data.error // 'Failed to enforce SLAs.'));` |
-| alert() used for UX | templates\admin_dashboard\dashboard.html | 626 | `alert('Network error while running SLA escalation.');` |
+| alert() used for UX | templates\admin_dashboard\dashboard.html | 633 | `alert(' ' + data.message);` |
+| alert() used for UX | templates\admin_dashboard\dashboard.html | 636 | `alert(' ' + (data.error // 'Failed to enforce SLAs.'));` |
+| alert() used for UX | templates\admin_dashboard\dashboard.html | 642 | `alert('Network error while running SLA escalation.');` |
 | alert() used for UX | templates\chat\campaigns\campaign_composer.html | 951 | `alert('Branch assignment is required. Please select a branch for this WhatsApp number.');` |
 | alert() used for UX | templates\chat\campaigns\campaign_composer.html | 1011 | `alert(' ' + data.message);` |
 | alert() used for UX | templates\chat\campaigns\campaign_composer.html | 1145 | `alert(' ' + data.message);` |

@@ -43,8 +43,9 @@ def admin_accountants_list(request):
 
     branches = Branch.objects.filter(status='Active')
 
-    total_accountants = User.objects.filter(role=UserRole.ACCOUNTANT).count()
-    active_accountants = User.objects.filter(role=UserRole.ACCOUNTANT, is_active=True).count()
+    total_accountants = accountants.count()
+    active_accountants = accountants.filter(is_active=True).count()
+    inactive_accountants = accountants.filter(is_active=False).count()
 
     context = {
         'accountants': accountants,
@@ -54,6 +55,7 @@ def admin_accountants_list(request):
         'search_query': query,
         'total_accountants': total_accountants,
         'active_accountants': active_accountants,
+        'inactive_accountants': inactive_accountants,
         'portal_title': 'Accountant Staff Management',
     }
     return render(request, 'admin/accountants_list.html', context)

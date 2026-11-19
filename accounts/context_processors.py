@@ -35,8 +35,29 @@ def crm_context(request):
         if request.user.is_admin_user:
             from branches.models import Branch
             from branches.utils import get_admin_selected_branch
+            from accounts.models import User, UserRole
+            from django.db.models import Count
+
             context['admin_branches'] = Branch.objects.filter(status=Branch.Status.ACTIVE).order_by('name')
-            context['selected_branch'] = get_admin_selected_branch(request)
+            selected_b = get_admin_selected_branch(request)
+            context['selected_branch'] = selected_b
+
+            staff_qs = User.objects.all()
+            if selected_b:
+                staff_qs = staff_qs.filter(Q(branch=selected_b) | Q(branch_access__branch=selected_b)).distinct()
+
+            role_counts = dict(staff_qs.values_list('role').annotate(cnt=Count('id', distinct=True)))
+
+            context['staff_counts'] = {
+                'total': staff_qs.count(),
+                'sales_heads': role_counts.get(UserRole.SALES_HEAD, 0),
+                'branch_heads': role_counts.get(UserRole.BRANCH_HEAD, 0),
+                'branch_admins': role_counts.get(UserRole.BRANCH_ADMIN, 0),
+                'counselors': role_counts.get(UserRole.COUNSELOR, 0),
+                'telecallers': role_counts.get(UserRole.TELECALLER, 0),
+                'receptionists': role_counts.get(UserRole.RECEPTIONIST, 0),
+                'accountants': role_counts.get(UserRole.ACCOUNTANT, 0),
+            }
 
         # Scoped notification counters
         today = timezone.now().date()

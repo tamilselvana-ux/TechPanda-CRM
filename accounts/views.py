@@ -691,7 +691,7 @@ def admin_users_list(request):
         )
 
     if role_filter:
-        users_qs = users_qs.filter(role=role_filter)
+        users_qs = users_qs.filter(role__iexact=role_filter)
 
     if branch_filter:
         if branch_filter == 'central':
@@ -699,6 +699,7 @@ def admin_users_list(request):
         else:
             users_qs = users_qs.filter(branch_id=branch_filter)
 
+    base_filtered_qs = users_qs
     if status_filter:
         if status_filter == 'active':
             users_qs = users_qs.filter(is_active=True)
@@ -708,20 +709,20 @@ def admin_users_list(request):
     users_qs = users_qs.order_by('role', 'username')
 
     total_count = users_qs.count()
-    active_count = User.objects.filter(is_active=True).count()
-    inactive_count = User.objects.filter(is_active=False).count()
+    active_count = base_filtered_qs.filter(is_active=True).count()
+    inactive_count = base_filtered_qs.filter(is_active=False).count()
     branches = Branch.objects.filter(status='Active').order_by('name')
 
     roles = [
-        ('SuperAdmin', 'Super Admin'),
-        ('Admin', 'Admin'),
-        ('Sales_Head', 'Sales Head / Manager'),
-        ('Branch_Head', 'Branch Head'),
-        ('Branch_Admin', 'Branch Admin'),
-        ('Counselor', 'Counselor'),
-        ('Telecaller', 'Telecaller'),
-        ('Receptionist', 'Receptionist'),
-        ('Accountant', 'Accountant'),
+        (UserRole.SUPERADMIN, 'Super Admin'),
+        (UserRole.ADMIN, 'Admin'),
+        (UserRole.SALES_HEAD, 'Sales Head / Manager'),
+        (UserRole.BRANCH_HEAD, 'Branch Head'),
+        (UserRole.BRANCH_ADMIN, 'Branch Admin'),
+        (UserRole.COUNSELOR, 'Counselor'),
+        (UserRole.TELECALLER, 'Telecaller'),
+        (UserRole.RECEPTIONIST, 'Receptionist'),
+        (UserRole.ACCOUNTANT, 'Accountant'),
     ]
 
     return render(request, 'admin/users_list.html', {
