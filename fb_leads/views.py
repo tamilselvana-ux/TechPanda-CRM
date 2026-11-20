@@ -40,7 +40,7 @@ def webhook(request):
         mode = q.get("hub.mode") or q.get("hub_mode")
         received = (q.get("hub.verify_token") or q.get("hub_verify_token") or "").strip()
         challenge = q.get("hub.challenge") or q.get("hub_challenge") or ""
-        
+
         candidate_tokens = get_candidate_verify_tokens(provider="facebook")
         # Include WhatsApp candidate tokens to allow cross-platform webhook handshakes
         candidate_tokens.update(get_candidate_verify_tokens(provider="whatsapp"))
