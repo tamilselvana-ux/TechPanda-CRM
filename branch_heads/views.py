@@ -3,7 +3,8 @@ from django.contrib import messages
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, OuterRef, Subquery, IntegerField
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta, time
 
@@ -667,10 +668,24 @@ def branch_head_counselor_change_password(request, pk):
 @branch_head_required
 def branch_head_telecallers_list(request):
     branch_id = request.user.branch_id
-    telecallers = User.objects.filter(role=UserRole.TELECALLER, branch_id=branch_id).select_related('counselor').annotate(
-        lead_count=Count('telecaller_leads', distinct=True),
-        call_count=Count('telecaller_calls', distinct=True),
-        followup_count=Count('telecaller_followups', distinct=True),
+    telecallers = User.objects.filter(role=UserRole.TELECALLER, branch_id=branch_id).select_related('counselor')
+    lead_sub = Coalesce(Subquery(
+        Lead.objects.filter(assigned_telecaller=OuterRef('pk')).values('assigned_telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+    call_sub = Coalesce(Subquery(
+        CallHistory.objects.filter(telecaller=OuterRef('pk')).values('telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+    followup_sub = Coalesce(Subquery(
+        FollowUp.objects.filter(telecaller=OuterRef('pk')).values('telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+
+    telecallers = telecallers.annotate(
+        lead_count=lead_sub,
+        call_count=call_sub,
+        followup_count=followup_sub
     ).order_by('-date_joined')
 
     return render(request, 'branch_head/telecallers_list.html', {

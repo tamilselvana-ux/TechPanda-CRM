@@ -23,6 +23,7 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
       Financial Dashboard
     </a>
+  </div>
 </div>
 
 <!-- TEAM & STAFF ROLE TABS BAR -->
@@ -50,6 +51,9 @@
   </a>
   <a href="{% url 'admin_accountants_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; text-decoration: none; background: #f1f5f9; color: #475569; border-bottom: 2px solid #475569;">
     Accountants <span class="badge" style="background: #475569; color: #ffffff; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.accountants }}</span>
+  </a>
+  <a href="{% url 'admin_marketing_users_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Marketing <span class="badge" style="background: #ede9fe; color: #6d28d9; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.marketing }}</span>
   </a>
 </div>
 

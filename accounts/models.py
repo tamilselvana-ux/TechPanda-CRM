@@ -13,6 +13,7 @@ class UserRole(models.TextChoices):
     RECEPTIONIST = 'RECEPTIONIST', 'Receptionist'
     ACCOUNTANT = 'ACCOUNTANT', 'Accountant'
     FINANCE_HEAD = 'FINANCE_HEAD', 'Finance Head'
+    MARKETING = 'MARKETING', 'Marketing'
 
 class CustomUserManager(UserManager):
     """
@@ -131,6 +132,10 @@ class User(AbstractUser):
     @property
     def is_finance_head_user(self):
         return self.role == UserRole.FINANCE_HEAD
+
+    @property
+    def is_marketing_user(self):
+        return self.role == UserRole.MARKETING
 
     @classmethod
     def get_telecallers_queryset(cls):

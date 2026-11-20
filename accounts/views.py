@@ -304,6 +304,8 @@ def resend_user_invitation(request, pk):
             return redirect('admin_receptionists_list')
         elif target_user.role == UserRole.ACCOUNTANT:
             return redirect('admin_accountants_list')
+        elif target_user.role == UserRole.MARKETING:
+            return redirect('admin_marketing_users_list')
         return redirect('admin_dashboard')
 
     # GET request: render CSRF-protected confirmation modal/page
@@ -366,6 +368,8 @@ def create_user_view(request):
                 return redirect('admin_receptionists_list')
             elif user.role == UserRole.ACCOUNTANT:
                 return redirect('admin_accountants_list')
+            elif user.role == UserRole.MARKETING:
+                return redirect('admin_marketing_users_list')
             return redirect('admin_dashboard')
     else:
         initial = {}
@@ -577,6 +581,8 @@ def admin_send_password_reset_link(request, pk):
             return redirect('admin_receptionists_list')
         elif target_user.role == UserRole.ACCOUNTANT:
             return redirect('admin_accountants_list')
+        elif target_user.role == UserRole.MARKETING:
+            return redirect('admin_marketing_users_list')
         return redirect('admin_dashboard')
 
     # GET request: render CSRF-protected confirmation modal/page
@@ -646,6 +652,8 @@ def admin_set_user_password(request, pk):
                 return redirect('admin_receptionists_list')
             elif target_user.role == UserRole.ACCOUNTANT:
                 return redirect('admin_accountants_list')
+            elif target_user.role == UserRole.MARKETING:
+                return redirect('admin_marketing_users_list')
             return redirect('admin_dashboard')
         else:
             messages.error(request, "Please correct the password errors below.")
@@ -733,6 +741,7 @@ def admin_users_list(request):
         (UserRole.TELECALLER, 'Telecaller'),
         (UserRole.RECEPTIONIST, 'Receptionist'),
         (UserRole.ACCOUNTANT, 'Accountant'),
+        (UserRole.MARKETING, 'Marketing'),
     ]
 
     return render(request, 'admin/users_list.html', {

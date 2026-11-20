@@ -14,6 +14,7 @@ def crm_context(request):
         'is_receptionist': False,
         'is_accountant': False,
         'is_finance_head': False,
+        'is_marketing': False,
         'user_role': '',
         'pending_followups_count': 0,
         'overdue_followups_count': 0,
@@ -30,6 +31,7 @@ def crm_context(request):
         context['is_receptionist'] = request.user.is_receptionist_user
         context['is_accountant'] = request.user.is_accountant_user
         context['is_finance_head'] = request.user.is_finance_head_user
+        context['is_marketing'] = request.user.is_marketing_user
         context['user_role'] = request.user.display_role
 
         if request.user.is_admin_user:
@@ -57,6 +59,7 @@ def crm_context(request):
                 'telecallers': role_counts.get(UserRole.TELECALLER, 0),
                 'receptionists': role_counts.get(UserRole.RECEPTIONIST, 0),
                 'accountants': role_counts.get(UserRole.ACCOUNTANT, 0),
+                'marketing': role_counts.get(UserRole.MARKETING, 0),
             }
 
         # Scoped notification counters

@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q, Max, Sum
+from django.db.models import Count, Q, Max, Sum, OuterRef, Subquery, IntegerField
+from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 from django.utils import timezone
 
@@ -98,10 +99,23 @@ def counselor_telecallers_list(request):
     if counselor.branch_id:
         telecallers = telecallers.filter(branch_id=counselor.branch_id)
 
+    lead_sub = Coalesce(Subquery(
+        Lead.objects.filter(assigned_telecaller=OuterRef('pk')).values('assigned_telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+    call_sub = Coalesce(Subquery(
+        CallHistory.objects.filter(telecaller=OuterRef('pk')).values('telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+    followup_sub = Coalesce(Subquery(
+        FollowUp.objects.filter(telecaller=OuterRef('pk')).values('telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+
     telecallers = telecallers.annotate(
-        lead_count=Count('telecaller_leads', distinct=True),
-        call_count=Count('telecaller_calls', distinct=True),
-        followup_count=Count('telecaller_followups', distinct=True)
+        lead_count=lead_sub,
+        call_count=call_sub,
+        followup_count=followup_sub
     ).order_by('-date_joined')
 
     return render(request, 'counselor/telecallers_list.html', {

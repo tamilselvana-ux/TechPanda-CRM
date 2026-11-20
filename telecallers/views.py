@@ -4,7 +4,8 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, OuterRef, Subquery, IntegerField
+from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta, time
 from django.utils import timezone
@@ -75,15 +76,28 @@ def admin_telecallers_list(request):
     elif branch_filter:
         telecallers_qs = telecallers_qs.filter(branch_id=branch_filter)
 
-    telecallers_qs = telecallers_qs.annotate(
-        lead_count=Count('telecaller_leads', distinct=True),
-        call_count=Count('telecaller_calls', distinct=True),
-        followup_count=Count('telecaller_followups', distinct=True)
-    ).order_by('-date_joined')
-
     total_count = telecallers_qs.count()
     active_count = telecallers_qs.filter(is_active=True).count()
     inactive_count = telecallers_qs.filter(is_active=False).count()
+
+    lead_sub = Coalesce(Subquery(
+        Lead.objects.filter(assigned_telecaller=OuterRef('pk')).values('assigned_telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+    call_sub = Coalesce(Subquery(
+        CallHistory.objects.filter(telecaller=OuterRef('pk')).values('telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+    followup_sub = Coalesce(Subquery(
+        FollowUp.objects.filter(telecaller=OuterRef('pk')).values('telecaller').annotate(cnt=Count('id')).values('cnt')[:1],
+        output_field=IntegerField()
+    ), 0)
+
+    telecallers_qs = telecallers_qs.annotate(
+        lead_count=lead_sub,
+        call_count=call_sub,
+        followup_count=followup_sub
+    ).order_by('-date_joined')
 
     page_size_param = request.GET.get('page_size', '50').strip().lower()
     if page_size_param == 'all':

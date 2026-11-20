@@ -16,6 +16,7 @@ _ROLE_DASHBOARD_URL_NAMES = {
     UserRole.RECEPTIONIST: 'receptionist_dashboard',
     UserRole.ACCOUNTANT: 'accountant_dashboard',
     UserRole.FINANCE_HEAD: 'finance_dashboard',
+    UserRole.MARKETING: 'admin_marketing_users_list',
 }
 
 def role_required(*allowed_roles):
