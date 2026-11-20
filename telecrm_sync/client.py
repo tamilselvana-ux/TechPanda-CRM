@@ -229,46 +229,18 @@ class TeleCRMClient:
     def get_team_members(self) -> List[Dict[str, Any]]:
         """
         Retrieves enterprise team members to map TeleCRM internal UIDs to email addresses.
-        Paginates /team-members using allowed limit (<= 10) to retrieve the complete team.
+        GET /team-members or /team-members/list
         """
-        all_members = []
-        skip = 0
-        limit = 10
+        try:
+            data = self._request("GET", "/team-members")
+        except TeleCRMError:
+            data = self._request("GET", "/team-members/list")
 
-        while True:
-            try:
-                data = self._request(
-                    "GET",
-                    "/team-members",
-                    params={"skip": skip, "limit": limit, "includeDeleted": "true"}
-                )
-            except TeleCRMError:
-                try:
-                    data = self._request("GET", "/team-members/list")
-                except TeleCRMError:
-                    break
-
-            page: List[Dict[str, Any]] = []
-            total_count = 0
-
-            if isinstance(data, dict):
-                page = data.get("data") or data.get("team_members") or []
-                total_count = int(data.get("total_count", len(page)))
-            elif isinstance(data, list):
-                page = data
-                total_count = len(page)
-            else:
-                break
-
-            if not page:
-                break
-
-            all_members.extend(page)
-            if len(all_members) >= total_count or len(page) < limit:
-                break
-            skip += len(page)
-
-        return all_members
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict):
+            return data.get("data") or data.get("team_members") or []
+        return []
 
     def get_lead_stage_pipeline(self) -> Dict[str, Any]:
         """

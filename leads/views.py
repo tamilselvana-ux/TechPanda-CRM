@@ -1413,8 +1413,10 @@ def admin_lead_detail(request, pk):
         'activities': activities,
 
         'call_recordings': call_recordings,
+
         'status_history': status_history,
-        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0) + (len(activities) if activities else 0),
+        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0),
+
         'detail_url_name': 'admin_lead_detail',
 
         'edit_url_name': 'admin_lead_edit',
@@ -1927,8 +1929,10 @@ def manager_lead_detail(request, pk):
         'activities': activities,
 
         'call_recordings': call_recordings,
+
         'status_history': status_history,
-        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0) + (len(activities) if activities else 0),
+        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0),
+
         'detail_url_name': 'manager_lead_detail',
 
         'edit_url_name': 'manager_lead_edit',
@@ -2321,23 +2325,36 @@ def telecaller_lead_detail(request, pk):
 
 
     followups = FollowUp.objects.filter(lead=lead).order_by('-created_at')
+
     calls = CallHistory.objects.filter(lead=lead).select_related('caller').order_by('-call_started_at')
-    activities = Activity.objects.filter(object_type='Lead', object_id=str(lead.pk)).select_related('user').order_by('-timestamp')
+
     call_recordings = lead.drive_recordings.all().select_related('drive_connection').order_by('-recording_date', '-created_at')
+
     status_history = lead.status_history.select_related('changed_by').order_by('-created_at')[:25]
 
+
+
     from .detail_service import build_lead_detail_context
+
     context = build_lead_detail_context(lead, request.user)
+
     context.update({
+
         'followups': followups,
+
         'calls': calls,
-        'activities': activities,
+
         'status_history': status_history,
-        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0) + (len(activities) if activities else 0),
+        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0),
+
         'call_recordings': call_recordings,
+
         'detail_url_name': 'telecaller_lead_detail',
+
         'edit_url_name': 'telecaller_lead_edit',
+
         'list_url_name': 'telecaller_leads_list',
+
     })
 
 
@@ -7395,22 +7412,34 @@ def branch_head_lead_detail(request, pk):
 
 
     followups = FollowUp.objects.filter(lead=lead).order_by('-created_at')
+
     calls = CallHistory.objects.filter(lead=lead).select_related('caller').order_by('-call_started_at')
-    activities = Activity.objects.filter(object_type='Lead', object_id=str(lead.pk)).select_related('user').order_by('-timestamp')
+
     assignment_history = lead.assignment_history.all()[:10]
+
     status_history = lead.status_history.all()[:10]
+
     call_recordings = lead.drive_recordings.all().select_related('drive_connection').order_by('-recording_date', '-created_at')
 
+
+
     from .detail_service import build_lead_detail_context
+
     context = build_lead_detail_context(lead, request.user)
+
     context.update({
+
         'followups': followups,
+
         'calls': calls,
-        'activities': activities,
+
         'assignment_history': assignment_history,
+
         'status_history': status_history,
-        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0) + (len(activities) if activities else 0),
+        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0),
+
         'call_recordings': call_recordings,
+
         'detail_url_name': 'branch_head_lead_detail',
 
         'list_url_name': 'branch_head_leads_list',
@@ -7542,20 +7571,30 @@ def counselor_lead_detail(request, pk):
 
 
     followups = FollowUp.objects.filter(lead=lead).order_by('-created_at')
+
     calls = CallHistory.objects.filter(lead=lead).select_related('caller').order_by('-call_started_at')
-    activities = Activity.objects.filter(object_type='Lead', object_id=str(lead.pk)).select_related('user').order_by('-timestamp')
+
     status_history = lead.status_history.all()[:10]
+
     call_recordings = lead.drive_recordings.all().select_related('drive_connection').order_by('-recording_date', '-created_at')
 
+
+
     from .detail_service import build_lead_detail_context
+
     context = build_lead_detail_context(lead, request.user)
+
     context.update({
+
         'followups': followups,
+
         'calls': calls,
-        'activities': activities,
+
         'status_history': status_history,
-        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0) + (len(activities) if activities else 0),
+        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0),
+
         'status_choices': COUNSELOR_STATUS_CHOICES,
+
         'call_recordings': call_recordings,
 
         'detail_url_name': 'counselor_lead_detail',

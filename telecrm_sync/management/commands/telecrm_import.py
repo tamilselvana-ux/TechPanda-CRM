@@ -11,15 +11,12 @@ from django.utils import timezone
 from telecrm_sync.client import TeleCRMAuthError, TeleCRMClient, TeleCRMError
 from telecrm_sync.mapper import (
     DEFAULT_STATUS_MAP,
-    build_and_save_uid_mappings,
     ingest_lead_actions,
     ingest_or_merge_lead,
     ms_to_datetime,
     normalize_telecrm_phone,
-    remap_telecrm_history_and_assignees,
     resolve_crm_status,
     suppress_sync_side_effects,
-    sync_and_provision_telecrm_team,
 )
 from telecrm_sync.models import (
     TeleCRMAction,
@@ -61,11 +58,6 @@ class Command(BaseCommand):
             help="Resume from the last uncompleted import run"
         )
         parser.add_argument(
-            "--remap",
-            action="store_true",
-            help="Re-map existing mirrors, historical actions, and assignees without re-fetching from API"
-        )
-        parser.add_argument(
             "--skip-history",
             action="store_true",
             help="Skip fetching timeline actions history (leads only)"
@@ -88,7 +80,6 @@ class Command(BaseCommand):
         workers: int = max(1, options["workers"])
         batch_size: int = max(1, options["batch_size"])
         resume_flag: bool = options["resume"]
-        remap_flag: bool = options.get("remap", False)
         skip_history: bool = options["skip_history"]
         token: Optional[str] = options["token"]
         enterprise_id: Optional[str] = options["enterprise_id"]
@@ -98,7 +89,7 @@ class Command(BaseCommand):
         self.stdout.write("================================================================================")
 
         client = TeleCRMClient(token=token, enterprise_id=enterprise_id)
-        if not client.token and not remap_flag:
+        if not client.token:
             raise CommandError("TELECRM_TOKEN is not configured in settings or environment. Pass via --token.")
 
         # 1. Concurrency and run tracking
@@ -106,30 +97,6 @@ class Command(BaseCommand):
         self.stdout.write(f"Sync Run ID: {sync_run.id} | Mode: {sync_run.kind} | Status: {sync_run.status}")
 
         start_time = time.time()
-
-        if remap_flag:
-            self.stdout.write("\n[Mode: Remap] Re-mapping existing mirrors, actions, assignees, and timestamps...")
-            try:
-                if client.token:
-                    self._sync_metadata(client, sync_run)
-                else:
-                    uid_cnt = build_and_save_uid_mappings()
-                    self.stdout.write(f"  Mapped {uid_cnt} Firebase UIDs from local mirror data.")
-            except Exception as exc:
-                self.stdout.write(f"  Notice during metadata sync: {exc}")
-
-            results = remap_telecrm_history_and_assignees()
-            sync_run.status = "COMPLETED"
-            sync_run.finished_at = timezone.now()
-            sync_run.save(update_fields=["status", "finished_at"])
-            self.stdout.write("\n================================================================================")
-            self.stdout.write("TeleCRM Historical Re-Map Completed Successfully")
-            self.stdout.write("================================================================================")
-            for k, v in results.items():
-                self.stdout.write(f"  {k:30}: {v}")
-            self.stdout.write(f"  Elapsed Time: {time.time() - start_time:.2f} seconds")
-            self.stdout.write("================================================================================")
-            return
 
         try:
             # 2. Step 0: Sync team members and lead-stage pipeline metadata
@@ -200,14 +167,29 @@ class Command(BaseCommand):
 
     def _sync_metadata(self, client: TeleCRMClient, sync_run: TeleCRMSyncRun):
         """Fetches team members and lead-stage pipeline metadata from TeleCRM."""
-        # 1. Team Members & CRM User Provisioning
+        # 1. Team Members
         try:
             members = client.get_team_members()
             self.stdout.write(f"  Retrieved {len(members)} team member records.")
-            provisioned = sync_and_provision_telecrm_team(members)
-            self.stdout.write(f"  Provisioned/linked {len(provisioned)} native CRM User accounts.")
-            mapped_uids = build_and_save_uid_mappings()
-            self.stdout.write(f"  Mapped {mapped_uids} Firebase UIDs to native CRM users.")
+            for m in members:
+                uid = str(m.get("uid") or m.get("id") or m.get("userId") or "").strip()
+                email = str(m.get("email") or "").strip().lower()
+                name = str(m.get("name") or "").strip()
+                if not uid:
+                    continue
+
+                crm_u = None
+                if email:
+                    crm_u = User.objects.filter(email__iexact=email).first()
+
+                TeleCRMUser.objects.update_or_create(
+                    uid=uid,
+                    defaults={
+                        "email": email,
+                        "name": name,
+                        "crm_user": crm_u
+                    }
+                )
         except Exception as exc:
             self.stdout.write(f"  Notice: Team members endpoint returned: {exc}")
 

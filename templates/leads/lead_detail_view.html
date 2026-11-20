@@ -23,20 +23,20 @@
  <span>Leads List</span>
  </button>
  <span class="lead-record-counter">{{ nav.current_index }} of {{ nav.total_count }}</span>
-        {% if nav.prev_lead_id and detail_url_name %}
-        <a href="{% url detail_url_name nav.prev_lead_id %}" class="lead-nav-btn" title="Previous Lead">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Prev
-        </a>
-        {% else %}
-        <span class="lead-nav-btn disabled">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Prev
-        </span>
-        {% endif %}
+ {% if nav.prev_lead_id %}
+ <a href="{% url detail_url_name nav.prev_lead_id %}" class="lead-nav-btn" title="Previous Lead">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+ Prev
+ </a>
+ {% else %}
+ <span class="lead-nav-btn disabled">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+ Prev
+ </span>
+ {% endif %}
 
-        {% if nav.next_lead_id and detail_url_name %}
-        <a href="{% url detail_url_name nav.next_lead_id %}" class="lead-nav-btn" title="Next Lead">
+ {% if nav.next_lead_id %}
+ <a href="{% url detail_url_name nav.next_lead_id %}" class="lead-nav-btn" title="Next Lead">
  Next
  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
  </a>
@@ -746,10 +746,6 @@
  <div style="margin-top: 8px;">
  <audio controls preload="none" src="{% url 'drive_stream_recording' rec.id %}" style="height: 28px; width: 220px; vertical-align: middle;"></audio>
  </div>
- {% elif c.recording_url %}
- <div style="margin-top: 8px;">
- <audio controls preload="none" src="{{ c.recording_url }}" style="height: 28px; width: 220px; vertical-align: middle;"></audio>
- </div>
  {% endif %}
  {% endwith %}
  </div>
@@ -834,31 +830,7 @@
  {% endfor %}
  {% endif %}
 
- <!-- Notes & Activity Log in Timeline -->
- {% for a in activities %}
- <div class="ldm-timeline-item">
- <div class="ldm-timeline-node node-note" style="background: rgba(14, 165, 233, 0.15); color: #0284c7;" title="{{ a.action }}">
- <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
- </div>
- <div class="ldm-timeline-card">
- <div class="ldm-timeline-header">
- <span class="ldm-timeline-title">
- <span>{{ a.action }}</span>
- <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.72rem;">Note</span>
- </span>
- <span class="ldm-timeline-time">{{ a.timestamp|date:"d M Y, h:i A" }}</span>
- </div>
- <div class="ldm-timeline-body">
- <div><strong>By:</strong> {% if a.user %}{{ a.user.get_full_name|default:a.user.username }}{% else %}System{% endif %}</div>
- {% if a.description %}
- <div style="margin-top: 4px; color: var(--ld-text-main); line-height: 1.45;">{{ a.description }}</div>
- {% endif %}
- </div>
- </div>
- </div>
- {% endfor %}
-
- {% if not calls and not status_history and not followups and not activities %}
+ {% if not calls and not status_history and not followups %}
  <div style="background: var(--ld-bg-card); border: 1px dashed var(--ld-border-subtle); padding: 32px; text-align: center; border-radius: 8px; color: var(--ld-text-muted); font-size: 0.88rem;">
  No activity recorded yet for this lead. Make calls or update the lead status to generate a live activity timeline.
  </div>
@@ -904,8 +876,6 @@
  {% with rec=c.drive_recordings.first %}
  {% if rec %}
  <audio controls preload="none" src="{% url 'drive_stream_recording' rec.id %}" style="height: 30px; width: 160px; vertical-align: middle;"></audio>
- {% elif c.recording_url %}
- <audio controls preload="none" src="{{ c.recording_url }}" style="height: 30px; width: 160px; vertical-align: middle;"></audio>
  {% else %}
  <span style="color: #94a3b8; font-size: 0.78rem;">No Recording</span>
  {% endif %}

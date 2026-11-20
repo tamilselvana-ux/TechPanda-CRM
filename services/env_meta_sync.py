@@ -341,17 +341,37 @@ def parse_facebook_env_pages() -> List[Dict[str, Any]]:
 
 def resolve_branch_by_name(branch_name: str) -> Optional[Any]:
     """
-    Resolves a Branch foreign key by name or alias.
+    Resolves a Branch foreign key by name or alias, supporting hyphens, dots, and partial matches.
     """
     if not branch_name:
         return None
     try:
         from branches.models import Branch
         b_clean = branch_name.strip()
+        # 1. Direct exact or substring match
         branch = Branch.objects.filter(name__iexact=b_clean).first()
-        if not branch:
-            branch = Branch.objects.filter(name__icontains=b_clean).first()
-        return branch
+        if branch:
+            return branch
+        # 2. Hyphen / space / dot variations (e.g. T-Nagar vs T. Nagar vs T Nagar)
+        alt_space = b_clean.replace("-", " ")
+        alt_dot = b_clean.replace("-", ". ")
+        alt_clean = b_clean.replace(".", "").replace("-", " ")
+        branch = (
+            Branch.objects.filter(name__iexact=alt_space).first()
+            or Branch.objects.filter(name__iexact=alt_dot).first()
+            or Branch.objects.filter(name__iexact=alt_clean).first()
+            or Branch.objects.filter(name__icontains=b_clean).first()
+            or Branch.objects.filter(name__icontains=alt_space).first()
+        )
+        if branch:
+            return branch
+        # 3. Alphanumeric canonical match
+        alpha_input = "".join(c.lower() for c in b_clean if c.isalnum())
+        for candidate in Branch.objects.all():
+            alpha_cand = "".join(c.lower() for c in candidate.name if c.isalnum())
+            if alpha_input and (alpha_input == alpha_cand or alpha_input in alpha_cand or alpha_cand in alpha_input):
+                return candidate
+        return None
     except Exception as exc:
         logger.debug("Could not resolve branch %s: %s", branch_name, exc)
         return None
@@ -408,6 +428,10 @@ def sync_all_env_meta_accounts(stdout=None) -> Dict[str, int]:
                     if not ba.is_active:
                         ba.is_active = True
                         update_fields.append("is_active")
+                    if cfg.get("is_default") and not ba.is_default:
+                        BusinessAccount.objects.exclude(pk=ba.pk).update(is_default=False)
+                        ba.is_default = True
+                        update_fields.append("is_default")
 
                     if update_fields:
                         ba.save(update_fields=update_fields)

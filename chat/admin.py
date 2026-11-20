@@ -12,9 +12,9 @@ from .models import (
 
 @admin.register(BusinessAccount)
 class BusinessAccountAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'phone_number', 'phone_number_id', 'business_account_id', 'crm_branch', 'is_default', 'is_active', 'automation_enabled', 'created_at')
+    list_display = ('id', 'name', 'phone_number', 'phone_number_id', 'business_account_id', 'is_default', 'is_active', 'created_at')
     list_display_links = ('id', 'name')
-    list_filter = ('crm_branch', 'is_default', 'is_active', 'automation_enabled')
+    list_filter = ('is_default', 'is_active')
     search_fields = ('name', 'phone_number', 'phone_number_id', 'business_account_id')
     fieldsets = (
         ('Account Information', {

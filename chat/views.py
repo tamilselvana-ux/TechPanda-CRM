@@ -210,6 +210,7 @@ class BusinessAccountDetailAPI(APIView):
         if 'name' in request.data and str(request.data['name']).strip():
             account.name = str(request.data['name']).strip()
             updated_fields.append('name')
+<<<<<<< HEAD
         if 'access_token' in request.data:
             account.access_token = str(request.data['access_token']).strip()
             updated_fields.append('access_token')
@@ -219,6 +220,8 @@ class BusinessAccountDetailAPI(APIView):
         if 'verify_token' in request.data:
             account.verify_token = str(request.data['verify_token']).strip()
             updated_fields.append('verify_token')
+=======
+>>>>>>> parent of 5ad02b0 ('whatsapp')
         if updated_fields:
             account.save(update_fields=updated_fields)
         serializer = BusinessAccountSerializer(account)
