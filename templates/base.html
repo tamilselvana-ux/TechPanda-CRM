@@ -116,10 +116,6 @@
  <span class="nav-text">Accountants</span>
  {% if staff_counts %}<span class="badge" style="background: #f1f5f9; color: #475569; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.accountants }}</span>{% endif %}
  </a>
-          <a href="{% url 'admin_marketing_users_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_marketing_users_list' %}active{% endif %}" style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="nav-text">Marketing Team</span>
-            {% if staff_counts %}<span class="badge" style="background: #ccfbf1; color: #0f766e; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.marketing }}</span>{% endif %}
-          </a>
  </div>
  </div>
 
@@ -506,21 +502,6 @@
  <span class="nav-text">Settings</span>
  </a>
 
-        {% elif is_marketing %}
-        <!-- MARKETING TEAM NAVIGATION -->
-        <div class="nav-section-title">Marketing Intelligence</div>
-        <a href="{% url 'marketing_dashboard' %}" class="nav-item {% if request.resolver_match.url_name in 'marketing_dashboard marketing_dashboard_alias' %}active{% endif %}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          <span class="nav-text">Marketing Dashboard</span>
-        </a>
-        <a href="{% url 'marketing_leads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'marketing_leads_list marketing_lead_detail' %}active{% endif %}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          <span class="nav-text">All Leads &amp; Filters</span>
-        </a>
-        <a href="{% url 'marketing_export_leads' %}" class="nav-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          <span class="nav-text">Export Leads (CSV)</span>
-        </a>
  {% elif is_accountant %}
  <!-- ACCOUNTANT NAVIGATION -->
  <div class="nav-section-title">Finance & Accounts</div>
@@ -654,7 +635,7 @@
  <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
  <div class="user-info-text">
  <strong>{{ user.get_full_name|default:user.username }}</strong>
- <span class="badge {% if is_superadmin or is_admin or is_branch_admin %}badge-admin{% elif is_manager or is_branch_head or is_counselor %}badge-manager{% elif is_finance_head or is_accountant %}badge-success{% elif is_marketing %}badge-info{% elif is_receptionist %}badge-running{% else %}badge-telecaller{% endif %}" style="margin-left: 4px;">
+ <span class="badge {% if is_superadmin or is_admin or is_branch_admin %}badge-admin{% elif is_manager or is_branch_head or is_counselor %}badge-manager{% elif is_finance_head or is_accountant %}badge-success{% elif is_receptionist %}badge-running{% else %}badge-telecaller{% endif %}" style="margin-left: 4px;">
  {{ user_role }}
  </span>
  </div>

@@ -97,7 +97,6 @@
  <!-- Header Right Actions & Assignee Info -->
  <div class="lead-header-right">
  <div class="lead-action-icons-group">
- {% if not is_marketing_readonly and not request.user.is_marketing_user %}
  <!-- Start Call Button -->
  <button type="button" class="lead-action-icon-btn call-btn" onclick="openCallDialer('{{ lead.pk }}', '{{ lead.name|escapejs }}', '{{ lead.phone|escapejs }}')" title="Start phone call with {{ lead.name }}">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -119,7 +118,6 @@
  <button type="button" class="lead-action-icon-btn" onclick="openWhatsAppVoiceModal()" title="WhatsApp Voice Calling Capability" style="color: #25D366;">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94m-1 7.98v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
  </button>
- {% endif %}
 
  <!-- Email Action -->
  {% if lead.email %}
@@ -143,14 +141,12 @@
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
  </button>
  <div class="more-actions-menu" id="moreActionsMenu">
- {% if not is_marketing_readonly and not request.user.is_marketing_user %}
  <button type="button" class="more-actions-item" onclick="openCallDialer('{{ lead.pk }}', '{{ lead.name|escapejs }}', '{{ lead.phone|escapejs }}')">
  Start Outgoing Call
  </button>
  <button type="button" class="more-actions-item" onclick="focusCallNotesSection()">
  Log Call Outcome &amp; Notes
  </button>
- {% endif %}
  {% if chat_conversation %}
  <a href="{% url 'inbox' %}?conversation={{ chat_conversation.pk }}" class="more-actions-item" style="color: #16a34a; font-weight: 600;">
  WHATSAPP &amp; FACEBOOK Chat (#{{ chat_conversation.pk }})
@@ -635,12 +631,6 @@
  </div>
 
  <!-- Integrated Call Logging & Notes Panel (Preserves Section 48 & 49 atomic workflow) -->
- {% if is_marketing_readonly or request.user.is_marketing_user %}
- <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-top: 16px; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 10px;">
- <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
- <span><strong>Marketing Team Read-Only View:</strong> All lead parameters and campaign attribution details are visible. Call logging, editing, and status modifications are reserved for operational staff.</span>
- </div>
- {% else %}
  <section class="lead-call-logging-card" id="callNotesSection">
  <div class="lead-call-logging-header">
  <h3 class="lead-call-logging-title">
@@ -707,7 +697,6 @@
  </div>
  </form>
  </section>
- {% endif %}
  </div><!-- End #tab-details -->
 
  <!-- ========================================================================= -->

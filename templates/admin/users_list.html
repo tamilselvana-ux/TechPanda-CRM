@@ -48,9 +48,6 @@
   <a href="{% url 'admin_accountants_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
     Accountants <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.accountants }}</span>
   </a>
-  <a href="{% url 'admin_marketing_users_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
-    Marketing Team <span class="badge" style="background: #ccfbf1; color: #0f766e; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.marketing }}</span>
-  </a>
 </div>
 
 <!-- KPI SUMMARY CARDS -->
@@ -172,7 +169,6 @@
               {% elif u.role == 'TELECALLER' or u.role == 'Telecaller' %}background: #dcfce7; color: #15803d;
               {% elif u.role == 'RECEPTIONIST' or u.role == 'Receptionist' %}background: #fce7f3; color: #be185d;
               {% elif u.role == 'ACCOUNTANT' or u.role == 'Accountant' %}background: #ccfbf1; color: #0f766e;
-              {% elif u.role == 'MARKETING' or u.role == 'Marketing' %}background: #e0f2fe; color: #0369a1;
               {% else %}background: #f3f4f6; color: #4b5563;{% endif %}
               font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;">
               {{ u.get_role_display|default:u.role }}

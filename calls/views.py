@@ -291,13 +291,6 @@ def complete_call_record(request):
 
     lead = get_object_or_404(Lead, pk=lead_id)
 
-    if caller.role == UserRole.MARKETING:
-        err_msg = "Marketing team members have read-only access and cannot log call records."
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-            return JsonResponse({'success': False, 'error': err_msg}, status=403)
-        messages.error(request, err_msg)
-        return redirect('marketing_dashboard')
-
     # Scoped verification: Enforce access control (returns 403 Forbidden if unauthorized)
     if not can_access_lead(caller, lead):
         raise PermissionDenied("Permission denied: You are not authorized to log calls for this lead.")

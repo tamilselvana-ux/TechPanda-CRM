@@ -66,7 +66,7 @@ def resolve_breadcrumbs(context) -> List[BreadcrumbItem]:
     dashboard_url_names = {
         'admin_dashboard', 'manager_dashboard', 'branch_head_dashboard',
         'counselor_dashboard', 'telecaller_dashboard', 'accountant_dashboard',
-        'receptionist_dashboard', 'finance_dashboard', 'marketing_dashboard', 'root', 'login_redirect'
+        'receptionist_dashboard', 'finance_dashboard', 'root', 'login_redirect'
     }
     if url_name in dashboard_url_names:
         return []
@@ -169,15 +169,6 @@ def resolve_breadcrumbs(context) -> List[BreadcrumbItem]:
     if url_name == 'admin_counselor_rnr_report':
         items.append(BreadcrumbItem(label='Reports & Analytics', url=_safe_reverse('admin_reports')))
         items.append(BreadcrumbItem(label='Counselor Performance', url=None))
-        return items
-
-    # --- MARKETING SUITE ---
-    if url_name == 'marketing_leads_list':
-        items.append(BreadcrumbItem(label='All Leads & Filters', url=None))
-        return items
-    if url_name == 'marketing_lead_detail':
-        items.append(BreadcrumbItem(label='All Leads & Filters', url=_safe_reverse('marketing_leads_list')))
-        items.append(BreadcrumbItem(label=lead_name, url=None))
         return items
 
     # --- ADMIN LEADS & OPERATIONS ---
