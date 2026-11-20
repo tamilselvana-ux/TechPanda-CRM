@@ -95,6 +95,8 @@
         newInitialMessage: document.getElementById('newInitialMessage'),
 
         // Add Business Modal
+        btnOneClickSyncEnv: document.getElementById('btnOneClickSyncEnv'),
+        btnModalOneClickSync: document.getElementById('btnModalOneClickSync'),
         btnAddBusinessLine: document.getElementById('btnAddBusinessLine'),
         addBusinessModal: document.getElementById('addBusinessModal'),
         addBusinessForm: document.getElementById('addBusinessForm'),
@@ -1254,6 +1256,52 @@
                 showToast('Unable to start conversation.');
             }
         });
+
+        // One-Click Meta Environment Sync
+        const runOneClickEnvSync = async (btnEl) => {
+            const originalHtml = btnEl ? btnEl.innerHTML : '';
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.innerText = 'Syncing...';
+            }
+            try {
+                const response = await fetch('/chat/api/sync-env-accounts/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.CRM_CONFIG.csrfToken,
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(`One-Click Sync Completed!\n\n` +
+                          `WhatsApp Lines Created: ${data.stats.whatsapp_created}\n` +
+                          `WhatsApp Lines Updated: ${data.stats.whatsapp_updated}\n` +
+                          `Facebook Pages Created: ${data.stats.facebook_created}\n` +
+                          `Facebook Pages Updated: ${data.stats.facebook_updated}`);
+                    if (elements.addBusinessModal) {
+                        elements.addBusinessModal.style.display = 'none';
+                    }
+                    loadBusinessAccounts();
+                } else {
+                    alert('Sync error: ' + (data.error || data.detail || 'Unable to sync accounts.'));
+                }
+            } catch (err) {
+                alert('One-Click Sync request failed: ' + err.message);
+            } finally {
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = originalHtml;
+                }
+            }
+        };
+
+        if (elements.btnOneClickSyncEnv) {
+            elements.btnOneClickSyncEnv.addEventListener('click', () => runOneClickEnvSync(elements.btnOneClickSyncEnv));
+        }
+        if (elements.btnModalOneClickSync) {
+            elements.btnModalOneClickSync.addEventListener('click', () => runOneClickEnvSync(elements.btnModalOneClickSync));
+        }
 
         // Add Business Line Modal events
         if (elements.btnAddBusinessLine) {

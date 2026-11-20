@@ -234,6 +234,25 @@ class BusinessAccountDetailAPI(APIView):
         return Response({'message': f'Business line "{account_name}" removed successfully.'}, status=status.HTTP_200_OK)
 
 
+class SyncEnvMetaAccountsAPI(APIView):
+    """
+    One-click synchronization endpoint that parses all WhatsApp lines and
+    Facebook pages from .env and provisions them into the database with branch mappings.
+    """
+    def post(self, request):
+        if not crm.can_manage_automation(request.user):
+            raise PermissionDenied("Only Admin and Sales Head can synchronize Meta accounts.")
+
+        from services.env_meta_sync import sync_all_env_meta_accounts
+        stats = sync_all_env_meta_accounts()
+        total_affected = sum(stats.values())
+        return Response({
+            "success": True,
+            "message": f"Successfully synchronized {total_affected} Meta account(s)/page(s) from .env in one click.",
+            "stats": stats
+        }, status=status.HTTP_200_OK)
+
+
 class ConversationListAPI(APIView):
     """
     GET /api/conversations/
@@ -502,15 +521,21 @@ class WhatsAppWebhookView(View):
 
         # Fallback to direct settings & database if needed
         global_secret = getattr(settings, "WHATSAPP_APP_SECRET", "") or getattr(settings, "FB_APP_SECRET", "")
-        if global_secret and str(global_secret).strip():
-            candidate_secrets.add(str(global_secret).strip())
+        if global_secret:
+            for s in str(global_secret).replace('\n', ',').replace(';', ',').split(','):
+                part = s.strip()
+                if part:
+                    candidate_secrets.add(part)
 
         try:
             from chat.models import BusinessAccount
             account_secrets = BusinessAccount.objects.filter(is_active=True).exclude(app_secret='').values_list('app_secret', flat=True)
             for s in account_secrets:
-                if s and str(s).strip():
-                    candidate_secrets.add(str(s).strip())
+                if s:
+                    for part in str(s).replace('\n', ',').replace(';', ',').split(','):
+                        p = part.strip()
+                        if p:
+                            candidate_secrets.add(p)
         except Exception as exc:
             logger.warning(f"Could not load BusinessAccount app secrets: {exc}")
 

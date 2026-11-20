@@ -2,7 +2,7 @@
 {% block title %}Branch Heads - TechPanda CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
   <div class="page-title-group">
     <div style="display: flex; align-items: center; gap: 10px;">
       <h1 style="margin: 0;">Branch Heads</h1>
@@ -11,6 +11,12 @@
       </span>
     </div>
     <p style="margin: 4px 0 0 0;">Manage branch administrators across branches &bull; Level 2</p>
+  </div>
+  <div class="page-actions" style="display: flex; gap: 8px;">
+    <a href="{% url 'admin_user_create' %}?role=BRANCH_HEAD" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      + Add Branch Head
+    </a>
   </div>
 </div>
 

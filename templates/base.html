@@ -80,6 +80,10 @@
  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
  </div>
  <div class="nav-group-children" id="admin-team-nav">
+          <a href="{% url 'admin_user_create' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_user_create' %}active{% endif %}" style="display: flex; align-items: center; gap: 8px; color: #16a34a; font-weight: 700; background: rgba(22, 163, 74, 0.08); border-radius: 6px; margin: 4px 8px 8px 8px; padding: 7px 12px; border: 1px dashed rgba(22, 163, 74, 0.35);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span class="nav-text">+ Add Team Member</span>
+          </a>
           <a href="{% url 'admin_users_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_users_list admin_set_user_password' %}active{% endif %}" style="font-weight: 700; color: #2563eb; display: flex; justify-content: space-between; align-items: center;">
             <span class="nav-text">All Staff &amp; Passwords</span>
             {% if staff_counts %}<span class="badge" style="background: #e0e7ff; color: #4338ca; font-size: 0.7rem; padding: 1px 6px; border-radius: 9999px;">{{ staff_counts.total }}</span>{% endif %}

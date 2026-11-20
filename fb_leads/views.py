@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -374,6 +374,43 @@ def fb_account_disconnect(request, account_id):
     except FacebookAccount.DoesNotExist:
         messages.error(request, "Facebook Account not found.")
 
+    return redirect("fb_leads:fb_accounts")
+
+
+@login_required
+@require_POST
+def fb_sync_env_accounts(request):
+    """
+    One-click synchronization endpoint that parses all WhatsApp lines and
+    Facebook pages from .env and provisions them into the database with branch mappings.
+    Supports both standard form POST and AJAX requests.
+    """
+    if not _can_manage(request.user):
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "error": "Permission denied"}, status=403)
+        raise PermissionDenied("Only Admin and Sales Head can synchronize Meta accounts.")
+
+    from services.env_meta_sync import sync_all_env_meta_accounts
+    stats = sync_all_env_meta_accounts()
+    total_affected = sum(stats.values())
+    msg = f"Successfully synchronized {stats['facebook_created'] + stats['facebook_updated']} Facebook page(s) and {stats['whatsapp_created'] + stats['whatsapp_updated']} WhatsApp line(s) from .env in one click."
+
+    log_activity(
+        user=request.user,
+        action="Meta Accounts 1-Click Sync",
+        description=msg,
+        object_type="FacebookAccount",
+        request=request
+    )
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "success": True,
+            "message": msg,
+            "stats": stats
+        })
+
+    messages.success(request, msg)
     return redirect("fb_leads:fb_accounts")
 
 

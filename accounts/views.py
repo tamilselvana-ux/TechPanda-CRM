@@ -374,11 +374,21 @@ def create_user_view(request):
                 return redirect('admin_marketing_users_list')
             return redirect('admin_dashboard')
     else:
-        form = AdminCreateUserForm(allowed_branches=allowed_branches)
+        initial = {}
+        role_param = (request.GET.get('role') or '').strip().upper()
+        if role_param in dict(UserRole.choices):
+            initial['role'] = role_param
+        branch_param = (request.GET.get('branch') or '').strip()
+        if branch_param and branch_param.isdigit():
+            initial['branch'] = int(branch_param)
+        form = AdminCreateUserForm(allowed_branches=allowed_branches, initial=initial)
+
+    cancel_url = request.META.get('HTTP_REFERER') or reverse('admin_users_list')
 
     return render(request, 'admin/user_create.html', {
         'form': form,
         'portal_title': 'Create New CRM User',
+        'cancel_url': cancel_url,
     })
 
 

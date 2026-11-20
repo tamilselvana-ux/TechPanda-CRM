@@ -26,9 +26,9 @@ def get_default_admissions_flow_data():
             "x": 380,
             "y": 80,
             "id": "msg_1",
-            "body": "Hey there! \ud83d\udc4b\n\nWelcome to Digipanda Academy!\ud83d\ude80\n\nReady to level up your digital marketing skills?\n\nExplore hands-on training in SEO, Google Ads, Meta Ads, Social Media, Content Creation, Video Editing & AI Tools.\n\nLet's help you get started! \u2728",
+            "body": "Hey there!\n\nWelcome to Digipanda Academy!\n\nReady to level up your digital marketing skills?\n\nExplore hands-on training in SEO, Google Ads, Meta Ads, Social Media, Content Creation, Video Editing & AI Tools.\n\nLet's help you get started!",
             "data": {
-                "text": "Hey there! \ud83d\udc4b\n\nWelcome to Digipanda Academy!\ud83d\ude80\n\nReady to level up your digital marketing skills?\n\nExplore hands-on training in SEO, Google Ads, Meta Ads, Social Media, Content Creation, Video Editing & AI Tools.\n\nLet's help you get started! \u2728",
+                "text": "Hey there!\n\nWelcome to Digipanda Academy!\n\nReady to level up your digital marketing skills?\n\nExplore hands-on training in SEO, Google Ads, Meta Ads, Social Media, Content Creation, Video Editing & AI Tools.\n\nLet's help you get started!",
                 "title": "Welcome Message"
             },
             "type": "message",
@@ -322,9 +322,9 @@ def get_default_admissions_flow_data():
             "x": 380,
             "y": 680,
             "id": "end_1",
-            "body": "Thank you for your interest in **DigiPanda Academy!** \ud83d\udc99\n\nOur team will help you with course details, available batches and career guidance.\n\n\ud83d\udcde Need assistance? Call or WhatsApp **74488 88593**.\n\n\ud83c\udf10 Website: https://digipandaacademy.com/\n\nLet's build your digital future! \ud83d\ude80",
+            "body": "Thank you for your interest in **DigiPanda Academy!**\n\nOur team will help you with course details, available batches and career guidance.\n\nNeed assistance? Call or WhatsApp **74488 88593**.\n\nWebsite: https://digipandaacademy.com/\n\nLet's build your digital future!",
             "data": {
-                "text": "Thank you for your interest in **DigiPanda Academy!** \ud83d\udc99\n\nOur team will help you with course details, available batches and career guidance.\n\n\ud83d\udcde Need assistance? Call or WhatsApp **74488 88593**.\n\n\ud83c\udf10 Website: https://digipandaacademy.com/\n\nLet's build your digital future! \ud83d\ude80",
+                "text": "Thank you for your interest in **DigiPanda Academy!**\n\nOur team will help you with course details, available batches and career guidance.\n\nNeed assistance? Call or WhatsApp **74488 88593**.\n\nWebsite: https://digipandaacademy.com/\n\nLet's build your digital future!",
                 "title": "End Session"
             },
             "type": "end",

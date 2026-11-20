@@ -12,8 +12,12 @@
       Manage Facebook connections, configure automated lead synchronization (default 3 mins), and set branch routing per Facebook Page.
     </p>
   </div>
-  <div style="display: flex; gap: 12px; align-items: center;">
-    <button type="button" class="btn btn-secondary" onclick="refreshAllPagesStatus()" title="Refresh Auto-Sync Status">⟳ Check Status</button>
+  <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+    <button type="button" class="btn btn-secondary" id="btnOneClickFbSync" onclick="triggerOneClickEnvSync()" title="One-Click Sync Accounts and Pages from .env" style="color: #2563eb; font-weight: 700; border-color: rgba(37,99,235,0.3); background: rgba(37,99,235,0.06); display: inline-flex; align-items: center; gap: 6px;">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      <span>1-Click Sync from .env</span>
+    </button>
+    <button type="button" class="btn btn-secondary" onclick="refreshAllPagesStatus()" title="Refresh Auto-Sync Status">Check Status</button>
     <button type="button" class="btn btn-primary" onclick="openConnectModal()">+ Connect Facebook Account</button>
   </div>
 </div>
@@ -199,6 +203,14 @@
     </div>
     <form method="post" action="{% url 'fb_leads:fb_account_connect' %}" style="padding: 24px;">
       {% csrf_token %}
+      <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <div style="font-size: 0.8rem; color: #1e40af;">
+          <strong>Configuring multiple accounts?</strong> You can also define your accounts in <code>.env</code> and import all of them in one click.
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" onclick="triggerOneClickEnvSync()" style="font-size: 0.78rem; padding: 5px 12px; white-space: nowrap; font-weight: 700;">
+          1-Click Sync
+        </button>
+      </div>
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Account Label / Business Name *</label>
         <input type="text" name="account_name" required class="form-control" placeholder="e.g. DigiPanda Digital Marketing / Agency Account" style="width: 100%;">
@@ -398,6 +410,47 @@ function syncPageNow(pageId) {
     btn.innerHTML = originalHtml;
     showToast('Sync request error', true);
   });
+}
+
+// 3.5 One-Click Environment Sync
+async function triggerOneClickEnvSync() {
+  const btn = document.getElementById('btnOneClickFbSync');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>Syncing...</span>';
+  }
+  try {
+    const resp = await fetch('{% url "fb_leads:fb_sync_env_accounts" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    });
+    const data = await resp.json();
+    if (data.success) {
+      alert(`One-Click Sync Completed!\n\n` +
+            `Facebook Pages Created: ${data.stats.facebook_created}\n` +
+            `Facebook Pages Updated: ${data.stats.facebook_updated}\n` +
+            `WhatsApp Lines Created: ${data.stats.whatsapp_created}\n` +
+            `WhatsApp Lines Updated: ${data.stats.whatsapp_updated}`);
+      window.location.reload();
+    } else {
+      alert('Sync failed: ' + (data.error || 'Unknown error'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    }
+  } catch (err) {
+    alert('Error running One-Click Sync: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
 }
 
 // 4. Background Heartbeat & Status Refresh

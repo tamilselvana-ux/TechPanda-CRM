@@ -97,6 +97,10 @@
                         <span>Business Line</span>
                     </span>
                     <div class="business-header-actions">
+                        <button class="add-line-btn" id="btnOneClickSyncEnv" title="One-Click Sync all WhatsApp & Facebook Accounts from .env" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25); font-weight: 700; margin-right: 4px;">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            <span>1-Click Sync</span>
+                        </button>
                         <button class="add-line-btn" id="btnAddBusinessLine" title="Add WhatsApp Business Number" aria-label="Add WhatsApp Business Number">
                             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -410,6 +414,14 @@
             <div class="modal-header">
                 <h3>Add WhatsApp Business Number</h3>
                 <button class="modal-close-btn" id="addBusinessModalClose">&times;</button>
+            </div>
+            <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); border-radius: 8px; padding: 10px 14px; margin: 12px 18px 0 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="font-size: 0.8rem; color: #1e40af;">
+                    <strong>Have 8+ accounts in .env?</strong> Auto-import and connect all accounts with branches in 1 click.
+                </div>
+                <button type="button" class="btn-primary" id="btnModalOneClickSync" style="font-size: 0.76rem; padding: 5px 10px; white-space: nowrap; font-weight: 700; border-radius: 5px; cursor: pointer;">
+                    1-Click Sync
+                </button>
             </div>
             <form id="addBusinessForm">
                 <div class="modal-field">

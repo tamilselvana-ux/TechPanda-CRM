@@ -2,7 +2,7 @@
 {% block title %}Counselors - TechPanda CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
   <div class="page-title-group">
     <div style="display: flex; align-items: center; gap: 10px;">
       <h1 style="margin: 0;">Counselors</h1>
@@ -11,6 +11,12 @@
       </span>
     </div>
     <p style="margin: 4px 0 0 0;">All Counselors across branches &bull; Level 3</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'admin_user_create' %}?role=COUNSELOR" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Add Counselor
+    </a>
   </div>
 </div>
 

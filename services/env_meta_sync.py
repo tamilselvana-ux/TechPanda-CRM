@@ -35,22 +35,23 @@ def get_candidate_webhook_secrets(provider: str = "all") -> Set[str]:
     """
     Aggregates all candidate Meta App Secrets from settings, environment variables,
     and active database records for multi-developer webhook HMAC validation.
+    Splits any comma-, newline-, or semicolon-separated tokens into individual secrets.
     """
     secrets: Set[str] = set()
 
     # 1. Global settings and environment secrets
     if provider in ("all", "facebook"):
         fb_sec = getattr(settings, "FB_APP_SECRET", "") or os.getenv("FB_APP_SECRET", "")
-        if fb_sec and str(fb_sec).strip():
-            secrets.add(str(fb_sec).strip())
+        for s in split_env_list(fb_sec):
+            secrets.add(s)
         raw_fb_secrets = getattr(settings, "FB_APP_SECRETS", "") or os.getenv("FB_APP_SECRETS", "")
         for s in split_env_list(raw_fb_secrets):
             secrets.add(s)
 
     if provider in ("all", "whatsapp"):
         wa_sec = getattr(settings, "WHATSAPP_APP_SECRET", "") or os.getenv("WHATSAPP_APP_SECRET", "")
-        if wa_sec and str(wa_sec).strip():
-            secrets.add(str(wa_sec).strip())
+        for s in split_env_list(wa_sec):
+            secrets.add(s)
         raw_wa_secrets = getattr(settings, "WHATSAPP_APP_SECRETS", "") or os.getenv("WHATSAPP_APP_SECRETS", "")
         for s in split_env_list(raw_wa_secrets):
             secrets.add(s)
@@ -61,9 +62,11 @@ def get_candidate_webhook_secrets(provider: str = "all") -> Set[str]:
             continue
         k_upper = k.upper()
         if provider in ("all", "whatsapp") and (k_upper.startswith("WHATSAPP_") and k_upper.endswith("_APP_SECRET")):
-            secrets.add(v.strip())
+            for s in split_env_list(v):
+                secrets.add(s)
         elif provider in ("all", "facebook") and (k_upper.startswith("FB_") and k_upper.endswith("_APP_SECRET")):
-            secrets.add(v.strip())
+            for s in split_env_list(v):
+                secrets.add(s)
 
     # 3. Database stored secrets on active WhatsApp Business Accounts & Facebook Accounts
     if provider in ("all", "whatsapp"):
@@ -71,8 +74,8 @@ def get_candidate_webhook_secrets(provider: str = "all") -> Set[str]:
             from chat.models import BusinessAccount
             db_wa_secrets = BusinessAccount.objects.filter(is_active=True).exclude(app_secret="").values_list("app_secret", flat=True)
             for s in db_wa_secrets:
-                if s and str(s).strip():
-                    secrets.add(str(s).strip())
+                for item in split_env_list(s):
+                    secrets.add(item)
         except Exception as exc:
             logger.debug("Could not query BusinessAccount app_secrets: %s", exc)
 
@@ -81,8 +84,8 @@ def get_candidate_webhook_secrets(provider: str = "all") -> Set[str]:
             from fb_leads.models import FacebookAccount
             db_fb_secrets = FacebookAccount.objects.exclude(app_secret="").values_list("app_secret", flat=True)
             for s in db_fb_secrets:
-                if s and str(s).strip():
-                    secrets.add(str(s).strip())
+                for item in split_env_list(s):
+                    secrets.add(item)
         except Exception as exc:
             logger.debug("Could not query FacebookAccount app_secrets: %s", exc)
 
@@ -93,22 +96,23 @@ def get_candidate_verify_tokens(provider: str = "all") -> Set[str]:
     """
     Aggregates all candidate Webhook Verify Tokens from settings, environment variables,
     and active database records for multi-developer webhook subscription handshakes.
+    Splits any comma-, newline-, or semicolon-separated tokens into individual tokens.
     """
     tokens: Set[str] = set()
 
     # 1. Global settings and environment tokens
     if provider in ("all", "facebook"):
         fb_tok = getattr(settings, "FB_VERIFY_TOKEN", "") or os.getenv("FB_VERIFY_TOKEN", "")
-        if fb_tok and str(fb_tok).strip():
-            tokens.add(str(fb_tok).strip())
+        for t in split_env_list(fb_tok):
+            tokens.add(t)
         raw_fb_tokens = getattr(settings, "FB_VERIFY_TOKENS", "") or os.getenv("FB_VERIFY_TOKENS", "")
         for t in split_env_list(raw_fb_tokens):
             tokens.add(t)
 
     if provider in ("all", "whatsapp"):
         wa_tok = getattr(settings, "WHATSAPP_VERIFY_TOKEN", "") or os.getenv("WHATSAPP_VERIFY_TOKEN", "")
-        if wa_tok and str(wa_tok).strip():
-            tokens.add(str(wa_tok).strip())
+        for t in split_env_list(wa_tok):
+            tokens.add(t)
         raw_wa_tokens = getattr(settings, "WHATSAPP_VERIFY_TOKENS", "") or os.getenv("WHATSAPP_VERIFY_TOKENS", "")
         for t in split_env_list(raw_wa_tokens):
             tokens.add(t)
@@ -119,9 +123,11 @@ def get_candidate_verify_tokens(provider: str = "all") -> Set[str]:
             continue
         k_upper = k.upper()
         if provider in ("all", "whatsapp") and (k_upper.startswith("WHATSAPP_") and k_upper.endswith("_VERIFY_TOKEN")):
-            tokens.add(v.strip())
+            for t in split_env_list(v):
+                tokens.add(t)
         elif provider in ("all", "facebook") and (k_upper.startswith("FB_") and k_upper.endswith("_VERIFY_TOKEN")):
-            tokens.add(v.strip())
+            for t in split_env_list(v):
+                tokens.add(t)
 
     # 3. Database stored verify tokens on active WhatsApp Business Accounts & Facebook Accounts
     if provider in ("all", "whatsapp"):
@@ -129,8 +135,8 @@ def get_candidate_verify_tokens(provider: str = "all") -> Set[str]:
             from chat.models import BusinessAccount
             db_wa_tokens = BusinessAccount.objects.filter(is_active=True).exclude(verify_token="").values_list("verify_token", flat=True)
             for t in db_wa_tokens:
-                if t and str(t).strip():
-                    tokens.add(str(t).strip())
+                for item in split_env_list(t):
+                    tokens.add(item)
         except Exception as exc:
             logger.debug("Could not query BusinessAccount verify_tokens: %s", exc)
 
@@ -139,8 +145,8 @@ def get_candidate_verify_tokens(provider: str = "all") -> Set[str]:
             from fb_leads.models import FacebookAccount
             db_fb_tokens = FacebookAccount.objects.exclude(verify_token="").values_list("verify_token", flat=True)
             for t in db_fb_tokens:
-                if t and str(t).strip():
-                    tokens.add(str(t).strip())
+                for item in split_env_list(t):
+                    tokens.add(item)
         except Exception as exc:
             logger.debug("Could not query FacebookAccount verify_tokens: %s", exc)
 

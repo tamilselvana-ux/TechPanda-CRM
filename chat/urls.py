@@ -37,6 +37,7 @@ urlpatterns = [
     path('chat/automations/<int:pk>/builder/', views.FlowBuilderView.as_view(), name='flow-builder-chat-automations-builder'),
 
     # REST APIs
+    path('api/sync-env-accounts/', views.SyncEnvMetaAccountsAPI.as_view(), name='api-sync-env-accounts'),
     path('api/business-accounts/', views.BusinessAccountListAPI.as_view(), name='api-business-accounts'),
     path('api/whatsapp/business-accounts/', views.BusinessAccountListAPI.as_view(), name='api-whatsapp-business-accounts-alias'),
     path('api/business-accounts/<int:pk>/', views.BusinessAccountDetailAPI.as_view(), name='api-business-account-detail'),
@@ -63,6 +64,15 @@ urlpatterns = [
     path('api/leads/<int:lead_id>/send-whatsapp/', views.api_telecaller_send_whatsapp, name='api_telecaller_send_whatsapp'),
     path('api/leads/<int:lead_id>/voice-capability/', views.api_whatsapp_voice_capability, name='api_whatsapp_voice_capability'),
 
-    # Meta WhatsApp Webhooks
+    # Meta WhatsApp Webhooks (resilient routing for all common callback URL variants)
     path('webhook/whatsapp/', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook'),
+    path('webhook/whatsapp', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-noslash'),
+    path('webhook/', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-root'),
+    path('webhook', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-root-noslash'),
+    path('chat/webhook/', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-chat'),
+    path('chat/webhook', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-chat-noslash'),
+    path('chat/webhook/whatsapp/', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-chat-full'),
+    path('chat/webhook/whatsapp', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-chat-full-noslash'),
+    path('whatsapp/webhook/', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-alt'),
+    path('whatsapp/webhook', views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook-alt-noslash'),
 ]

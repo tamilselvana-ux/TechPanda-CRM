@@ -10,6 +10,7 @@ urlpatterns = [
     path("", views.lead_list, name="facebook_leads"),
     path("sync/", views.sync_leads, name="facebook_leads_sync"),
     path("accounts/", views.fb_accounts, name="fb_accounts"),
+    path("accounts/sync-env/", views.fb_sync_env_accounts, name="fb_sync_env_accounts"),
     path("accounts/connect/", views.fb_account_connect, name="fb_account_connect"),
     path("accounts/<int:account_id>/disconnect/", views.fb_account_disconnect, name="fb_account_disconnect"),
     path("pages/<int:page_id>/branch/", views.fb_page_update_branch, name="fb_page_update_branch"),

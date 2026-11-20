@@ -1,8 +1,8 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-20 13:13 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-20 14:45 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
-**Blockers:** 0 · **Warnings:** 106 · **Verdict:** ✅ no stubs found
+**Blockers:** 0 · **Warnings:** 112 · **Verdict:** ✅ no stubs found
 
 ## 🚫 Blockers (must fix before 'done')
 | Rule | File | Line | Code |
@@ -18,7 +18,13 @@ Run: 2026-11-20 13:13 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
 | Debug output left in | chat\static\chat\flow_builder_dist\assets\flow_builder_app.js | 61 | ``)),u=h.reduce((p,y)=>p.concat(...y),[]);return[h,u]}return[[],[]]},[e]);return P.useEffect(()=>{const s=(t==n` |
+| alert() used for UX | chat\static\chat\js\inbox.js | 1277 | `alert(`One-Click Sync Completed!\n\n` +` |
+| alert() used for UX | chat\static\chat\js\inbox.js | 1287 | `alert('Sync error: ' + (data.error // data.detail // 'Unable to sync accounts.'));` |
+| alert() used for UX | chat\static\chat\js\inbox.js | 1290 | `alert('One-Click Sync request failed: ' + err.message);` |
 | Hard-coded localhost URL | config\settings.py | 349 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 434 | `alert(`One-Click Sync Completed!\n\n` +` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 441 | `alert('Sync failed: ' + (data.error // 'Unknown error'));` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 448 | `alert('Error running One-Click Sync: ' + err.message);` |
 | Hard-coded localhost URL | scratch\add_track_aa_todo.py | 18 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
 | Hard-coded localhost URL | scratch\mark_todo_track_aa_done.py | 14 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
 | Hard-coded localhost URL | scratch\mark_todo_track_z_done.py | 64 | `- Proof: Executed `test_new_enquiry_form.py` against live server (`http://127.0.0.1:8001/enquiry/` -> HTTP 200` |
