@@ -80,9 +80,12 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
             'phone_number_id',
             'business_account_id',
 <<<<<<< HEAD
+<<<<<<< HEAD
             'access_token',
             'app_secret',
             'verify_token',
+=======
+>>>>>>> parent of 5ad02b0 ('whatsapp')
 =======
 >>>>>>> parent of 5ad02b0 ('whatsapp')
             'is_default',
@@ -96,9 +99,12 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
 <<<<<<< HEAD
+<<<<<<< HEAD
             'access_token': {'write_only': True, 'required': False, 'allow_blank': True},
             'app_secret': {'write_only': True, 'required': False, 'allow_blank': True},
             'verify_token': {'write_only': True, 'required': False, 'allow_blank': True},
+=======
+>>>>>>> parent of 5ad02b0 ('whatsapp')
 =======
 >>>>>>> parent of 5ad02b0 ('whatsapp')
             'crm_branch': {'required': False, 'allow_null': True}
