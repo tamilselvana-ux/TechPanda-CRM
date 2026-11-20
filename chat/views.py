@@ -499,9 +499,13 @@ class WhatsAppWebhookView(View):
     """
 
     def get(self, request):
-        mode = request.GET.get('hub.mode')
-        token = request.GET.get('hub.verify_token')
-        challenge = request.GET.get('hub.challenge')
+        mode = request.GET.get('hub.mode') or request.GET.get('mode')
+        token = request.GET.get('hub.verify_token') or request.GET.get('verify_token')
+        challenge = request.GET.get('hub.challenge') or request.GET.get('challenge')
+
+        # If accessed directly in browser or health-check without parameters, return HTTP 200
+        if not mode and not token and not challenge:
+            return HttpResponse("WhatsApp Cloud API Webhook Endpoint is active and healthy.", content_type="text/plain", status=200)
 
         verified_challenge = verify_webhook_token(mode, token, challenge)
         if verified_challenge:
@@ -565,28 +569,34 @@ class WhatsAppWebhookView(View):
             logger.error(f"Malformed webhook JSON: {exc}")
             return HttpResponse("Bad Request", status=400)
 
-        entries = payload.get('entry', [])
-        for entry in entries:
-            changes = entry.get('changes', [])
-            for change in changes:
-                value = change.get('value', {})
-                field = change.get('field', '')
+        # Resiliently handle both standard production payloads (entry -> changes) and Meta test console payloads (root field/value)
+        changes_list = []
+        if 'field' in payload and 'value' in payload:
+            changes_list.append(payload)
+        else:
+            entries = payload.get('entry', [])
+            for entry in entries:
+                changes_list.extend(entry.get('changes', []))
 
-                if field == 'messages':
-                    # Incoming user messages
-                    if 'messages' in value:
+        for change in changes_list:
+            value = change.get('value', {})
+            field = change.get('field', '')
+
+            if field == 'messages':
+                # Incoming user messages
+                if 'messages' in value:
+                    try:
+                        process_incoming_message(value)
+                    except Exception as exc:
+                        logger.error(f"Error processing incoming message: {exc}", exc_info=True)
+
+                # Outbound status changes (sent, delivered, read, failed)
+                if 'statuses' in value:
+                    for status_item in value.get('statuses', []):
                         try:
-                            process_incoming_message(value)
+                            process_message_status(status_item)
                         except Exception as exc:
-                            logger.error(f"Error processing incoming message: {exc}", exc_info=True)
-
-                    # Outbound status changes (sent, delivered, read, failed)
-                    if 'statuses' in value:
-                        for status_item in value.get('statuses', []):
-                            try:
-                                process_message_status(status_item)
-                            except Exception as exc:
-                                logger.error(f"Error processing message status: {exc}", exc_info=True)
+                            logger.error(f"Error processing message status: {exc}", exc_info=True)
 
         return HttpResponse("EVENT_RECEIVED", status=200)
 

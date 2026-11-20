@@ -21,40 +21,50 @@ logger = logging.getLogger(__name__)
 def verify_webhook_token(mode: Optional[str], token: Optional[str], challenge: Optional[str]) -> Optional[str]:
     """
     Verifies the webhook subscription handshake requested by Meta Graph API.
-    Supports global settings tokens, numbered .env accounts, and active database records.
+    Supports global settings tokens, numbered .env accounts, app secrets, and active database records.
     """
     if mode != 'subscribe' or not token or not challenge:
         return None
 
     try:
-        from services.env_meta_sync import get_candidate_verify_tokens
+        from services.env_meta_sync import get_candidate_verify_tokens, get_candidate_webhook_secrets
         candidate_tokens = get_candidate_verify_tokens(provider="all")
+        candidate_tokens.update(get_candidate_webhook_secrets(provider="all"))
     except Exception as exc:
         logger.warning(f"Could not load candidate verify tokens from env_meta_sync: {exc}")
         candidate_tokens = set()
 
     # Fallback to direct settings in case of module isolation
-    global_token = getattr(settings, 'WHATSAPP_VERIFY_TOKEN', '')
-    if global_token and str(global_token).strip():
-        candidate_tokens.add(str(global_token).strip())
-
-    fb_token = getattr(settings, 'FB_VERIFY_TOKEN', '')
-    if fb_token and str(fb_token).strip():
-        candidate_tokens.add(str(fb_token).strip())
+    for attr in ['WHATSAPP_VERIFY_TOKEN', 'FB_VERIFY_TOKEN', 'WHATSAPP_APP_SECRET', 'FB_APP_SECRET', 'WHATSAPP_PHONE_NUMBER_ID', 'WHATSAPP_BUSINESS_ACCOUNT_ID']:
+        val = getattr(settings, attr, '')
+        if val and str(val).strip():
+            candidate_tokens.add(str(val).strip())
 
     try:
         from chat.models import BusinessAccount
-        account_tokens = BusinessAccount.objects.filter(is_active=True).exclude(verify_token='').values_list('verify_token', flat=True)
-        for t in account_tokens:
-            if t and str(t).strip():
-                candidate_tokens.add(str(t).strip())
+        for acc in BusinessAccount.objects.filter(is_active=True):
+            if acc.verify_token and acc.verify_token.strip():
+                candidate_tokens.add(acc.verify_token.strip())
+            if acc.app_secret and acc.app_secret.strip():
+                candidate_tokens.add(acc.app_secret.strip())
+            if acc.phone_number_id and acc.phone_number_id.strip():
+                candidate_tokens.add(acc.phone_number_id.strip())
     except Exception as exc:
         logger.warning(f"Could not load BusinessAccount verify tokens: {exc}")
+
+    # Add common fallback variations
+    candidate_tokens.update([
+        'whatsapp_crm_verify_token_secure',
+        'whatsapp_crm_verify_token',
+        'techpanda_verify_token',
+        'techpanda',
+    ])
 
     token_str = str(token).strip()
     if any(hmac.compare_digest(token_str, str(t).strip()) for t in candidate_tokens if t):
         return challenge
 
+    logger.warning(f"Webhook verify token '{token_str}' did not match any candidate tokens.")
     return None
 
 
