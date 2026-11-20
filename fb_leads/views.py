@@ -292,34 +292,47 @@ def fb_accounts(request):
 @login_required
 @require_POST
 def fb_account_connect(request):
-    """Add a new Facebook Account and automatically discover its Pages."""
+    """Add a new Facebook Account and automatically discover its Pages with target branch assignment."""
     if not _can_manage(request.user):
         raise PermissionDenied("Only Admin and Sales Head can connect Facebook accounts.")
 
     from .models import FacebookAccount
     from .facebook import sync_pages_for_account
+    from branches.models import Branch
 
     account_name = request.POST.get("account_name", "").strip()
     access_token = request.POST.get("access_token", "").strip()
+    branch_id = request.POST.get("branch") or request.POST.get("branch_id")
+    app_id = request.POST.get("app_id", "").strip()
+    app_secret = request.POST.get("app_secret", "").strip()
+    verify_token = request.POST.get("verify_token", "").strip()
 
     if not account_name or not access_token:
         messages.error(request, "Account name and access token are required.")
         return redirect("fb_leads:fb_accounts")
 
+    target_branch = None
+    if branch_id:
+        target_branch = Branch.objects.filter(id=branch_id).first()
+
     account = FacebookAccount.objects.create(
         account_name=account_name,
         access_token=access_token,
+        app_id=app_id,
+        app_secret=app_secret,
+        verify_token=verify_token,
         connected_by=request.user,
         status="CONNECTED",
     )
 
     try:
-        pages_count = sync_pages_for_account(account)
-        messages.success(request, f"Connected Facebook Account '{account_name}' and imported {pages_count} page(s).")
+        pages_count = sync_pages_for_account(account, default_branch=target_branch)
+        branch_msg = f" and assigned to {target_branch.name}" if target_branch else ""
+        messages.success(request, f"Connected Facebook Account '{account_name}' and imported {pages_count} page(s){branch_msg}.")
         log_activity(
             user=request.user,
             action="Facebook Account Connected",
-            description=f"Connected Facebook account '{account_name}' with {pages_count} pages.",
+            description=f"Connected Facebook account '{account_name}' with {pages_count} pages{branch_msg}.",
             object_type="FacebookAccount",
             object_id=account.id,
             request=request

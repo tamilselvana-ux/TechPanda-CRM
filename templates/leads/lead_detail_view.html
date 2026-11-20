@@ -926,9 +926,9 @@
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
  Imported TeleCRM Activity ({{ telecrm_actions|length }} events)
  </h3>
- <a href="javascript:void(0)" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" style="font-size: 0.8rem; font-weight: 600; color: #0284c7; text-decoration: none; padding: 4px 10px; border-radius: 6px; background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.2);">
+ <button type="button" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.2); font-size: 0.8rem; font-weight: 600; color: #0284c7; padding: 4px 10px; border-radius: 6px; cursor: pointer;">
  View in Dedicated Tab &rarr;
- </a>
+ </button>
  </div>
  
  <div class="ldm-timeline-list">
@@ -953,9 +953,9 @@
  {% endfor %}
  {% if telecrm_actions|length > 5 %}
  <div style="text-align: center; padding: 8px 0;">
- <a href="javascript:void(0)" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" style="font-size: 0.82rem; font-weight: 600; color: #0284c7; text-decoration: underline;">
+ <button type="button" onclick="document.querySelector('[data-tab-target=\'#tab-telecrm\']').click()" style="background: none; border: none; font-size: 0.82rem; font-weight: 600; color: #0284c7; text-decoration: underline; cursor: pointer; padding: 0;">
  + {{ telecrm_actions|length|add:"-5" }} more TeleCRM historical actions available in the TeleCRM History tab
- </a>
+ </button>
  </div>
  {% endif %}
  </div>

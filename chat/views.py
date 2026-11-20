@@ -107,8 +107,11 @@ class InboxView(LoginRequiredMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
+        from branches.models import Branch
+        branches = Branch.objects.filter(status=Branch.Status.ACTIVE).order_by('name')
         return render(request, 'chat/inbox.html', {
             'can_manage_automation': crm.can_manage_automation(request.user),
+            'branches': branches,
         })
 
 
@@ -168,7 +171,12 @@ class BusinessAccountListAPI(APIView):
         """
         if not crm.can_manage_automation(request.user):
             raise PermissionDenied("Only Admin and Sales Head can add WhatsApp numbers.")
-        serializer = BusinessAccountSerializer(data=request.data)
+        
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if 'crm_branch_id' in data and not data.get('crm_branch'):
+            data['crm_branch'] = data['crm_branch_id']
+
+        serializer = BusinessAccountSerializer(data=data)
         if serializer.is_valid():
             account = serializer.save()
             return Response(BusinessAccountSerializer(account).data, status=status.HTTP_201_CREATED)

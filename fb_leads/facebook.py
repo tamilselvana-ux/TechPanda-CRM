@@ -134,10 +134,11 @@ def unsubscribe_page(page_id):
     return success
 
 
-def sync_pages_for_account(account):
+def sync_pages_for_account(account, default_branch=None):
     """
     Fetches all Facebook Pages accessible with the account's access token via me/accounts
     and saves or updates FacebookPage records in the database.
+    If default_branch is provided, pages are linked to that CRM branch.
     """
     r = requests.get(
         f"{_graph()}/me/accounts",
@@ -156,16 +157,28 @@ def sync_pages_for_account(account):
         p_name = page_info.get("name")
         p_token = page_info.get("access_token")
         if p_id and p_token:
-            fb_page, created = FacebookPage.objects.update_or_create(
+            fb_page, created = FacebookPage.objects.get_or_create(
                 account=account,
                 page_id=p_id,
                 defaults={
                     "page_name": p_name,
                     "page_access_token": p_token,
+                    "branch": default_branch,
                     "status": "CONNECTED",
                     "last_error": "",
                 }
             )
+            if not created:
+                fb_page.page_name = p_name
+                fb_page.page_access_token = p_token
+                fb_page.status = "CONNECTED"
+                fb_page.last_error = ""
+                update_fields = ["page_name", "page_access_token", "status", "last_error"]
+                if default_branch and not fb_page.branch:
+                    fb_page.branch = default_branch
+                    update_fields.append("branch")
+                fb_page.save(update_fields=update_fields)
+
             try:
                 subscribe_page(p_id)
             except Exception as e:

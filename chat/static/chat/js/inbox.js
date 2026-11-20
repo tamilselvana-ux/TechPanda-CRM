@@ -102,6 +102,7 @@
         addBusinessModalCancel: document.getElementById('addBusinessModalCancel'),
         bizName: document.getElementById('bizName'),
         bizPhoneNumber: document.getElementById('bizPhoneNumber'),
+        bizBranch: document.getElementById('bizBranch'),
         bizPhoneNumberId: document.getElementById('bizPhoneNumberId'),
         bizAccountId: document.getElementById('bizAccountId'),
         bizAccessToken: document.getElementById('bizAccessToken'),
@@ -1278,14 +1279,15 @@
                 e.preventDefault();
                 const name = elements.bizName.value.trim();
                 const phone = elements.bizPhoneNumber.value.trim();
+                const branchId = elements.bizBranch ? elements.bizBranch.value.trim() : '';
                 const phoneId = elements.bizPhoneNumberId.value.trim();
                 const accountId = elements.bizAccountId.value.trim();
                 const token = elements.bizAccessToken.value.trim();
                 const appSecret = elements.bizAppSecret ? elements.bizAppSecret.value.trim() : '';
                 const verifyToken = elements.bizVerifyToken ? elements.bizVerifyToken.value.trim() : '';
 
-                if (!name || !phone || !phoneId) {
-                    showToast('Please fill all required fields.');
+                if (!name || !phone || !phoneId || !branchId) {
+                    showToast('Please fill all required fields and select an assigned branch.');
                     return;
                 }
 
@@ -1304,6 +1306,7 @@
                             access_token: token,
                             app_secret: appSecret,
                             verify_token: verifyToken,
+                            crm_branch: branchId ? parseInt(branchId, 10) : null,
                             is_active: true
                         }),
                     });

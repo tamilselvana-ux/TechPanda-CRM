@@ -204,11 +204,38 @@
         <input type="text" name="account_name" required class="form-control" placeholder="e.g. DigiPanda Digital Marketing / Agency Account" style="width: 100%;">
       </div>
       <div style="margin-bottom: 16px;">
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Assigned Branch *</label>
+        <select name="branch" required class="form-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color, #cbd5e1); font-size: 0.85rem; font-weight: 500;">
+          <option value="">-- Select Target Branch --</option>
+          {% for b in branches %}
+          <option value="{{ b.id }}">{{ b.name }}</option>
+          {% endfor %}
+        </select>
+        <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+          All Facebook Pages discovered under this account will be automatically assigned to this branch for lead capture.
+        </span>
+      </div>
+      <div style="margin-bottom: 16px;">
         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">User / System User Access Token *</label>
-        <textarea name="access_token" rows="4" required class="form-control" placeholder="Paste Meta Graph API User or System User Token (EAA...)" style="width: 100%; font-family: monospace; font-size: 0.8rem;"></textarea>
+        <textarea name="access_token" rows="3" required class="form-control" placeholder="Paste Meta Graph API User or System User Token (EAA...)" style="width: 100%; font-family: monospace; font-size: 0.8rem;"></textarea>
         <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
           Token must include <code>pages_show_list</code>, <code>pages_read_engagement</code>, and <code>leads_retrieval</code>.
         </span>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Meta App ID (Optional)</label>
+        <input type="text" name="app_id" class="form-control" placeholder="e.g. 104829104859102" style="width: 100%;">
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Meta App Secret (Optional)</label>
+        <input type="text" name="app_secret" class="form-control" placeholder="e.g. 50bb27751fdd0cfb887dd4db5e54dab8" style="width: 100%;">
+        <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+          Used to verify X-Hub-Signature-256 for Lead Ads webhooks.
+        </span>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-main);">Webhook Verify Token (Optional)</label>
+        <input type="text" name="verify_token" class="form-control" placeholder="e.g. techpanda-crm-2026" style="width: 100%;">
       </div>
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
         <button type="button" class="btn btn-secondary" onclick="closeConnectModal()">Cancel</button>
