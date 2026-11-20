@@ -268,16 +268,16 @@ REST_FRAMEWORK = {
 # ---------------------------------------------------------------------------
 # WhatsApp Cloud API (Meta). Per-number tokens can also be saved on each Business Account.
 # ---------------------------------------------------------------------------
-WHATSAPP_ACCESS_TOKEN = os.getenv('WHATSAPP_ACCESS_TOKEN', '')
-WHATSAPP_APP_SECRET = os.getenv('WHATSAPP_APP_SECRET', os.getenv('FB_APP_SECRET', ''))
+WHATSAPP_ACCESS_TOKEN = os.getenv('WHATSAPP_ACCESS_TOKEN') or os.getenv('WHATSAPP_1_ACCESS_TOKEN', '')
+WHATSAPP_APP_SECRET = os.getenv('WHATSAPP_APP_SECRET') or os.getenv('WHATSAPP_1_APP_SECRET') or os.getenv('FB_APP_SECRET', '')
 WHATSAPP_APP_SECRETS = os.getenv('WHATSAPP_APP_SECRETS', '')
-WHATSAPP_PHONE_NUMBER_ID = os.getenv('WHATSAPP_PHONE_NUMBER_ID', '')
-WHATSAPP_BUSINESS_ACCOUNT_ID = os.getenv('WHATSAPP_BUSINESS_ACCOUNT_ID', '')
-WHATSAPP_VERIFY_TOKEN = os.getenv('WHATSAPP_VERIFY_TOKEN', '')
+WHATSAPP_PHONE_NUMBER_ID = os.getenv('WHATSAPP_PHONE_NUMBER_ID') or os.getenv('WHATSAPP_1_PHONE_ID', '')
+WHATSAPP_BUSINESS_ACCOUNT_ID = os.getenv('WHATSAPP_BUSINESS_ACCOUNT_ID') or os.getenv('WHATSAPP_1_WABA_ID', '')
+WHATSAPP_VERIFY_TOKEN = os.getenv('WHATSAPP_VERIFY_TOKEN') or os.getenv('WHATSAPP_1_VERIFY_TOKEN', '')
 WHATSAPP_VERIFY_TOKENS = os.getenv('WHATSAPP_VERIFY_TOKENS', '')
 WHATSAPP_API_VERSION = os.getenv('WHATSAPP_API_VERSION', 'v20.0')
 # CRM branch for new WhatsApp leads when the WhatsApp number has no branch set (exact branch name)
-WHATSAPP_DEFAULT_BRANCH = os.getenv('WHATSAPP_DEFAULT_BRANCH', '')
+WHATSAPP_DEFAULT_BRANCH = os.getenv('WHATSAPP_DEFAULT_BRANCH') or os.getenv('WHATSAPP_1_BRANCH', '')
 MAX_UPLOAD_SIZE = 16 * 1024 * 1024  # 16 MB max WhatsApp media upload
 ALLOWED_MEDIA_TYPES = [
     'image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'audio/mpeg', 'audio/ogg', 'video/mp4',
@@ -286,16 +286,16 @@ ALLOWED_MEDIA_TYPES = [
 # ---------------------------------------------------------------------------
 # Facebook Lead Ads (fb_leads). Values come from .env, never commit them.
 # ---------------------------------------------------------------------------
-FB_VERIFY_TOKEN = os.getenv('FB_VERIFY_TOKEN', '')
+FB_VERIFY_TOKEN = os.getenv('FB_VERIFY_TOKEN') or os.getenv('FB_PAGE_1_VERIFY_TOKEN', '')
 FB_VERIFY_TOKENS = os.getenv('FB_VERIFY_TOKENS', '')
 # Supports single secret or multiple comma-separated secrets (e.g. "secret1, secret2")
-FB_APP_SECRET = os.getenv('FB_APP_SECRET', '')
+FB_APP_SECRET = os.getenv('FB_APP_SECRET') or os.getenv('FB_PAGE_1_APP_SECRET', '')
 FB_APP_SECRETS = os.getenv('FB_APP_SECRETS', '')
-FB_PAGE_TOKEN = os.getenv('FB_PAGE_TOKEN', '')
-FB_PAGE_ID = os.getenv('FB_PAGE_ID', '')
+FB_PAGE_TOKEN = os.getenv('FB_PAGE_TOKEN') or os.getenv('FB_PAGE_1_ACCESS_TOKEN', '')
+FB_PAGE_ID = os.getenv('FB_PAGE_ID') or os.getenv('FB_PAGE_1_ID', '')
 FB_GRAPH_VERSION = os.getenv('FB_GRAPH_VERSION', 'v23.0')
 # CRM branch for new Facebook leads when the form has no branch question (exact branch name)
-FB_DEFAULT_BRANCH = os.getenv('FB_DEFAULT_BRANCH', '')
+FB_DEFAULT_BRANCH = os.getenv('FB_DEFAULT_BRANCH') or os.getenv('FB_PAGE_1_BRANCH', '')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
