@@ -577,7 +577,7 @@ def admin_leads_list(request):
 
     elif status_group == 'prospected':
 
-        leads_qs = leads_qs.filter(status__in=[LeadStatus.CONVERTED, LeadStatus.FOLLOW_UP, LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.VISITED, LeadStatus.JOINED])
+        leads_qs = leads_qs.filter(status__in=[LeadStatus.CONVERTED, LeadStatus.ENROLLED, LeadStatus.FOLLOW_UP, LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.VISITED, LeadStatus.JOINED])
 
     elif status_group == 'not_connected':
 
@@ -604,14 +604,11 @@ def admin_leads_list(request):
         leads_qs = leads_qs.filter(Q(source__icontains=source_filter) | Q(channel__name__icontains=source_filter))
 
     if channel_filter:
-
         if channel_filter.isdigit():
-
             leads_qs = leads_qs.filter(channel_id=int(channel_filter))
-
         else:
-
-            leads_qs = leads_qs.filter(Q(channel__name__icontains=channel_filter) | Q(source__icontains=channel_filter))
+            from reports.services import resolve_canonical_channel_q
+            leads_qs = leads_qs.filter(resolve_canonical_channel_q(channel_filter))
 
     if product_filter:
 
@@ -1645,7 +1642,7 @@ def manager_leads_list(request):
 
     elif status_group == 'prospected':
 
-        leads_qs = leads_qs.filter(status__in=[LeadStatus.CONVERTED, LeadStatus.FOLLOW_UP, LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.VISITED, LeadStatus.JOINED])
+        leads_qs = leads_qs.filter(status__in=[LeadStatus.CONVERTED, LeadStatus.ENROLLED, LeadStatus.FOLLOW_UP, LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.VISITED, LeadStatus.JOINED])
 
     elif status_group == 'not_connected':
 
@@ -1656,14 +1653,11 @@ def manager_leads_list(request):
         leads_qs = leads_qs.filter(assigned_telecaller_id=telecaller_filter)
 
     if channel_filter:
-
         if channel_filter.isdigit():
-
             leads_qs = leads_qs.filter(channel_id=int(channel_filter))
-
         else:
-
-            leads_qs = leads_qs.filter(Q(channel__name__icontains=channel_filter) | Q(source__icontains=channel_filter))
+            from reports.services import resolve_canonical_channel_q
+            leads_qs = leads_qs.filter(resolve_canonical_channel_q(channel_filter))
 
     if branch_filter:
         if branch_filter.isdigit():

@@ -84,6 +84,8 @@ urlpatterns = [
 
     # Admin Marketing Team Oversight & Management
     path('admin/marketing-team/', marketing_views.admin_marketing_users_list, name='admin_marketing_users_list'),
+    path('admin/marketing-team/<int:pk>/', marketing_views.admin_marketing_user_detail, name='admin_marketing_user_detail'),
+    path('admin/marketing-team/<int:pk>/edit/', marketing_views.admin_marketing_user_edit, name='admin_marketing_user_edit'),
     path('admin/marketing-team/<int:pk>/toggle-status/', marketing_views.admin_marketing_user_toggle_status, name='admin_marketing_user_toggle_status'),
 
     # Progressive Hierarchy Routes (Levels 1 - 5)

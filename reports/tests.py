@@ -118,5 +118,5 @@ class DashboardReportIntegrationTests(TestCase):
         data = get_dashboard_report_data(self.admin, {'date_filter': 'all'})
         self.assertEqual(data['kpi_total_leads'], 2)
         self.assertEqual(data['converted_leads_count'], 1)
-        self.assertEqual(len(data['canonical_channels']), 7)
+        self.assertEqual(len(data['canonical_channels']), 8)
         self.assertEqual(data['total_calls_count'], 1)

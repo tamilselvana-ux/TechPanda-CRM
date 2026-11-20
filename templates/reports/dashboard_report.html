@@ -289,6 +289,21 @@
           <span class="tp-channel-box-pct" data-chan-pct="Influencer">{{ channels.6.percentage|default:0 }}%</span>
         </div>
       </a>
+
+      <!-- 8. Other / Direct -->
+      <a href="{{ leads_url }}?view=all&channel=Other+/+Direct{% if start_date %}&date_from={{ start_date }}&date_to={{ end_date }}{% endif %}{% if branch_filter %}&branch={{ branch_filter }}{% endif %}" data-chan-link="Other / Direct" class="tp-channel-box" style="text-decoration: none; color: inherit; cursor: pointer;" title="View Other / Direct leads">
+        <div class="tp-channel-box-icon">
+          <svg viewBox="0 0 36 36" fill="none">
+            <rect width="36" height="36" rx="8" fill="#f1f5f9"/>
+            <path d="M12 18H24M18 12V24" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="tp-channel-box-details">
+          <span class="tp-channel-box-title">Other / Direct</span>
+          <span class="tp-channel-box-count" data-chan-count="Other / Direct">{{ channels.7.count|default:0 }}</span>
+          <span class="tp-channel-box-pct" data-chan-pct="Other / Direct">{{ channels.7.percentage|default:0 }}%</span>
+        </div>
+      </a>
     </div>
   </section>
 
@@ -315,6 +330,7 @@
             <th class="th-instagram">Instagram</th>
             <th class="th-google-call">Google Calls</th>
             <th class="th-influencer">Influencer</th>
+            <th class="th-other" style="background: rgba(100, 116, 139, 0.08); color: #475569;">Other / Direct</th>
             <th class="th-status-normal">New Leads</th>
             <th class="th-status-normal">Contacted</th>
             <th class="th-status-normal">Missed</th>
@@ -332,13 +348,14 @@
             <td class="td-ig">{{ r.channels.4 }}</td>
             <td class="td-call">{{ r.channels.5 }}</td>
             <td class="td-influencer">{{ r.channels.6 }}</td>
+            <td class="td-other">{{ r.channels.7 }}</td>
             <td class="td-status-normal">{{ r.new_leads }}</td>
             <td class="td-status-normal">{{ r.contacted_leads }}</td>
             <td class="td-status-normal">{{ r.missed_leads }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="12" style="text-align: center; color: var(--text-muted); padding: 24px;">No branch lead records found for this period.</td>
+            <td colspan="13" style="text-align: center; color: var(--text-muted); padding: 24px;">No branch lead records found for this period.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -353,6 +370,7 @@
             <td class="td-ig">{{ branch_totals.channels.4 }}</td>
             <td class="td-call">{{ branch_totals.channels.5 }}</td>
             <td class="td-influencer">{{ branch_totals.channels.6 }}</td>
+            <td class="td-other">{{ branch_totals.channels.7 }}</td>
             <td class="td-status-normal">{{ branch_totals.new_leads }}</td>
             <td class="td-status-normal">{{ branch_totals.contacted_leads }}</td>
             <td class="td-status-normal">{{ branch_totals.missed_leads }}</td>
