@@ -205,6 +205,12 @@ class BusinessAccountDetailAPI(APIView):
         if 'access_token' in request.data:
             account.access_token = str(request.data['access_token']).strip()
             updated_fields.append('access_token')
+        if 'app_secret' in request.data:
+            account.app_secret = str(request.data['app_secret']).strip()
+            updated_fields.append('app_secret')
+        if 'verify_token' in request.data:
+            account.verify_token = str(request.data['verify_token']).strip()
+            updated_fields.append('verify_token')
         if updated_fields:
             account.save(update_fields=updated_fields)
         serializer = BusinessAccountSerializer(account)
@@ -479,15 +485,45 @@ class WhatsAppWebhookView(View):
         return HttpResponse("Verification token mismatch", status=403)
 
     def post(self, request):
-        secret = getattr(settings, "WHATSAPP_APP_SECRET", "") or getattr(settings, "FB_APP_SECRET", "")
-        if not secret:
-            logger.error("WhatsApp webhook rejected: WHATSAPP_APP_SECRET is not configured.")
+        candidate_secrets = set()
+        try:
+            from services.env_meta_sync import get_candidate_webhook_secrets
+            candidate_secrets = get_candidate_webhook_secrets(provider="all")
+        except Exception as exc:
+            logger.warning(f"Could not load candidate webhook secrets from env_meta_sync: {exc}")
+
+        # Fallback to direct settings & database if needed
+        global_secret = getattr(settings, "WHATSAPP_APP_SECRET", "") or getattr(settings, "FB_APP_SECRET", "")
+        if global_secret and str(global_secret).strip():
+            candidate_secrets.add(str(global_secret).strip())
+
+        try:
+            from chat.models import BusinessAccount
+            account_secrets = BusinessAccount.objects.filter(is_active=True).exclude(app_secret='').values_list('app_secret', flat=True)
+            for s in account_secrets:
+                if s and str(s).strip():
+                    candidate_secrets.add(str(s).strip())
+        except Exception as exc:
+            logger.warning(f"Could not load BusinessAccount app secrets: {exc}")
+
+        if not candidate_secrets:
+            logger.error("WhatsApp webhook rejected: no WHATSAPP_APP_SECRET or BusinessAccount app secrets are configured.")
             return HttpResponse("Webhook secret not configured", status=403)
 
         signature = request.headers.get("X-Hub-Signature-256", "")
-        expected = "sha256=" + hmac.new(secret.encode('utf-8'), request.body, hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(signature, expected):
-            logger.warning("WhatsApp webhook rejected: bad or missing X-Hub-Signature-256 signature")
+        if not signature:
+            logger.warning("WhatsApp webhook rejected: missing X-Hub-Signature-256 header")
+            return HttpResponse("Bad signature", status=403)
+
+        signature_valid = False
+        for secret in candidate_secrets:
+            expected = "sha256=" + hmac.new(secret.encode('utf-8'), request.body, hashlib.sha256).hexdigest()
+            if hmac.compare_digest(signature, expected):
+                signature_valid = True
+                break
+
+        if not signature_valid:
+            logger.warning("WhatsApp webhook rejected: bad X-Hub-Signature-256 signature (checked %d candidate secrets)", len(candidate_secrets))
             return HttpResponse("Bad signature", status=403)
 
         try:

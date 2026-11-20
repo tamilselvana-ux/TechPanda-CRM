@@ -433,6 +433,16 @@
                     <label for="bizAccessToken">Custom Access Token (Optional)</label>
                     <textarea id="bizAccessToken" rows="2" placeholder="Leave blank to use default token from .env"></textarea>
                 </div>
+                <div class="modal-field">
+                    <label for="bizAppSecret">Meta App Secret (Optional)</label>
+                    <input type="text" id="bizAppSecret" placeholder="e.g. 50bb27751fdd0cfb887dd4db5e54dab8">
+                    <small style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">Used to verify incoming X-Hub-Signature-256 webhooks for this app. Leave blank to use .env secret.</small>
+                </div>
+                <div class="modal-field">
+                    <label for="bizVerifyToken">Webhook Verify Token (Optional)</label>
+                    <input type="text" id="bizVerifyToken" placeholder="e.g. whatsapp_crm_verify_token_secure">
+                    <small style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px; display: block;">Used for Meta webhook handshake verification. Leave blank to use .env verify token.</small>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" id="addBusinessModalCancel">Cancel</button>
                     <button type="submit" class="btn-primary" id="addBusinessModalSubmit">Save & Add Line</button>

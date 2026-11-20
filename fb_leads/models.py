@@ -21,6 +21,9 @@ class FacebookAccount(models.Model):
     )
     last_verified_at = models.DateTimeField(null=True, blank=True)
     last_error = models.TextField(blank=True, default='')
+    app_id = models.CharField(max_length=64, blank=True, default='', help_text="Meta App ID for this Facebook account (optional)")
+    app_secret = models.CharField(max_length=128, blank=True, default='', help_text="Meta App Secret for this Facebook account (optional)")
+    verify_token = models.CharField(max_length=128, blank=True, default='', help_text="Webhook Verify Token for this Facebook account (optional)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

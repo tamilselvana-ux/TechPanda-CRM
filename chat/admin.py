@@ -16,6 +16,15 @@ class BusinessAccountAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'name')
     list_filter = ('crm_branch', 'is_default', 'is_active', 'automation_enabled')
     search_fields = ('name', 'phone_number', 'phone_number_id', 'business_account_id')
+    fieldsets = (
+        ('Account Information', {
+            'fields': ('name', 'phone_number', 'crm_branch', 'is_default', 'is_active', 'automation_enabled')
+        }),
+        ('Meta Credentials & Secrets', {
+            'fields': ('phone_number_id', 'business_account_id', 'access_token', 'app_secret', 'verify_token'),
+            'description': 'Configure dedicated Meta credentials for this WhatsApp line. If left blank, values from settings / .env are used.'
+        }),
+    )
 
     def has_delete_permission(self, request, obj=None):
         """Prevent deleting business accounts from Django admin to avoid accidental admin deletions."""

@@ -105,6 +105,8 @@
         bizPhoneNumberId: document.getElementById('bizPhoneNumberId'),
         bizAccountId: document.getElementById('bizAccountId'),
         bizAccessToken: document.getElementById('bizAccessToken'),
+        bizAppSecret: document.getElementById('bizAppSecret'),
+        bizVerifyToken: document.getElementById('bizVerifyToken'),
         btnDeleteBusinessLine: document.getElementById('btnDeleteBusinessLine'),
 
         // Automation & Handover Controls
@@ -1279,6 +1281,8 @@
                 const phoneId = elements.bizPhoneNumberId.value.trim();
                 const accountId = elements.bizAccountId.value.trim();
                 const token = elements.bizAccessToken.value.trim();
+                const appSecret = elements.bizAppSecret ? elements.bizAppSecret.value.trim() : '';
+                const verifyToken = elements.bizVerifyToken ? elements.bizVerifyToken.value.trim() : '';
 
                 if (!name || !phone || !phoneId) {
                     showToast('Please fill all required fields.');
@@ -1298,6 +1302,8 @@
                             phone_number_id: phoneId,
                             business_account_id: accountId,
                             access_token: token,
+                            app_secret: appSecret,
+                            verify_token: verifyToken,
                             is_active: true
                         }),
                     });

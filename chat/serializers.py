@@ -80,6 +80,8 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
             'phone_number_id',
             'business_account_id',
             'access_token',
+            'app_secret',
+            'verify_token',
             'is_default',
             'is_active',
             'automation_enabled',
@@ -91,6 +93,8 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'access_token': {'write_only': True, 'required': False, 'allow_blank': True},
+            'app_secret': {'write_only': True, 'required': False, 'allow_blank': True},
+            'verify_token': {'write_only': True, 'required': False, 'allow_blank': True},
             'crm_branch': {'required': False, 'allow_null': True}
         }
 

@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from activities.utils import log_activity
+from services.env_meta_sync import get_candidate_verify_tokens, get_candidate_webhook_secrets
 
 from .crm import push_to_crm
 from .facebook import fetch_and_save_lead, subscribe_page, sync_all_leads
@@ -32,31 +33,50 @@ def webhook(request):
     """
     Facebook calls this URL (also mounted at the CRM's old /api/webhooks/meta/leads/).
     GET = verification handshake, POST = new lead (only its id; full details are fetched from Graph API).
+    Supports multiple Meta developer accounts, secrets, and verify tokens configured via .env and DB.
     """
     if request.method == "GET":
         q = request.GET
         mode = q.get("hub.mode") or q.get("hub_mode")
         received = (q.get("hub.verify_token") or q.get("hub_verify_token") or "").strip()
         challenge = q.get("hub.challenge") or q.get("hub_challenge") or ""
-        expected = str(getattr(settings, "FB_VERIFY_TOKEN", "")).strip()
-        if mode == "subscribe" and expected and received == expected:
-            log.info("Facebook webhook verified")
+        
+        candidate_tokens = get_candidate_verify_tokens(provider="facebook")
+        # Include WhatsApp candidate tokens to allow cross-platform webhook handshakes
+        candidate_tokens.update(get_candidate_verify_tokens(provider="whatsapp"))
+
+        if mode == "subscribe" and received and any(hmac.compare_digest(received, tok) for tok in candidate_tokens if tok):
+            log.info("Facebook webhook verified against candidate verify token")
             return HttpResponse(challenge)
-        log.warning("Facebook webhook verification failed (check FB_VERIFY_TOKEN in .env)")
+        log.warning("Facebook webhook verification failed (checked %d candidate tokens)", len(candidate_tokens))
         return HttpResponse("Verification failed", status=403)
 
     if request.method != "POST":
         return HttpResponse(status=405)
 
-    # Only accept messages really signed by Facebook with our App Secret.
-    secret = getattr(settings, "FB_APP_SECRET", "") or ""
-    if not secret:
-        log.error("Facebook webhook rejected: FB_APP_SECRET is not set in .env")
+    # Only accept messages really signed by Facebook with any registered developer App Secret.
+    candidate_secrets = get_candidate_webhook_secrets(provider="facebook")
+    # Include WhatsApp candidate secrets to support unified Meta Apps
+    candidate_secrets.update(get_candidate_webhook_secrets(provider="whatsapp"))
+
+    if not candidate_secrets:
+        log.error("Facebook webhook rejected: no candidate App Secrets configured")
         return HttpResponse("Not configured", status=403)
+
     signature = request.headers.get("X-Hub-Signature-256", "")
-    expected = "sha256=" + hmac.new(secret.encode(), request.body, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(signature, expected):
-        log.warning("Facebook webhook rejected: bad signature")
+    if not signature:
+        log.warning("Facebook webhook rejected: missing signature header")
+        return HttpResponse("Missing signature", status=403)
+
+    matched = False
+    for secret in candidate_secrets:
+        expected = "sha256=" + hmac.new(secret.encode("utf-8"), request.body, hashlib.sha256).hexdigest()
+        if hmac.compare_digest(signature, expected):
+            matched = True
+            break
+
+    if not matched:
+        log.warning("Facebook webhook rejected: bad signature (checked %d candidate secrets)", len(candidate_secrets))
         return HttpResponse("Bad signature", status=403)
 
     try:

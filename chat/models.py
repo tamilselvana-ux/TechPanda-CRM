@@ -13,6 +13,8 @@ class BusinessAccount(models.Model):
     phone_number_id = models.CharField(max_length=64, unique=True, db_index=True, help_text="Meta Phone Number ID")
     business_account_id = models.CharField(max_length=64, blank=True, default='', help_text="Meta WABA ID")
     access_token = models.TextField(blank=True, default='', help_text="Custom Access Token for this number (optional)")
+    app_secret = models.CharField(max_length=128, blank=True, default='', help_text="Meta App Secret for this account (optional)")
+    verify_token = models.CharField(max_length=128, blank=True, default='', help_text="Webhook Verify Token for this account (optional)")
     is_default = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     automation_enabled = models.BooleanField(default=True, help_text="Enable or disable automated chatbot flows on this number")
