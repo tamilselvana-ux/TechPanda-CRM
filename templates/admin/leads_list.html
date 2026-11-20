@@ -229,18 +229,31 @@
  }
 </style>
 
+{% if is_marketing_readonly %}
+<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <div style="font-weight: 700; color: #1e40af; font-size: 0.95rem;">Marketing Team Lead Explorer</div>
+    <div style="font-size: 0.85rem; color: #1d4ed8; margin-top: 2px;">Full read-only visibility across all physical branches and digital channels with 14 dynamic TeleCRM filter conditions.</div>
+  </div>
+  <a href="{% url 'marketing_dashboard' %}" class="btn btn-sm btn-outline-primary" style="font-weight: 700; background: #ffffff;">
+    Back to Marketing Dashboard &rarr;
+  </a>
+</div>
+{% endif %}
+
 <div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
 
  <div class="page-title-group">
 
- <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--tp-text-primary); margin: 0 0 6px 0;">All Leads</h1>
+ <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--tp-text-primary); margin: 0 0 6px 0;">{% if is_marketing_readonly %}Marketing Lead Explorer{% else %}All Leads{% endif %}</h1>
 
- <p style="font-size: 0.9rem; color: var(--tp-text-muted); margin: 0;">Manage and track all organizational CRM inquiries, allocations, and conversions</p>
+ <p style="font-size: 0.9rem; color: var(--tp-text-muted); margin: 0;">{% if is_marketing_readonly %}Explore and filter organizational CRM leads across all locations and sources{% else %}Manage and track all organizational CRM inquiries, allocations, and conversions{% endif %}</p>
 
  </div>
 
  <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 
+ {% if not is_marketing_readonly and not request.user.is_marketing_user %}
  {% if pending_count > 0 %}
 
  <a href="{% url 'admin_retry_pending_assignments' %}" class="btn tp-btn-sm" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #78350f; background: #fde68a; border: 1px solid #fcd34d; border-radius: var(--tp-radius-md);">
@@ -268,6 +281,7 @@
  Enrolled Students
 
  </a>
+ {% endif %}
 
  <!-- Page Size Dropdown Selector -->
 
@@ -309,6 +323,7 @@
 
  </div>
 
+ {% if not is_marketing_readonly and not request.user.is_marketing_user %}
  <!-- Direct Action Buttons (TeleCRM Image 2) -->
  <button type="button" class="btn btn-secondary tp-btn-secondary tp-btn-sm" onclick="openBulkEditModal()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -319,6 +334,7 @@
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"></path><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
  <span>Bulk WACA Message</span>
  </button>
+ {% endif %}
 
  <!-- Actions Dropdown for Secondary Tools -->
  <div class="dropdown tp-dropdown">
@@ -342,6 +358,7 @@
 
  </button>
 
+ {% if not is_marketing_readonly and not request.user.is_marketing_user %}
  <a href="{% url 'admin_leads_import' %}" class="btn btn-secondary tp-btn-secondary tp-btn-sm">
 
  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -357,6 +374,7 @@
  Add Lead
 
  </a>
+ {% endif %}
 
  </div>
 
@@ -489,7 +507,7 @@
  </div>
 
  <!-- Active Conditions Form & Dynamic Cards Container -->
- <form method="GET" action="{% url 'admin_leads_list' %}" id="telecrmCreateViewForm" style="flex: 1; overflow-y: auto; padding: 12px; margin: 0; display: flex; flex-direction: column;">
+ <form method="GET" action="{% if is_marketing_readonly %}{% url 'marketing_leads_list' %}{% else %}{% url 'admin_leads_list' %}{% endif %}" id="telecrmCreateViewForm" style="flex: 1; overflow-y: auto; padding: 12px; margin: 0; display: flex; flex-direction: column;">
  <input type="hidden" name="view" value="{{ active_view|default:'all' }}">
  {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
  {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size }}">{% endif %}
@@ -1019,7 +1037,7 @@
  <div style="display: flex; flex-direction: column; gap: 3px;">
  <div style="display: flex; align-items: center; gap: 6px;">
  <strong>
- <a href="{% url 'admin_lead_detail' ld.pk %}" style="color: #0f172a; text-decoration: none; font-size: 0.95rem; font-weight: 700;">{{ ld.name }}</a>
+ <a href="{% if lead_detail_url_name %}{% url lead_detail_url_name ld.pk %}{% else %}{% url 'admin_lead_detail' ld.pk %}{% endif %}" style="color: #0f172a; text-decoration: none; font-size: 0.95rem; font-weight: 700;">{{ ld.name }}</a>
  </strong>
  <button type="button" onclick="openStudent360Drawer('{{ ld.pk }}', event)" title="Quick 360 View" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 0 3px; display: inline-flex; align-items: center;">
  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -1115,6 +1133,9 @@
  <!-- 7. Actions (Quick actions: Call, WhatsApp, Edit, Delete) -->
  <td style="text-align: right; white-space: nowrap;">
  <div style="display: inline-flex; gap: 4px; align-items: center;">
+ {% if is_marketing_readonly or request.user.is_marketing_user %}
+ <a href="{% if lead_detail_url_name %}{% url lead_detail_url_name ld.pk %}{% else %}{% url 'admin_lead_detail' ld.pk %}{% endif %}" class="btn btn-sm btn-secondary tp-btn-secondary" style="padding: 3px 10px; font-size: 0.78rem; text-decoration: none;">View</a>
+ {% else %}
  <button type="button" class="btn btn-sm btn-success" onclick="openCallDialer('{{ ld.pk }}', '{{ ld.name|escapejs }}', '{{ ld.phone|escapejs }}')" title="Quick Call" style="padding: 4px 7px;">
  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
  </button>
@@ -1128,6 +1149,7 @@
  {% csrf_token %}
  <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Lead" style="padding: 3px 7px; font-size: 0.75rem;">Del</button>
  </form>
+ {% endif %}
  </div>
  </td>
  </tr>
@@ -2061,6 +2083,7 @@ function closeDuplicateModal() {
 
  <div class="tp-bulk-dock-controls" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 
+ {% if not is_marketing_readonly and not request.user.is_marketing_user %}
  <button type="button" class="btn btn-sm btn-primary" id="btn-dock-bulk-edit" onclick="openBulkEditModal()" style="background: var(--tp-primary-600, #0284c7); border: none; color: #ffffff; font-weight: 700; padding: 6px 14px; border-radius: var(--tp-radius-md); display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer;">
 
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -2098,6 +2121,7 @@ function closeDuplicateModal() {
  <button type="button" class="btn btn-sm btn-primary tp-btn-primary" id="btn-apply-bulk-status" style="padding: 5px 12px; font-weight: 600;">Update</button>
 
  </div>
+ {% endif %}
 
 
 

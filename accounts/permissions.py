@@ -16,6 +16,7 @@ _ROLE_DASHBOARD_URL_NAMES = {
     UserRole.RECEPTIONIST: 'receptionist_dashboard',
     UserRole.ACCOUNTANT: 'accountant_dashboard',
     UserRole.FINANCE_HEAD: 'finance_dashboard',
+    UserRole.MARKETING: 'marketing_dashboard',
 }
 
 def role_required(*allowed_roles):
@@ -68,6 +69,9 @@ def accountant_required(view_func):
 def finance_head_required(view_func):
     return role_required(UserRole.FINANCE_HEAD, UserRole.ADMIN, UserRole.SUPERADMIN)(view_func)
 
+def marketing_required(view_func):
+    return role_required(UserRole.MARKETING, UserRole.ADMIN, UserRole.SUPERADMIN)(view_func)
+
 def get_accessible_branch_ids(user):
     """Branch ids this user can see/operate within, under the hierarchy."""
     if not user.is_authenticated:
@@ -88,6 +92,9 @@ def get_accessible_branch_ids(user):
             return [user.branch_id]
         from branches.models import Branch
         return list(Branch.objects.values_list('id', flat=True))
+    if user.role == UserRole.MARKETING:
+        from branches.models import Branch
+        return list(Branch.objects.values_list('id', flat=True))
     if user.branch_id:
         return [user.branch_id]
     return []
@@ -97,6 +104,8 @@ def can_access_lead(user, lead):
     if not user.is_authenticated:
         return False
     if user.is_admin_user:
+        return True
+    if user.role == UserRole.MARKETING:
         return True
     if user.role == UserRole.SALES_HEAD:
         if lead.assigned_sales_head_id == user.id:

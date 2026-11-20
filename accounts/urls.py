@@ -5,6 +5,7 @@ from . import hierarchy_views
 from . import receptionist_views
 from . import accountant_views
 from . import branch_admin_views
+from . import marketing_views
 
 urlpatterns = [
     path('login/', views.general_login, name='login'),
@@ -80,6 +81,10 @@ urlpatterns = [
     path('admin/branch-admins/<int:pk>/', branch_admin_views.admin_branch_admin_detail, name='admin_branch_admin_detail'),
     path('admin/branch-admins/<int:pk>/edit/', branch_admin_views.admin_branch_admin_edit, name='admin_branch_admin_edit'),
 
+
+    # Admin Marketing Team Oversight & Management
+    path('admin/marketing-team/', marketing_views.admin_marketing_users_list, name='admin_marketing_users_list'),
+    path('admin/marketing-team/<int:pk>/toggle-status/', marketing_views.admin_marketing_user_toggle_status, name='admin_marketing_user_toggle_status'),
 
     # Progressive Hierarchy Routes (Levels 1 - 5)
     path('sales-heads/', hierarchy_views.hierarchy_sales_heads_list, name='hierarchy_sales_heads_list'),

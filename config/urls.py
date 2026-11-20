@@ -45,6 +45,8 @@ urlpatterns = [
     path('finance/', include('finance.urls')),
     # Superadmin Local CRM Assistant (Zero-AI, Zero-API)
     path('admin/superadmin-bot/', include('superadmin_bot.urls')),
+    # Dedicated Marketing Portal Suite
+    path('marketing/', include('marketing.urls')),
 ]
 
 if settings.DEBUG:

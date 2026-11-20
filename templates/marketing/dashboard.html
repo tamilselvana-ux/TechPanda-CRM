@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Marketing Dashboard - TechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div class="page-title-group">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--tp-text-primary); margin: 0;">
+        MARKETING OVERVIEW &amp; LEAD INTELLIGENCE
+      </h1>
+      <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 9999px;">
+        Read-Only Analytics Portal
+      </span>
+    </div>
+    <p style="color: var(--tp-text-muted); font-size: 0.88rem; margin: 4px 0 0 0;">
+      Cross-branch lead acquisition tracking, channel efficacy, source conversion analytics, and full filtering explorer.
+    </p>
+  </div>
+  <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="{% url 'marketing_export_leads' %}" class="btn btn-secondary tp-btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <span>Export Leads CSV</span>
+    </a>
+    <a href="{% url 'marketing_leads_list' %}" class="btn btn-primary tp-btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; background: var(--tp-primary-600); color: #ffffff; border: none; padding: 8px 18px; border-radius: var(--tp-radius-md);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+      <span>Explore All Leads &amp; Filters &rarr;</span>
+    </a>
+  </div>
+</div>
+
+<!-- Quick Launch Explorer Banner -->
+<div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+  <div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+      <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #f8fafc;">Universal Lead Explorer &amp; Dynamic Filter Engine</h3>
+    </div>
+    <p style="font-size: 0.88rem; color: #94a3b8; margin: 0; max-width: 680px; line-height: 1.4;">
+      Access all {{ total_leads|intcomma }} leads across physical branches and digital channels. Filter by 14 dynamic criteria (Source, Campaign, Branch, Date ranges, Status, Degree, Passed Out, Rating) with exact match and inverted operators.
+    </p>
+  </div>
+  <a href="{% url 'marketing_leads_list' %}" class="btn btn-light" style="font-weight: 700; color: #0f172a; padding: 10px 22px; border-radius: 8px; font-size: 0.9rem; text-decoration: none; white-space: nowrap;">
+    Open Lead Explorer &rarr;
+  </a>
+</div>
+
+<!-- Primary Metric Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b); letter-spacing: 0.04em;">Total Leads</div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--tp-text-primary, #0f172a); margin: 6px 0 2px 0;">{{ total_leads|intcomma }}</div>
+    <div style="font-size: 0.78rem; color: var(--tp-text-muted, #64748b);">Across all branches &amp; sources</div>
+  </div>
+
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #059669; letter-spacing: 0.04em;">Converted / Enrolled</div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: #059669; margin: 6px 0 2px 0;">{{ converted_leads|intcomma }}</div>
+    <div style="font-size: 0.78rem; color: #059669; font-weight: 600;">{{ conversion_rate }}% conversion rate</div>
+  </div>
+
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #2563eb; letter-spacing: 0.04em;">Fresh / New Inquiries</div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: #2563eb; margin: 6px 0 2px 0;">{{ new_leads_count|intcomma }}</div>
+    <div style="font-size: 0.78rem; color: var(--tp-text-muted, #64748b);">Status = New</div>
+  </div>
+
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #7c3aed; letter-spacing: 0.04em;">Today's Leads</div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: #7c3aed; margin: 6px 0 2px 0;">{{ today_leads|intcomma }}</div>
+    <div style="font-size: 0.78rem; color: var(--tp-text-muted, #64748b);">Received today</div>
+  </div>
+
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #d97706; letter-spacing: 0.04em;">Past 7 Days</div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: #d97706; margin: 6px 0 2px 0;">{{ week_leads|intcomma }}</div>
+    <div style="font-size: 0.78rem; color: var(--tp-text-muted, #64748b);">Weekly intake</div>
+  </div>
+
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted, #64748b); letter-spacing: 0.04em;">This Month</div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--tp-text-primary, #0f172a); margin: 6px 0 2px 0;">{{ month_leads|intcomma }}</div>
+    <div style="font-size: 0.78rem; color: var(--tp-text-muted, #64748b);">Current calendar month</div>
+  </div>
+</div>
+
+<!-- Two-Column Analytics Section -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 24px;">
+  <!-- Source Performance Breakdown -->
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--tp-text-primary);">Acquisition by Lead Source</h3>
+      <span style="font-size: 0.8rem; color: var(--tp-text-muted);">Top {{ source_stats|length }} Sources</span>
+    </div>
+
+    {% if source_stats %}
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      {% for s in source_stats %}
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.85rem;">
+          <a href="{% url 'marketing_leads_list' %}?source={{ s.source|urlencode }}" style="font-weight: 700; color: var(--tp-primary-600, #2563eb); text-decoration: none;">
+            {{ s.source }}
+          </a>
+          <span style="color: var(--tp-text-muted);">
+            <strong>{{ s.total|intcomma }}</strong> leads ({{ s.pct_of_total }}%) &bull; <span style="color: #059669; font-weight: 600;">{{ s.converted }} enrolled ({{ s.rate }}%)</span>
+          </span>
+        </div>
+        <div style="background: #f1f5f9; height: 7px; border-radius: 9999px; overflow: hidden; display: flex;">
+          <div style="background: var(--tp-primary-600, #3b82f6); width: {{ s.pct_of_total }}%;"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: var(--tp-text-muted); font-size: 0.85rem; margin: 0;">No lead source records found.</p>
+    {% endif %}
+  </div>
+
+  <!-- Branch Lead Distribution -->
+  <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--tp-text-primary);">Branch Lead Volume &amp; Conversions</h3>
+      <span style="font-size: 0.8rem; color: var(--tp-text-muted);">All Branches</span>
+    </div>
+
+    {% if branch_stats %}
+    <div style="overflow-x: auto;">
+      <table class="table" style="width: 100%; margin: 0; font-size: 0.85rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--tp-surface-border, #e2e8f0); color: var(--tp-text-muted); text-align: left;">
+            <th style="padding: 8px 12px; font-weight: 700;">Branch</th>
+            <th style="padding: 8px 12px; font-weight: 700; text-align: right;">Total Leads</th>
+            <th style="padding: 8px 12px; font-weight: 700; text-align: right;">Enrolled</th>
+            <th style="padding: 8px 12px; font-weight: 700; text-align: right;">Rate</th>
+            <th style="padding: 8px 12px; font-weight: 700; text-align: center;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in branch_stats %}
+          <tr style="border-bottom: 1px solid var(--tp-surface-border, #f1f5f9);">
+            <td style="padding: 10px 12px; font-weight: 600; color: var(--tp-text-primary);">{{ b.branch }}</td>
+            <td style="padding: 10px 12px; text-align: right; font-weight: 700;">{{ b.total|intcomma }}</td>
+            <td style="padding: 10px 12px; text-align: right; color: #059669; font-weight: 600;">{{ b.converted|intcomma }}</td>
+            <td style="padding: 10px 12px; text-align: right;">
+              <span class="badge" style="background: #f0fdf4; color: #16a34a; font-weight: 700; font-size: 0.78rem;">
+                {{ b.rate }}%
+              </span>
+            </td>
+            <td style="padding: 10px 12px; text-align: center;">
+              <a href="{% url 'marketing_leads_list' %}?search={{ b.branch|urlencode }}" class="btn btn-sm btn-outline-primary" style="padding: 2px 8px; font-size: 0.75rem; text-decoration: none;">
+                View Leads
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="color: var(--tp-text-muted); font-size: 0.85rem; margin: 0;">No branch records found.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Recent Leads Stream -->
+<div style="background: var(--bg-card, #ffffff); border: 1px solid var(--tp-surface-border, #e2e8f0); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--tp-text-primary);">Recent Inquiries Stream</h3>
+      <p style="font-size: 0.82rem; color: var(--tp-text-muted); margin: 2px 0 0 0;">Latest leads captured across digital ads, walk-in desks, and integrations.</p>
+    </div>
+    <a href="{% url 'marketing_leads_list' %}" style="font-size: 0.85rem; font-weight: 700; color: var(--tp-primary-600, #2563eb); text-decoration: none;">
+      View All Leads &rarr;
+    </a>
+  </div>
+
+  {% if recent_leads %}
+  <div style="overflow-x: auto;">
+    <table class="table" style="width: 100%; margin: 0; font-size: 0.85rem;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--tp-surface-border, #e2e8f0); color: var(--tp-text-muted); text-align: left;">
+          <th style="padding: 8px 12px; font-weight: 700;">#</th>
+          <th style="padding: 8px 12px; font-weight: 700;">Lead Name</th>
+          <th style="padding: 8px 12px; font-weight: 700;">Contact</th>
+          <th style="padding: 8px 12px; font-weight: 700;">Source / Channel</th>
+          <th style="padding: 8px 12px; font-weight: 700;">Branch</th>
+          <th style="padding: 8px 12px; font-weight: 700;">Status</th>
+          <th style="padding: 8px 12px; font-weight: 700;">Created</th>
+          <th style="padding: 8px 12px; font-weight: 700; text-align: center;">Profile</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ld in recent_leads %}
+        <tr style="border-bottom: 1px solid var(--tp-surface-border, #f1f5f9);">
+          <td style="padding: 10px 12px; color: var(--tp-text-muted); font-size: 0.8rem;">{{ forloop.counter }}</td>
+          <td style="padding: 10px 12px; font-weight: 700; color: var(--tp-text-primary);">
+            <a href="{% url 'marketing_lead_detail' ld.pk %}" style="text-decoration: none; color: inherit;">
+              {{ ld.name }}
+            </a>
+          </td>
+          <td style="padding: 10px 12px; color: var(--tp-text-muted);">
+            <div>{{ ld.phone }}</div>
+            {% if ld.email %}<div style="font-size: 0.78rem;">{{ ld.email }}</div>{% endif %}
+          </td>
+          <td style="padding: 10px 12px;">
+            <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.78rem;">
+              {{ ld.source|default:ld.channel.name|default:"Direct" }}
+            </span>
+          </td>
+          <td style="padding: 10px 12px; color: var(--tp-text-muted);">{{ ld.branch.name|default:"Unassigned" }}</td>
+          <td style="padding: 10px 12px;">
+            <span class="badge" style="background: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 0.78rem;">
+              {{ ld.status|default:"New" }}
+            </span>
+          </td>
+          <td style="padding: 10px 12px; color: var(--tp-text-muted); font-size: 0.8rem; white-space: nowrap;">
+            {{ ld.created_at|date:"d M Y, H:i" }}
+          </td>
+          <td style="padding: 10px 12px; text-align: center;">
+            <a href="{% url 'marketing_lead_detail' ld.pk %}" class="btn btn-sm btn-secondary tp-btn-secondary" style="padding: 3px 10px; font-size: 0.78rem; text-decoration: none;">
+              View Details
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color: var(--tp-text-muted); font-size: 0.85rem; margin: 0;">No leads available.</p>
+  {% endif %}
+</div>
+{% endblock %}

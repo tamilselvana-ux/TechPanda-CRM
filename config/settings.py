@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'telecrm_sync.apps.TelecrmSyncConfig',
     'finance.apps.FinanceConfig',
     'superadmin_bot',
+    'marketing.apps.MarketingConfig',
 ]
 
 MIDDLEWARE = [

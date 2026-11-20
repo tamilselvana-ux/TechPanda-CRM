@@ -19,6 +19,7 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
       Enrolled Students
     </a>
+  </div>
 </div>
 
 <!-- TEAM & STAFF ROLE TABS BAR -->
@@ -46,6 +47,9 @@
   </a>
   <a href="{% url 'admin_accountants_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
     Accountants <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.accountants }}</span>
+  </a>
+  <a href="{% url 'admin_marketing_users_list' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; background: #f3f4f6; color: #374151;">
+    Marketing Team <span class="badge" style="background: #ccfbf1; color: #0f766e; padding: 2px 7px; border-radius: 9999px; font-size: 0.72rem;">{{ staff_counts.marketing }}</span>
   </a>
 </div>
 

@@ -7905,6 +7905,9 @@ def api_update_lead_status(request):
 
         # Enforce security
 
+        if request.user.role == UserRole.MARKETING:
+            return JsonResponse({'success': False, 'error': 'Permission denied: Marketing team members have read-only access.'}, status=403)
+
         if not can_access_lead(request.user, lead):
 
             return JsonResponse({'success': False, 'error': 'Permission denied: Cannot access this lead.'}, status=403)
@@ -8288,6 +8291,9 @@ def api_bulk_action(request):
 
 
         action = data.get('action')
+
+        if request.user.role == UserRole.MARKETING:
+            return JsonResponse({'success': False, 'error': 'Permission denied: Marketing team members have read-only access.'}, status=403)
 
         lead_ids = data.get('lead_ids', [])
 
