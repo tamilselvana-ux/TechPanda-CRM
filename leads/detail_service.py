@@ -664,9 +664,11 @@ def build_lead_detail_context(lead, user=None):
 
     # 9. Status and Activity History defaults
     status_history = list(lead.status_history.select_related('changed_by').order_by('-created_at')[:25])
-    calls = list(lead.calls.select_related('caller').order_by('-call_started_at'))
+    calls = list(lead.calls.select_related('caller', 'telecaller').order_by('-call_started_at'))
     followups = list(lead.followups.order_by('-created_at'))
-    timeline_count = len(calls) + len(status_history) + len(followups)
+    from activities.models import Activity
+    activities = list(Activity.objects.filter(object_type='Lead', object_id=str(lead.pk)).select_related('user').order_by('-timestamp')[:50])
+    timeline_count = len(calls) + len(status_history) + len(followups) + len(activities)
     if hasattr(lead, 'enrollment') and lead.enrollment:
         timeline_count += lead.enrollment.payments.count()
 
@@ -693,6 +695,7 @@ def build_lead_detail_context(lead, user=None):
         'status_history': status_history,
         'calls': calls,
         'followups': followups,
+        'activities': activities,
         'timeline_count': timeline_count,
         'whatsapp_phone': whatsapp_phone,
         'phone_display': phone_display,

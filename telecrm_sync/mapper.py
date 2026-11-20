@@ -47,15 +47,59 @@ def suppress_sync_side_effects():
 # Default pipeline status fallback mapping from TeleCRM strings to TechPanda LeadStatus choices
 DEFAULT_STATUS_MAP = {
     "1": LeadStatus.NEW,
+    "2": LeadStatus.INTERESTED,
     "3": LeadStatus.INTERESTED,
+    "4": LeadStatus.INTERESTED,
+    "5": LeadStatus.ENROLLED,
+    "6": LeadStatus.LOST,
     "7": LeadStatus.NO_ANSWER,
+    "8": LeadStatus.DEMO_SCHEDULED,
+    "9": LeadStatus.VISITED,
+    "10": LeadStatus.LATER,
+    "11": LeadStatus.SWITCHED_OFF,
+    "12": LeadStatus.CONTACTED,
+    "13": LeadStatus.VISIT_SCHEDULED,
+    "14": LeadStatus.LATER,
+    "15": LeadStatus.NOT_INTERESTED,
+    "16": LeadStatus.COUNSELING,
+    "17": LeadStatus.COUNSELING,
+    "18": LeadStatus.ENROLLED,
+    "19": LeadStatus.ENROLLED,
+    "20": LeadStatus.ENROLLED,
+    "21": LeadStatus.ENROLLED,
+    "22": LeadStatus.ENROLLED,
+    "23": LeadStatus.VISITED,
+    "24": LeadStatus.VISITED,
+    "25": LeadStatus.VISITED,
+    "26": LeadStatus.VISITED,
+    "27": LeadStatus.VISITED,
+    "28": LeadStatus.ENROLLED,
+    "29": LeadStatus.VISITED,
+    "30": LeadStatus.NO_ANSWER,
+    "31": LeadStatus.NO_ANSWER,
+    "32": LeadStatus.NO_ANSWER,
+    "33": LeadStatus.NO_ANSWER,
+    "34": LeadStatus.SWITCHED_OFF,
+    "35": LeadStatus.SWITCHED_OFF,
+    "36": LeadStatus.SWITCHED_OFF,
+    "37": LeadStatus.SWITCHED_OFF,
     "fresh": LeadStatus.NEW,
     "new": LeadStatus.NEW,
     "contacted": LeadStatus.CONTACTED,
+    "call taken": LeadStatus.CONTACTED,
+    "just curious": LeadStatus.INTERESTED,
     "interested": LeadStatus.INTERESTED,
+    "hot": LeadStatus.INTERESTED,
     "call not picked_1": LeadStatus.NO_ANSWER,
     "call not picked_2": LeadStatus.NO_ANSWER,
     "call not picked_3": LeadStatus.NO_ANSWER,
+    "call not picked_4": LeadStatus.NO_ANSWER,
+    "call not picked_5": LeadStatus.NO_ANSWER,
+    "call not connected_1": LeadStatus.SWITCHED_OFF,
+    "call not connected_2": LeadStatus.SWITCHED_OFF,
+    "call not connected_3": LeadStatus.SWITCHED_OFF,
+    "call not connected_4": LeadStatus.SWITCHED_OFF,
+    "call not connected_5": LeadStatus.SWITCHED_OFF,
     "rnr": LeadStatus.NO_ANSWER,
     "ring no response": LeadStatus.NO_ANSWER,
     "busy": LeadStatus.BUSY,
@@ -66,21 +110,31 @@ DEFAULT_STATUS_MAP = {
     "discussion": LeadStatus.DISCUSSION,
     "in discussion": LeadStatus.DISCUSSION,
     "demo scheduled": LeadStatus.DEMO_SCHEDULED,
+    "demo attended": LeadStatus.DEMO_SCHEDULED,
     "visit scheduled": LeadStatus.VISIT_SCHEDULED,
+    "institute visit booked": LeadStatus.VISIT_SCHEDULED,
     "visited": LeadStatus.VISITED,
+    "centre visited": LeadStatus.VISITED,
+    "center visited": LeadStatus.VISITED,
     "walkin done": LeadStatus.VISITED,
     "counseling": LeadStatus.COUNSELING,
     "counselling": LeadStatus.COUNSELING,
+    "online counselling initiated": LeadStatus.COUNSELING,
+    "online counselling done": LeadStatus.COUNSELING,
     "enrolled": LeadStatus.ENROLLED,
     "converted": LeadStatus.ENROLLED,
     "joined": LeadStatus.ENROLLED,
     "admission done": LeadStatus.ENROLLED,
+    "won": LeadStatus.ENROLLED,
     "not interested": LeadStatus.NOT_INTERESTED,
+    "other language": LeadStatus.NOT_INTERESTED,
+    "financial issue": LeadStatus.LATER,
     "not joined": LeadStatus.NOT_JOINED,
     "lost": LeadStatus.LOST,
     "junk": LeadStatus.LOST,
     "invalid": LeadStatus.LOST,
     "later": LeadStatus.LATER,
+    "late": LeadStatus.LATER,
     "call later": LeadStatus.LATER,
     "historical": LeadStatus.HISTORICAL,
 }
@@ -95,23 +149,40 @@ BRANCH_ALIASES = {
     "tnagar": "T. Nagar",
     "t. nagar": "T. Nagar",
     "t nagar": "T. Nagar",
+    "tn": "T. Nagar",
+    "_tn": "T. Nagar",
     "main branch": "T. Nagar",
     "corporate hq": "T. Nagar",
     "velachery": "Velachery",
     "velachary": "Velachery",
+    "vel": "Velachery",
+    "_vel": "Velachery",
     "sholinganallur": "Sholinganallur",
     "omr": "Sholinganallur",
     "sholinganallur (omr)": "Sholinganallur",
+    "shol": "Sholinganallur",
+    "_shol": "Sholinganallur",
     "anna nagar": "Anna Nagar",
     "annanagar": "Anna Nagar",
     "anna-nagar": "Anna Nagar",
+    "an": "Anna Nagar",
+    "_an": "Anna Nagar",
     "tambaram": "Tambaram",
     "kadaperi": "Tambaram",
+    "tam": "Tambaram",
+    "tham": "Tambaram",
+    "_tam": "Tambaram",
+    "_tham": "Tambaram",
     "porur": "Porur",
     "mount poonamallee": "Porur",
+    "pr": "Porur",
+    "_pr": "Porur",
     "coimbatore": "Coimbatore",
     "kovai": "Coimbatore",
     "gandhipuram": "Coimbatore",
+    "cmb": "Coimbatore",
+    "cbe": "Coimbatore",
+    "_cmb": "Coimbatore",
 }
 
 
@@ -151,7 +222,8 @@ def resolve_telecrm_user(
 ) -> Optional[User]:
     """
     Resolves an action or lead employee reference to a native TechPanda CRM User.
-    Handles internal TeleCRM UIDs (via TeleCRMUser mirror) and direct email addresses.
+    Handles internal TeleCRM UIDs (via TeleCRMUser mirror), direct email addresses,
+    username prefixes, and contact phone numbers.
     """
     raw_id = str(employee_uid_or_email or "").strip()
     if not raw_id or raw_id in ("__telecrm", "telecrm", "__facebook", "null", "none"):
@@ -175,10 +247,19 @@ def resolve_telecrm_user(
     # 2. Check if raw_id is an email address directly
     if not matched_user and "@" in raw_id:
         matched_user = User.objects.filter(email__iexact=raw_id).first()
+        if not matched_user:
+            prefix = raw_id.split("@")[0].strip()
+            matched_user = User.objects.filter(username__iexact=prefix).first()
 
     # 3. Check by username
     if not matched_user:
         matched_user = User.objects.filter(username__iexact=raw_id).first()
+
+    # 4. Check by 10-digit phone digits
+    if not matched_user:
+        clean_digits = "".join(ch for ch in raw_id if ch.isdigit())
+        if len(clean_digits) >= 10:
+            matched_user = User.objects.filter(phone__icontains=clean_digits[-10:]).first()
 
     if user_cache is not None:
         user_cache[raw_id] = matched_user
@@ -205,6 +286,37 @@ def resolve_branch_from_text(
     # Try existing intake resolver
     if raw:
         b = intake_resolve_branch(raw)
+        if b:
+            return b
+
+    # Tag and substring checks
+    clean = raw.upper().replace("-", "_").replace(" ", "_")
+    if "_TN" in clean or "TNAGAR" in clean or "T_NAGAR" in clean:
+        b = Branch.objects.filter(name="T. Nagar").first()
+        if b:
+            return b
+    if "_VEL" in clean or "VELACHERY" in clean:
+        b = Branch.objects.filter(name="Velachery").first()
+        if b:
+            return b
+    if "_AN" in clean or "ANNANAGAR" in clean or "ANNA_NAGAR" in clean:
+        b = Branch.objects.filter(name="Anna Nagar").first()
+        if b:
+            return b
+    if "_CMB" in clean or "COIMBATORE" in clean or "_CBE" in clean:
+        b = Branch.objects.filter(name="Coimbatore").first()
+        if b:
+            return b
+    if "_PR" in clean or "PORUR" in clean:
+        b = Branch.objects.filter(name="Porur").first()
+        if b:
+            return b
+    if "_SHOL" in clean or "SHOLINGANALLUR" in clean or "OMR" in clean:
+        b = Branch.objects.filter(name="Sholinganallur").first()
+        if b:
+            return b
+    if "_TAM" in clean or "_THAM" in clean or "TAMBARAM" in clean:
+        b = Branch.objects.filter(name="Tambaram").first()
         if b:
             return b
 
@@ -260,6 +372,21 @@ def resolve_crm_status(raw_status: Any, status_id: Any = "") -> str:
         return DEFAULT_STATUS_MAP[s_name.lower()]
     if s_id in DEFAULT_STATUS_MAP:
         return DEFAULT_STATUS_MAP[s_id]
+
+    # 3. Substring heuristics
+    s_low = s_name.lower()
+    if s_low.startswith("won"):
+        return LeadStatus.ENROLLED
+    if "center visited" in s_low or "centre visited" in s_low:
+        return LeadStatus.VISITED
+    if "call not picked" in s_low:
+        return LeadStatus.NO_ANSWER
+    if "call not connected" in s_low:
+        return LeadStatus.SWITCHED_OFF
+    if "counsel" in s_low:
+        return LeadStatus.COUNSELING
+    if "visit" in s_low:
+        return LeadStatus.VISIT_SCHEDULED
 
     return LeadStatus.NEW
 
@@ -347,7 +474,14 @@ def ingest_or_merge_lead(
     raw_alt_phone = str(fields.get("alternate_phone") or "").strip()
     raw_status = raw_lead.get("status") or fields.get("status")
     raw_rating = raw_lead.get("rating")
-    raw_employee = raw_lead.get("employeeid")
+    raw_employee = raw_lead.get("employeeid") or fields.get("assignee") or fields.get("assignee_name") or fields.get("employee")
+    if not raw_employee and actions:
+        for act in reversed(sorted(actions, key=lambda a: int(a.get("creationTimestamp") or 0))):
+            if str(act.get("type", "")).upper() == "LEAD_ASSIGNMENT":
+                assignedto = act.get("assignedto")
+                if assignedto and not str(assignedto).startswith("__") and assignedto != "telecrm":
+                    raw_employee = assignedto
+                    break
     raw_branch = fields.get("base_branch")
     raw_course = fields.get("courses")
     created_ms = fields.get("created_on") or raw_lead.get("creationTimestamp")
@@ -416,20 +550,21 @@ def ingest_or_merge_lead(
             if mapped_rating is not None and lead.rating is None:
                 lead.rating = mapped_rating
 
-            # 8. User Assignment: Fill if lead currently has no assignee
+            # 8. User Assignment: Fill if lead currently has no assignee or update to matched telecaller
             if assigned_user:
-                if assigned_user.role == UserRole.TELECALLER and not lead.assigned_telecaller:
+                lead.assignment_status = "Assigned"
+                if assigned_user.role == UserRole.TELECALLER:
                     lead.assigned_telecaller = assigned_user
                     lead.current_owner_type = "TELECALLER"
-                    lead.assignment_status = "Assigned"
-                elif assigned_user.role == UserRole.COUNSELOR and not lead.assigned_counselor:
+                elif assigned_user.role == UserRole.COUNSELOR:
                     lead.assigned_counselor = assigned_user
                     lead.current_owner_type = "COUNSELOR"
-                    lead.assignment_status = "Assigned"
-                elif assigned_user.role in (UserRole.BRANCH_HEAD, UserRole.MANAGER) and not lead.assigned_sales_head:
+                elif assigned_user.role in (UserRole.BRANCH_HEAD, UserRole.SALES_HEAD):
                     lead.assigned_sales_head = assigned_user
                     lead.current_owner_type = "BRANCH_HEAD"
-                    lead.assignment_status = "Assigned"
+                else:
+                    lead.assigned_telecaller = assigned_user
+                    lead.current_owner_type = "TELECALLER"
 
             # 9. Custom Fields Aggregation
             if not isinstance(lead.custom_fields, dict):
@@ -475,9 +610,12 @@ def ingest_or_merge_lead(
                 elif assigned_user.role == UserRole.COUNSELOR:
                     assigned_counselor = assigned_user
                     current_owner_type = "COUNSELOR"
-                elif assigned_user.role in (UserRole.BRANCH_HEAD, UserRole.MANAGER):
+                elif assigned_user.role in (UserRole.BRANCH_HEAD, UserRole.SALES_HEAD):
                     assigned_sales_head = assigned_user
                     current_owner_type = "BRANCH_HEAD"
+                else:
+                    assigned_telecaller = assigned_user
+                    current_owner_type = "TELECALLER"
 
             lead = Lead.objects.create(
                 name=name_val,
@@ -618,15 +756,17 @@ def ingest_lead_actions(
 
                         ch = CallHistory.objects.create(
                             lead=lead,
-                            caller=actor_user,
-                            telecaller=actor_user,
+                            caller=actor_user or lead.assigned_telecaller,
+                            telecaller=actor_user or lead.assigned_telecaller,
                             call_started_at=occurred_dt,
                             duration=duration_sec,
                             call_status=c_status,
                             call_outcome=c_outcome,
                             notes=note_str or feedback,
+                            notes_completed=True,
                             recording_url=rec_path,
                         )
+                        CallHistory.objects.filter(id=ch.id).update(created_at=occurred_dt)
                         crm_obj_type = "CallHistory"
                         crm_obj_id = str(ch.id)
                         mapped_ok = True
@@ -636,7 +776,7 @@ def ingest_lead_actions(
                     text_val = str(action.get("text") or "").strip()
                     is_system = a_type == "SYSTEM_NOTE" or emp_uid in ("__telecrm", "telecrm", "__facebook")
                     action_title = "TeleCRM System Note" if is_system else "TeleCRM Note"
-                    activity_user = None if is_system else actor_user
+                    activity_user = None if is_system else (actor_user or lead.assigned_telecaller)
 
                     act = Activity.objects.create(
                         user=activity_user,
@@ -644,8 +784,45 @@ def ingest_lead_actions(
                         object_type="Lead",
                         object_id=str(lead.id),
                         description=text_val,
-                        timestamp=occurred_dt
                     )
+                    Activity.objects.filter(id=act.id).update(timestamp=occurred_dt)
+                    act.timestamp = occurred_dt
+                    crm_obj_type = "Activity"
+                    crm_obj_id = str(act.id)
+                    mapped_ok = True
+
+                elif a_type == "TASK_CREATION_ACTION":
+                    # ================= TASK CREATION ACTIONS =================
+                    task_name = str(action.get("taskName") or "Follow-up Task").strip()
+                    task_type = str(action.get("taskType") or "").strip()
+                    task_desc = f"Task: {task_name}"
+                    if task_type:
+                        task_desc += f" ({task_type})"
+                    act = Activity.objects.create(
+                        user=actor_user or lead.assigned_telecaller,
+                        action="TeleCRM Task",
+                        object_type="Lead",
+                        object_id=str(lead.id),
+                        description=task_desc,
+                    )
+                    Activity.objects.filter(id=act.id).update(timestamp=occurred_dt)
+                    crm_obj_type = "Activity"
+                    crm_obj_id = str(act.id)
+                    mapped_ok = True
+
+                elif a_type == "FIELD_CHANGE":
+                    # ================= FIELD CHANGE ACTIONS =================
+                    f_id = str(action.get("fieldid") or "field")
+                    from_v = str(action.get("from") or "")
+                    to_v = str(action.get("to") or "")
+                    act = Activity.objects.create(
+                        user=actor_user or lead.assigned_telecaller,
+                        action="TeleCRM Field Update",
+                        object_type="Lead",
+                        object_id=str(lead.id),
+                        description=f"Field updated ({f_id}): '{from_v}' -> '{to_v}'",
+                    )
+                    Activity.objects.filter(id=act.id).update(timestamp=occurred_dt)
                     crm_obj_type = "Activity"
                     crm_obj_id = str(act.id)
                     mapped_ok = True
@@ -661,10 +838,11 @@ def ingest_lead_actions(
                         lead=lead,
                         old_status=old_st,
                         new_status=new_st,
-                        changed_by=actor_user,
+                        changed_by=actor_user or lead.assigned_telecaller,
                         remarks="Status changed in TeleCRM",
-                        created_at=occurred_dt
                     )
+                    LeadStatusHistory.objects.filter(id=lsh.id).update(created_at=occurred_dt)
+                    lsh.created_at = occurred_dt
                     crm_obj_type = "LeadStatusHistory"
                     crm_obj_id = str(lsh.id)
                     mapped_ok = True
@@ -677,12 +855,13 @@ def ingest_lead_actions(
                     lah = LeadAssignmentHistory.objects.create(
                         lead=lead,
                         from_user=None,
-                        to_user=to_user,
+                        to_user=to_user or actor_user or lead.assigned_telecaller,
                         from_role="",
-                        to_role=to_user.role if to_user else "",
+                        to_role=(to_user or actor_user or lead.assigned_telecaller).role if (to_user or actor_user or lead.assigned_telecaller) else "",
                         reason="Assignment synced from TeleCRM",
-                        created_at=occurred_dt
                     )
+                    LeadAssignmentHistory.objects.filter(id=lah.id).update(created_at=occurred_dt)
+                    lah.created_at = occurred_dt
                     crm_obj_type = "LeadAssignmentHistory"
                     crm_obj_id = str(lah.id)
                     mapped_ok = True
@@ -713,6 +892,7 @@ def ingest_lead_actions(
                             all_answers=action,
                             crm_result="Imported from TeleCRM history",
                         )
+                        FacebookLead.objects.filter(id=fb_lead.id).update(created_at=occurred_dt)
                         crm_obj_type = "FacebookLead"
                         crm_obj_id = str(fb_lead.id)
                         mapped_ok = True
@@ -750,8 +930,8 @@ def ingest_lead_actions(
                             media_file=media_url,
                             whatsapp_message_id=msg_id_tag,
                             status="read",
-                            timestamp=occurred_dt
                         )
+                        Message.objects.filter(id=msg.id).update(timestamp=occurred_dt)
                         conv.last_message = msg_text[:255]
                         conv.last_message_time = occurred_dt
                         conv.save(update_fields=["last_message", "last_message_time"])
@@ -807,3 +987,256 @@ def sync_telecrm_lead_payload(
             "was_created": was_created,
             "actions_mapped": actions_mapped,
         }
+
+
+def sync_and_provision_telecrm_team(members: List[Dict[str, Any]]) -> Dict[str, User]:
+    """
+    Provisions native CRM User records from TeleCRM team members metadata.
+    Maps roles, extracts branch assignments from name/email, and links records.
+    Returns mapping of email -> User.
+    """
+    import re
+    email_to_user: Dict[str, User] = {}
+
+    for m in members:
+        email = str(m.get("email") or "").strip().lower()
+        if not email:
+            continue
+        raw_name = str(m.get("name") or "").strip()
+        phone = str(m.get("phone_number") or "").strip()
+        perm = str(m.get("permission_template_name") or "").lower()
+
+        role = UserRole.TELECALLER
+        if "admin" in perm or "root" in perm:
+            role = UserRole.ADMIN
+        elif "counselor" in perm or "counsellor" in perm:
+            role = UserRole.COUNSELOR
+        elif "manager" in perm or "head" in perm:
+            role = UserRole.BRANCH_HEAD
+
+        clean_name = re.sub(r'_(TN|VEL|AN|CMB|PR|THAM|TAM|SHOL|OMR)$', '', raw_name, flags=re.I).strip()
+        parts = clean_name.split(None, 1)
+        first_name = parts[0] if parts else raw_name
+        last_name = parts[1] if len(parts) > 1 else ""
+
+        branch = resolve_branch_from_text(raw_name)
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user:
+            update_fields = []
+            if not user.phone and phone:
+                user.phone = phone
+                update_fields.append("phone")
+            if not user.branch and branch:
+                user.branch = branch
+                update_fields.append("branch")
+            if update_fields:
+                user.save(update_fields=update_fields)
+        else:
+            username_base = email.split("@")[0]
+            uname = username_base
+            idx = 1
+            while User.objects.filter(username__iexact=uname).exists():
+                uname = f"{username_base}_{idx}"
+                idx += 1
+
+            user = User.objects.create(
+                username=uname,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                phone=phone,
+                role=role,
+                branch=branch,
+                is_active=True
+            )
+            user.set_unusable_password()
+            user.save()
+
+        email_to_user[email] = user
+
+    return email_to_user
+
+
+def build_and_save_uid_mappings() -> int:
+    """
+    Analyzes historical TeleCRMAction and TeleCRMLead records to deterministically
+    link Firebase UIDs to native CRM Users.
+    """
+    from collections import defaultdict, Counter
+
+    lead_emps: Dict[int, str] = {}
+    for lid, raw in TeleCRMLead.objects.values_list("id", "raw"):
+        emp = (raw.get("employeeid") or "").strip().lower()
+        if emp and "@" in emp:
+            lead_emps[lid] = emp
+
+    uid_scores = defaultdict(Counter)
+    for uid, lid in TeleCRMAction.objects.exclude(employee_uid="").values_list("employee_uid", "lead_id"):
+        if not uid or uid.startswith("__") or uid == "telecrm":
+            continue
+        emp = lead_emps.get(lid)
+        if emp:
+            uid_scores[uid][emp] += 1
+
+    mapped_count = 0
+    for uid, counter in uid_scores.items():
+        best_email, _ = counter.most_common(1)[0]
+        user = User.objects.filter(email__iexact=best_email).first()
+        TeleCRMUser.objects.update_or_create(
+            uid=uid,
+            defaults={
+                "email": best_email,
+                "name": user.get_full_name() or user.username if user else best_email,
+                "crm_user": user
+            }
+        )
+        mapped_count += 1
+
+    return mapped_count
+
+
+def remap_telecrm_history_and_assignees() -> Dict[str, int]:
+    """
+    One-time / administrative backfill repair that aligns all existing TeleCRM leads,
+    call records, activity notes, and status transition logs to genuine historical
+    timestamps, real assignees, and canonical LeadStatus stages using batch atomic blocks.
+    """
+    user_cache: Dict[str, Optional[User]] = {}
+    results = {
+        "leads_reassigned": 0,
+        "calls_remapped": 0,
+        "activities_remapped": 0,
+        "status_history_remapped": 0,
+        "assignment_history_remapped": 0,
+    }
+
+    # 1. Lead Assignee & Status Alignment (in atomic batch)
+    with transaction.atomic():
+        lead_qs = TeleCRMLead.objects.filter(crm_lead__isnull=False).select_related("crm_lead")
+        for tl in lead_qs:
+            c_lead = tl.crm_lead
+            if not c_lead:
+                continue
+
+            raw_employee = tl.raw.get("employeeid")
+            user = resolve_telecrm_user(raw_employee, user_cache)
+            lead_dirty = False
+
+            if user:
+                if user.role == UserRole.TELECALLER and c_lead.assigned_telecaller != user:
+                    c_lead.assigned_telecaller = user
+                    c_lead.current_owner_type = "TELECALLER"
+                    c_lead.assignment_status = "Assigned"
+                    lead_dirty = True
+                elif user.role == UserRole.COUNSELOR and c_lead.assigned_counselor != user:
+                    c_lead.assigned_counselor = user
+                    c_lead.current_owner_type = "COUNSELOR"
+                    c_lead.assignment_status = "Assigned"
+                    lead_dirty = True
+                elif user.role in (UserRole.BRANCH_HEAD, UserRole.SALES_HEAD) and c_lead.assigned_sales_head != user:
+                    c_lead.assigned_sales_head = user
+                    c_lead.current_owner_type = "BRANCH_HEAD"
+                    c_lead.assignment_status = "Assigned"
+                    lead_dirty = True
+                elif not c_lead.assigned_telecaller:
+                    c_lead.assigned_telecaller = user
+                    c_lead.current_owner_type = "TELECALLER"
+                    c_lead.assignment_status = "Assigned"
+                    lead_dirty = True
+
+            raw_st = tl.raw.get("status")
+            if raw_st and c_lead.status not in TERMINAL_LEAD_STATUSES:
+                mapped_st = resolve_crm_status(raw_st)
+                if mapped_st and c_lead.status != mapped_st:
+                    c_lead.status = mapped_st
+                    lead_dirty = True
+
+            if lead_dirty:
+                c_lead.save(update_fields=[
+                    "assigned_telecaller",
+                    "assigned_counselor",
+                    "assigned_sales_head",
+                    "current_owner_type",
+                    "assignment_status",
+                    "status"
+                ])
+                results["leads_reassigned"] += 1
+
+    # 2. Activity Notes Alignment (Timestamp & User in atomic batch)
+    with transaction.atomic():
+        act_actions = list(TeleCRMAction.objects.filter(crm_object_type="Activity", mapped_ok=True).values("crm_object_id", "employee_uid", "occurred_at"))
+        for a in act_actions:
+            obj_id = a["crm_object_id"]
+            if not obj_id:
+                continue
+            u = resolve_telecrm_user(a["employee_uid"], user_cache)
+            Activity.objects.filter(id=obj_id).update(
+                timestamp=a["occurred_at"],
+                user=u
+            )
+            results["activities_remapped"] += 1
+
+    # 3. Call History Alignment (Caller/Telecaller, Created_at in atomic batch)
+    with transaction.atomic():
+        call_actions = list(TeleCRMAction.objects.filter(crm_object_type="CallHistory", mapped_ok=True).values("crm_object_id", "employee_uid", "occurred_at", "lead__crm_lead__assigned_telecaller_id"))
+        for a in call_actions:
+            obj_id = a["crm_object_id"]
+            if not obj_id:
+                continue
+            u = resolve_telecrm_user(a["employee_uid"], user_cache)
+            caller_id = u.id if u else a.get("lead__crm_lead__assigned_telecaller_id")
+            CallHistory.objects.filter(id=obj_id).update(
+                caller_id=caller_id,
+                telecaller_id=caller_id,
+                created_at=a["occurred_at"]
+            )
+            results["calls_remapped"] += 1
+
+    # 4. Status Transition History Alignment (Timestamp, Changed_By, Stages in atomic batch)
+    with transaction.atomic():
+        status_actions = list(TeleCRMAction.objects.filter(crm_object_type="LeadStatusHistory", mapped_ok=True).values("crm_object_id", "employee_uid", "occurred_at", "raw"))
+        for a in status_actions:
+            obj_id = a["crm_object_id"]
+            if not obj_id:
+                continue
+            u = resolve_telecrm_user(a["employee_uid"], user_cache)
+            raw_dict = a.get("raw") or {}
+            from_id = raw_dict.get("fromStatusid")
+            to_id = raw_dict.get("toStatusid")
+
+            updates: Dict[str, Any] = {
+                "created_at": a["occurred_at"],
+                "changed_by": u,
+            }
+            if to_id:
+                updates["new_status"] = resolve_crm_status("", to_id)
+            if from_id:
+                updates["old_status"] = resolve_crm_status("", from_id)
+
+            LeadStatusHistory.objects.filter(id=obj_id).update(**updates)
+            results["status_history_remapped"] += 1
+
+    # 5. Assignment History Alignment (To User & Timestamp in atomic batch)
+    with transaction.atomic():
+        assign_actions = list(TeleCRMAction.objects.filter(crm_object_type="LeadAssignmentHistory", mapped_ok=True).values("crm_object_id", "occurred_at", "raw"))
+        for a in assign_actions:
+            obj_id = a["crm_object_id"]
+            if not obj_id:
+                continue
+            raw_dict = a.get("raw") or {}
+            assigned_to_uid = str(raw_dict.get("assignedto") or "").strip()
+            to_user = resolve_telecrm_user(assigned_to_uid, user_cache)
+            if to_user:
+                LeadAssignmentHistory.objects.filter(id=obj_id).update(
+                    to_user=to_user,
+                    to_role=to_user.role,
+                    created_at=a["occurred_at"]
+                )
+            else:
+                LeadAssignmentHistory.objects.filter(id=obj_id).update(
+                    created_at=a["occurred_at"]
+                )
+            results["assignment_history_remapped"] += 1
+
+    return results

@@ -12,9 +12,9 @@ from .models import (
 
 @admin.register(BusinessAccount)
 class BusinessAccountAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'phone_number', 'phone_number_id', 'business_account_id', 'is_default', 'is_active', 'created_at')
+    list_display = ('id', 'name', 'phone_number', 'phone_number_id', 'business_account_id', 'crm_branch', 'is_default', 'is_active', 'automation_enabled', 'created_at')
     list_display_links = ('id', 'name')
-    list_filter = ('is_default', 'is_active')
+    list_filter = ('crm_branch', 'is_default', 'is_active', 'automation_enabled')
     search_fields = ('name', 'phone_number', 'phone_number_id', 'business_account_id')
 
     def has_delete_permission(self, request, obj=None):

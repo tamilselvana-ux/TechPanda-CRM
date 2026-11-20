@@ -202,6 +202,9 @@ class BusinessAccountDetailAPI(APIView):
         if 'name' in request.data and str(request.data['name']).strip():
             account.name = str(request.data['name']).strip()
             updated_fields.append('name')
+        if 'access_token' in request.data:
+            account.access_token = str(request.data['access_token']).strip()
+            updated_fields.append('access_token')
         if updated_fields:
             account.save(update_fields=updated_fields)
         serializer = BusinessAccountSerializer(account)

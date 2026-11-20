@@ -311,7 +311,7 @@ def marketing_lead_detail(request, pk):
         'activities': activities,
         'call_recordings': call_recordings,
         'status_history': status_history,
-        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0),
+        'timeline_count': (len(calls) if calls else 0) + (len(status_history) if status_history else 0) + (len(followups) if followups else 0) + (len(activities) if activities else 0),
         'detail_url_name': 'marketing_lead_detail',
         'edit_url_name': None,
         'list_url_name': 'marketing_leads_list',
