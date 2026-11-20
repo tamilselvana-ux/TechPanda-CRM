@@ -96,15 +96,6 @@
         <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
       </select>
     </div>
-    <div class="filter-col" style="flex: 1 1 150px;">
-      <label style="display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Branch</label>
-      <select name="branch" class="form-select">
-        <option value="">All Branches</option>
-        {% for b in branches %}
-        <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
     <div class="filter-col" style="display: flex; gap: 8px;">
       <button type="submit" class="btn btn-primary">Filter</button>
       <a href="{% url 'admin_marketing_users_list' %}" class="btn btn-secondary">Reset</a>
@@ -142,27 +133,19 @@
           </td>
           <td style="padding: 12px 14px; vertical-align: middle;">
             <div style="font-weight: 700; color: var(--text-main, #0f172a);">
-              <a href="{% url 'admin_marketing_user_detail' m.id %}" style="color: var(--primary, #0f766e); text-decoration: none;">
-                {{ m.get_full_name|default:m.username }}
-              </a>
+              {{ m.get_full_name|default:m.username }}
             </div>
             <div style="font-size: 0.75rem; color: var(--text-muted, #64748b); font-family: monospace;">
               @{{ m.username }}
             </div>
           </td>
           <td style="padding: 12px 14px; vertical-align: middle;">
-            {% if m.branch %}
-            <span class="badge" style="background: rgba(14, 165, 233, 0.12); color: #0284c7; font-weight: 600; font-size: 0.78rem;">
-              {{ m.branch.name }}
-            </span>
-            {% else %}
             <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 600; font-size: 0.78rem;">
-              Universal (All Branches)
+              Universal (All Branches &amp; Channels)
             </span>
-            {% endif %}
           </td>
           <td style="padding: 12px 14px; vertical-align: middle;">
-            <div style="color: #374151; font-family: monospace;">{{ m.phone|default:"No phone" }}</div>
+            <div style="color: #374151;">{{ m.phone|default:"No phone" }}</div>
             <div style="font-size: 0.78rem; color: #6b7280;">{{ m.email|default:"No email" }}</div>
           </td>
           <td style="padding: 12px 14px; vertical-align: middle;">
@@ -171,31 +154,15 @@
             {% else %}
             <span class="badge" style="background: #fef2f2; color: #b91c1c; font-weight: 600; font-size: 0.75rem; padding: 3px 8px; border-radius: 9999px;">Inactive</span>
             {% endif %}
-            {% if m.invitation_status == 'SENT' %}
-            <div style="margin-top: 3px;"><span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.68rem;">Invite Sent</span></div>
-            {% elif m.invitation_status == 'FAILED' %}
-            <div style="margin-top: 3px;"><span class="badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.68rem;">Invite Failed</span></div>
-            {% elif m.invitation_status == 'ACTIVATED' %}
-            <div style="margin-top: 3px;"><span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.68rem;">Activated</span></div>
-            {% endif %}
           </td>
           <td style="padding: 12px 14px; vertical-align: middle; color: #6b7280; font-size: 0.8rem; white-space: nowrap;">
             {{ m.date_joined|date:"d M Y" }}
           </td>
           <td style="padding: 12px 14px; vertical-align: middle; text-align: right; white-space: nowrap;">
-            <div style="display: inline-flex; gap: 4px; align-items: center;">
-              <a href="{% url 'resend_user_invitation' m.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" title="Resend Welcome Email & Setup Link">
-                Invite
-              </a>
-              <a href="{% url 'admin_set_user_password' m.id %}?next={% url 'admin_marketing_users_list' %}" class="btn btn-warning" style="font-size: 0.75rem; padding: 4px 8px;" title="Reset / Set Password">
-                Password
-              </a>
-              <a href="{% url 'admin_marketing_user_edit' m.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" title="Edit Staff Profile">
-                Edit
-              </a>
-              <form method="POST" action="{% url 'admin_marketing_user_toggle_status' m.id %}" style="display: inline-block; margin-left: 2px;" onsubmit="return confirm('Change active status for this user?');">
+            <div style="display: inline-flex; gap: 6px; align-items: center;">
+              <form method="POST" action="{% url 'admin_marketing_user_toggle_status' m.id %}" style="display: inline;" onsubmit="return confirm('Change active status for this user?');">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-sm {% if m.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" style="padding: 4px 8px; font-size: 0.75rem;">
+                <button type="submit" class="btn btn-sm {% if m.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" style="padding: 3px 8px; font-size: 0.75rem;">
                   {% if m.is_active %}Deactivate{% else %}Activate{% endif %}
                 </button>
               </form>
@@ -215,21 +182,5 @@
       </tbody>
     </table>
   </div>
-
-  {% if page_obj.has_other_pages %}
-  <div style="padding: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 8px;">
-    <div style="font-size: 0.85rem; color: #6b7280;">
-      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} marketing staff)
-    </div>
-    <div style="display: flex; gap: 6px;">
-      {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" class="btn btn-secondary" style="font-size: 0.8rem;">Previous</a>
-      {% endif %}
-      {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_branch %}&branch={{ selected_branch }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" class="btn btn-secondary" style="font-size: 0.8rem;">Next</a>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
 </div>
 {% endblock %}

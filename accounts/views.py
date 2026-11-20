@@ -306,8 +306,6 @@ def resend_user_invitation(request, pk):
             return redirect('admin_receptionists_list')
         elif target_user.role == UserRole.ACCOUNTANT:
             return redirect('admin_accountants_list')
-        elif target_user.role == UserRole.MARKETING:
-            return redirect('admin_marketing_users_list')
         return redirect('admin_dashboard')
 
     # GET request: render CSRF-protected confirmation modal/page
@@ -370,8 +368,6 @@ def create_user_view(request):
                 return redirect('admin_receptionists_list')
             elif user.role == UserRole.ACCOUNTANT:
                 return redirect('admin_accountants_list')
-            elif user.role == UserRole.MARKETING:
-                return redirect('admin_marketing_users_list')
             return redirect('admin_dashboard')
     else:
         initial = {}
@@ -500,10 +496,6 @@ def universal_user_profile_redirect(request, pk):
         return redirect('admin_receptionist_detail', pk=pk)
     elif target_user.role == UserRole.ACCOUNTANT:
         return redirect('admin_accountant_detail', pk=pk)
-    elif target_user.role == UserRole.BRANCH_ADMIN:
-        return redirect('admin_branch_admin_detail', pk=pk)
-    elif target_user.role == UserRole.MARKETING:
-        return redirect('admin_marketing_user_detail', pk=pk)
     else:
         if request.user.pk == target_user.pk:
             return redirect('user_profile')
@@ -587,8 +579,6 @@ def admin_send_password_reset_link(request, pk):
             return redirect('admin_receptionists_list')
         elif target_user.role == UserRole.ACCOUNTANT:
             return redirect('admin_accountants_list')
-        elif target_user.role == UserRole.MARKETING:
-            return redirect('admin_marketing_users_list')
         return redirect('admin_dashboard')
 
     # GET request: render CSRF-protected confirmation modal/page
@@ -658,8 +648,6 @@ def admin_set_user_password(request, pk):
                 return redirect('admin_receptionists_list')
             elif target_user.role == UserRole.ACCOUNTANT:
                 return redirect('admin_accountants_list')
-            elif target_user.role == UserRole.MARKETING:
-                return redirect('admin_marketing_user_detail', pk=target_user.pk)
             return redirect('admin_dashboard')
         else:
             messages.error(request, "Please correct the password errors below.")

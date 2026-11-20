@@ -18,7 +18,6 @@
     'Instagram': '#ec4899',
     'Google Calls': '#06b6d4',
     'Influencer': '#6366f1',
-    'Other / Direct': '#64748b',
     'Other': '#64748b',
   };
 
@@ -322,7 +321,6 @@
           '<td class="td-ig">' + (r.channels[4] || 0) + '</td>' +
           '<td class="td-call">' + (r.channels[5] || 0) + '</td>' +
           '<td class="td-influencer">' + (r.channels[6] || 0) + '</td>' +
-          '<td class="td-other">' + (r.channels[7] || 0) + '</td>' +
           '<td class="td-status-normal">' + (r.new_leads || 0) + '</td>' +
           '<td class="td-status-normal">' + (r.contacted_leads || 0) + '</td>' +
           '<td class="td-status-normal">' + (r.missed_leads || 0) + '</td>' +
@@ -344,7 +342,6 @@
         '<td class="td-ig">' + (bt.channels[4] || 0) + '</td>' +
         '<td class="td-call">' + (bt.channels[5] || 0) + '</td>' +
         '<td class="td-influencer">' + (bt.channels[6] || 0) + '</td>' +
-        '<td class="td-other">' + (bt.channels[7] || 0) + '</td>' +
         '<td class="td-status-normal">' + (bt.new_leads || 0) + '</td>' +
         '<td class="td-status-normal">' + (bt.contacted_leads || 0) + '</td>' +
         '<td class="td-status-normal">' + (bt.missed_leads || 0) + '</td>';
@@ -397,8 +394,8 @@
     var dateSelect = document.getElementById('dateFilter');
     var branchSelect = document.getElementById('branchFilter');
     var channelSelect = document.getElementById('channelFilter');
-    var customStartDate = document.getElementById('customStartDate') || document.querySelector('input[name="start_date"]') || document.querySelector('input[name="date_from"]');
-    var customEndDate = document.getElementById('customEndDate') || document.querySelector('input[name="end_date"]') || document.querySelector('input[name="date_to"]');
+    var customStartDate = document.getElementById('customStartDate');
+    var customEndDate = document.getElementById('customEndDate');
 
     var dateFilter = dateSelect ? dateSelect.value : 'today';
     var branch = branchSelect ? branchSelect.value : '';

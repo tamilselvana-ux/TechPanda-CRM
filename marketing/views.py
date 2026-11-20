@@ -192,8 +192,7 @@ def marketing_leads_list(request):
         if channel_filter.isdigit():
             leads_qs = leads_qs.filter(channel_id=int(channel_filter))
         else:
-            from reports.services import resolve_canonical_channel_q
-            leads_qs = leads_qs.filter(resolve_canonical_channel_q(channel_filter))
+            leads_qs = leads_qs.filter(Q(channel__name__icontains=channel_filter) | Q(source__icontains=channel_filter))
 
     # Product / Course filter
     if product_filter:

@@ -240,23 +240,3 @@ class MarketingTeamPortalTests(TestCase):
         self.assertEqual(resp_toggle.status_code, 302)
         self.marketing_user.refresh_from_db()
         self.assertFalse(self.marketing_user.is_active)
-
-    def test_10_marketing_dashboard_renders_with_null_channel_and_source(self):
-        """Verify marketing dashboard renders cleanly without template errors when leads have null channels or sources."""
-        self.client.login(username="marketing_analyst", password="Password123!")
-
-        # Create a lead with null channel, null source, null branch
-        Lead.objects.create(
-            name="Null Channel Lead",
-            phone="9000099999",
-            email="null@test.com",
-            channel=None,
-            source="",
-            branch=None,
-            status=LeadStatus.NEW
-        )
-
-        response = self.client.get(reverse('marketing_dashboard'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Null Channel Lead")
-        self.assertContains(response, "Direct")

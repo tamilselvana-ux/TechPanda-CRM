@@ -34,7 +34,6 @@ CANONICAL_CHANNELS = [
     'Instagram',
     'Google Calls',
     'Influencer',
-    'Other / Direct',
 ]
 
 CHANNEL_COLORS = {
@@ -45,7 +44,6 @@ CHANNEL_COLORS = {
     'Instagram': '#ec4899',
     'Google Calls': '#06b6d4',
     'Influencer': '#6366f1',
-    'Other / Direct': '#64748b',
     'Other': '#64748b',
 }
 
@@ -83,17 +81,6 @@ def resolve_canonical_channel_q(channel_name: str) -> Q:
         return Q(channel__name__icontains='google call') | Q(source__icontains='google call') | Q(source__icontains='call')
     elif 'influencer' in c:
         return Q(channel__name__icontains='influencer') | Q(source__icontains='influencer')
-    elif 'other' in c or 'direct' in c or 'telecrm' in c or 'manual' in c:
-        digital_q = (
-            Q(channel__name__icontains='whatsapp') | Q(source__icontains='whatsapp') |
-            Q(channel__name__icontains='facebook') | Q(channel__name__icontains='meta') | Q(source__icontains='facebook') | Q(source__icontains='meta') |
-            Q(channel__name__icontains='google ad') | Q(source__icontains='google ad') |
-            Q(channel__name__icontains='website') | Q(channel__name__icontains='seo') | Q(source__icontains='website') | Q(source__icontains='seo') |
-            Q(channel__name__icontains='instagram') | Q(source__icontains='instagram') |
-            Q(channel__name__icontains='google call') | Q(source__icontains='google call') | Q(source__icontains='call') |
-            Q(channel__name__icontains='influencer') | Q(source__icontains='influencer')
-        )
-        return ~digital_q
     return Q(channel__name__iexact=channel_name) | Q(source__iexact=channel_name)
 
 
@@ -114,7 +101,7 @@ def map_lead_to_canonical_channel(channel_name: str, source: str) -> str:
         return 'Google Calls'
     if 'influencer' in val:
         return 'Influencer'
-    return 'Other / Direct'
+    return 'Other'
 
 
 def parse_date_range(date_filter: str, start_date_str: str = '', end_date_str: str = ''):
@@ -208,18 +195,9 @@ def get_dashboard_report_data(user, params=None):
     branch-wise highlighted summary table, and Chart.js payloads.
     """
     params = params or {}
+    date_filter = params.get('date_filter', 'today')
     start_date_str = params.get('start_date', '')
     end_date_str = params.get('end_date', '')
-    raw_date_filter = params.get('date_filter')
-    if not raw_date_filter and not (start_date_str or end_date_str):
-        # Initial page load with no explicit date filter requested:
-        # Check if today has leads; if not, smart-default to 'this_month' so users see active metrics
-        now_date = timezone.localtime(timezone.now()).date()
-        today_leads_exist = Lead.objects.filter(created_at__date=now_date).exists()
-        date_filter = 'today' if today_leads_exist else 'this_month'
-    else:
-        date_filter = raw_date_filter or 'today'
-
     branch_filter = params.get('branch', '').strip()
     channel_filter = params.get('channel', '').strip()
 
@@ -283,7 +261,7 @@ def get_dashboard_report_data(user, params=None):
     connected_pct = round((connected_leads / total_leads * 100)) if total_leads > 0 else 0
 
     # KPI 2: Prospected / Converted / Follow-up Leads
-    prospected_q = Q(status__in=[LeadStatus.CONVERTED, LeadStatus.ENROLLED, LeadStatus.FOLLOW_UP, LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.VISITED, LeadStatus.JOINED])
+    prospected_q = Q(status__in=[LeadStatus.CONVERTED, LeadStatus.FOLLOW_UP, LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.VISITED, LeadStatus.JOINED])
     prospected_leads = current_leads_qs.filter(prospected_q).count()
     prospected_pct = round((prospected_leads / total_leads * 100)) if total_leads > 0 else 0
 
@@ -293,9 +271,8 @@ def get_dashboard_report_data(user, params=None):
     not_connected_pct = round((not_connected_leads / total_leads * 100)) if total_leads > 0 else 0
 
     # Detailed status metrics
-    converted_statuses = [LeadStatus.CONVERTED, LeadStatus.ENROLLED, LeadStatus.JOINED]
     new_leads_count = current_leads_qs.filter(status=LeadStatus.NEW).count()
-    converted_leads_count = current_leads_qs.filter(status__in=converted_statuses).count()
+    converted_leads_count = current_leads_qs.filter(status=LeadStatus.CONVERTED).count()
     conversion_rate = round((converted_leads_count / total_leads * 100), 1) if total_leads > 0 else 0
 
     # Call metrics
@@ -362,7 +339,7 @@ def get_dashboard_report_data(user, params=None):
         br_new = br_leads_qs.filter(status=LeadStatus.NEW).count()
         br_contacted = br_leads_qs.filter(status__in=[LeadStatus.CONTACTED, LeadStatus.INTERESTED, LeadStatus.DISCUSSION]).count()
         br_missed = br_leads_qs.filter(status__in=[LeadStatus.NO_ANSWER, LeadStatus.BUSY, LeadStatus.LOST, LeadStatus.NOT_INTERESTED]).count()
-        br_conv = br_leads_qs.filter(status__in=converted_statuses).count()
+        br_conv = br_leads_qs.filter(status=LeadStatus.CONVERTED).count()
 
         channel_counts_list = [br_ch_map[c] for c in CANONICAL_CHANNELS]
 
@@ -401,7 +378,7 @@ def get_dashboard_report_data(user, params=None):
         un_new = unassigned_leads_qs.filter(status=LeadStatus.NEW).count()
         un_contacted = unassigned_leads_qs.filter(status__in=[LeadStatus.CONTACTED, LeadStatus.INTERESTED, LeadStatus.DISCUSSION]).count()
         un_missed = unassigned_leads_qs.filter(status__in=[LeadStatus.NO_ANSWER, LeadStatus.BUSY, LeadStatus.LOST, LeadStatus.NOT_INTERESTED]).count()
-        un_conv = unassigned_leads_qs.filter(status__in=converted_statuses).count()
+        un_conv = unassigned_leads_qs.filter(status=LeadStatus.CONVERTED).count()
         un_ch_list = [un_ch_map[c] for c in CANONICAL_CHANNELS]
 
         branch_rows.append({
@@ -488,8 +465,6 @@ def get_dashboard_report_data(user, params=None):
     resolved_start_date = start_dt.strftime('%Y-%m-%d') if start_dt else ''
     resolved_end_date = end_dt.strftime('%Y-%m-%d') if end_dt else ''
 
-    leads_url = reverse('admin_leads_list') if (getattr(user, 'is_admin_user', False) or getattr(user, 'role', '') == 'ADMIN' or getattr(user, 'is_superuser', False)) else reverse('manager_leads_list')
-
     report_state_payload = {
         'period_label': period_label,
         'date_filter': date_filter,
@@ -497,7 +472,6 @@ def get_dashboard_report_data(user, params=None):
         'end_date': resolved_end_date,
         'branch_filter': effective_branch_id,
         'channel_filter': channel_filter,
-        'leads_url': leads_url,
         'kpi_total_leads': total_leads,
         'kpi_total_change_pct': total_change_pct,
         'kpi_connected_leads': connected_leads,
@@ -507,8 +481,6 @@ def get_dashboard_report_data(user, params=None):
         'kpi_not_connected_leads': not_connected_leads,
         'kpi_not_connected_pct': not_connected_pct,
         'channels': channel_cards,
-        'branch_rows': branch_rows,
-        'branch_totals': branch_totals,
         'donut_chart': {
             'labels': donut_labels,
             'values': donut_values,
@@ -537,7 +509,7 @@ def get_dashboard_report_data(user, params=None):
         'branch_filter': effective_branch_id,
         'channel_filter': channel_filter,
         'report_state_json': report_state_json,
-        'leads_url': leads_url,
+        'leads_url': reverse('admin_leads_list') if (getattr(user, 'is_admin_user', False) or getattr(user, 'role', '') == 'ADMIN' or getattr(user, 'is_superuser', False)) else reverse('manager_leads_list'),
 
         # 4 Pastel KPI Cards
         'kpi_total_leads': total_leads,
