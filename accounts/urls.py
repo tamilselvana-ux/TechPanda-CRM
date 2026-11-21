@@ -68,6 +68,7 @@ urlpatterns = [
     path('users/<int:pk>/leads/redirect/', views.universal_user_leads_redirect, name='universal_user_leads_redirect'),
     path('admin/users/<int:pk>/edit/', views.admin_user_edit, name='admin_user_edit'),
     path('admin/users/<int:pk>/delete/', views.admin_user_delete, name='admin_user_delete'),
+    path('admin/users/<int:pk>/toggle-status/', views.admin_user_toggle_status, name='admin_user_toggle_status'),
 
     # Admin Receptionist Oversight & Management
     path('admin/receptionists/', receptionist_views.admin_receptionists_list, name='admin_receptionists_list'),

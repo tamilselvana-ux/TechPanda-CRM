@@ -630,6 +630,39 @@ def admin_user_delete(request, pk):
     return redirect(next_url)
 
 
+@admin_required
+def admin_user_toggle_status(request, pk):
+    """
+    Universal toggle view for activating or deactivating any staff/user account.
+    Blocks deactivating the currently logged in administrator account.
+    """
+    target_user = get_object_or_404(User, pk=pk)
+    next_url = request.POST.get('next') or request.GET.get('next') or request.META.get('HTTP_REFERER') or reverse('admin_users_list')
+
+    if target_user.pk == request.user.pk:
+        messages.error(request, "You cannot deactivate your own administrator account.")
+        return redirect(next_url)
+
+    target_user.is_active = not target_user.is_active
+    target_user.save(update_fields=['is_active'])
+
+    status_str = "activated" if target_user.is_active else "deactivated"
+    role_display = target_user.get_role_display()
+    full_name = target_user.get_full_name() or target_user.username
+
+    log_activity(
+        user=request.user,
+        action="User Status Toggled",
+        description=f"Admin {status_str} {role_display} '{target_user.username}' ({full_name}).",
+        object_type="User",
+        object_id=str(pk),
+        request=request
+    )
+
+    messages.success(request, f"User '{full_name}' (@{target_user.username}) was successfully {status_str}.")
+    return redirect(next_url)
+
+
 
 @login_required
 def user_change_password(request):

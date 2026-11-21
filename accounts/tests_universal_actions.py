@@ -262,6 +262,30 @@ class UniversalUserActionsTests(TestCase):
         self.assertIsNotNone(ch)
         self.assertIsNone(ch.caller)
 
+    def test_admin_user_toggle_status_and_self_prevention(self):
+        self.client.force_login(self.admin_user)
+
+        # 1. Attempt to toggle own account (must be blocked)
+        own_url = reverse('admin_user_toggle_status', args=[self.admin_user.pk])
+        res = self.client.post(own_url)
+        self.assertEqual(res.status_code, 302)
+        self.admin_user.refresh_from_db()
+        self.assertTrue(self.admin_user.is_active)
+
+        # 2. Deactivate active telecaller
+        self.assertTrue(self.telecaller.is_active)
+        tc_url = reverse('admin_user_toggle_status', args=[self.telecaller.pk])
+        res = self.client.post(tc_url)
+        self.assertEqual(res.status_code, 302)
+        self.telecaller.refresh_from_db()
+        self.assertFalse(self.telecaller.is_active)
+
+        # 3. Reactivate telecaller
+        res = self.client.post(tc_url)
+        self.assertEqual(res.status_code, 302)
+        self.telecaller.refresh_from_db()
+        self.assertTrue(self.telecaller.is_active)
+
     def test_list_templates_rendering(self):
         self.client.force_login(self.admin_user)
 
@@ -281,9 +305,11 @@ class UniversalUserActionsTests(TestCase):
             res = self.client.get(u)
             self.assertEqual(res.status_code, 200, f"Failed rendering {u}")
             self.assertContains(res, 'Resend Invite')
-            self.assertContains(res, 'Leads')
-            self.assertContains(res, 'Profile')
+            self.assertContains(res, 'Deactivate')
             self.assertContains(res, 'Edit')
             self.assertContains(res, 'Password')
             self.assertContains(res, 'Delete')
             self.assertContains(res, 'universalUserDeleteModal')
+            # Verify Profile and Leads buttons are completely removed from toolbar
+            self.assertNotContains(res, 'tp-action-leads')
+            self.assertNotContains(res, 'tp-action-profile')
