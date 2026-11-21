@@ -342,6 +342,27 @@ def get_default_admissions_flow_data():
                 "source_output": "default"
             },
             {
+                "id": "c_q3_row1_q4",
+                "source": "node_list_q3",
+                "target": "node_buttons_q4",
+                "target_input": "input",
+                "source_output": "row_1"
+            },
+            {
+                "id": "c_q3_row2_q4",
+                "source": "node_list_q3",
+                "target": "node_buttons_q4",
+                "target_input": "input",
+                "source_output": "row_2"
+            },
+            {
+                "id": "c_q3_row3_q4",
+                "source": "node_list_q3",
+                "target": "node_buttons_q4",
+                "target_input": "input",
+                "source_output": "row_3"
+            },
+            {
                 "id": "c_q4_opt1_end",
                 "source": "node_buttons_q4",
                 "target": "end_1",

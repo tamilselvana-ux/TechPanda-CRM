@@ -132,40 +132,20 @@ DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
 DB_PORT = os.getenv('DB_PORT', '3306')
 
 if DB_ENGINE == 'django.db.backends.mysql':
-    import socket
-    _mysql_reachable = False
-    try:
-        _s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        _s.settimeout(0.8)
-        _s.connect((DB_HOST, int(DB_PORT)))
-        _s.close()
-        _mysql_reachable = True
-    except Exception:
-        _mysql_reachable = False
-
-    if _mysql_reachable:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.mysql',
-                'NAME': DB_NAME,
-                'USER': DB_USER,
-                'PASSWORD': DB_PASSWORD,
-                'HOST': DB_HOST,
-                'PORT': DB_PORT,
-                'OPTIONS': {
-                    'charset': 'utf8mb4',
-                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                },
-            }
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
         }
-    else:
-        # Fall back to local SQLite if MySQL daemon is not currently listening
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
-        }
+    }
 else:
     DATABASES = {
         'default': {
