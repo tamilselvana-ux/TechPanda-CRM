@@ -179,23 +179,12 @@
             {{ acc.date_joined|date:"M d, Y" }}
           </td>
           <td style="padding: 12px 14px; vertical-align: middle; text-align: right; white-space: nowrap;">
-            <a href="{% url 'resend_user_invitation' acc.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" title="Resend Welcome Email & Setup Link">
-              Invite
-            </a>
-            <a href="{% url 'admin_set_user_password' acc.id %}?next={% url 'admin_accountants_list' %}" class="btn btn-warning" style="font-size: 0.75rem; padding: 4px 8px;" title="Reset / Set Password">
-              Password
-            </a>
-            <form method="POST" action="{% url 'admin_accountant_toggle_status' acc.id %}" style="display: inline-block; margin-left: 4px;">
-              {% csrf_token %}
-              <button type="submit" class="btn {% if acc.is_active %}btn-secondary{% else %}btn-primary{% endif %}" style="font-size: 0.75rem; padding: 4px 8px;">
-                {% if acc.is_active %}Deactivate{% else %}Activate{% endif %}
-              </button>
-            </form>
+            {% include 'admin/partials/user_action_buttons.html' with target_user=acc next_url=request.get_full_path %}
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" style="text-align: center; padding: 48px 16px; color: var(--text-muted, #64748b);">
+          <td colspan="7" style="text-align: center; padding: 48px 16px; color: var(--text-muted, #64748b);">
             <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main, #0f172a);">No Accountants Found</div>
             <div style="font-size: 0.85rem; margin-top: 4px;">Click "+ Add Accountant" above to create a dedicated finance role.</div>
             <div style="margin-top: 14px;">
@@ -208,4 +197,6 @@
     </table>
   </div>
 </div>
+
+{% include 'admin/partials/user_delete_modal.html' %}
 {% endblock %}

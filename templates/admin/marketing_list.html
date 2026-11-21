@@ -168,27 +168,8 @@
           <td style="padding: 12px 14px; vertical-align: middle; color: var(--text-muted, #64748b); font-size: 0.8rem;">
             {{ m.date_joined|date:"d M Y" }}
           </td>
-          <td style="padding: 12px 14px; vertical-align: middle; text-align: right;">
-            <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
-              <a href="{% url 'admin_set_user_password' m.pk %}?next={% url 'admin_marketing_users_list' %}" class="btn btn-warning btn-sm" style="font-size: 0.75rem; padding: 4px 8px;" title="Directly set password">
-                Reset Password
-              </a>
-              <form method="POST" action="{% url 'admin_send_password_reset_link' m.pk %}" style="display: inline;">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{% url 'admin_marketing_users_list' %}">
-                <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 8px;" title="Email reset link">
-                  Send Link
-                </button>
-              </form>
-              <form method="POST" action="{% url 'admin_marketing_toggle_status' m.pk %}" style="display: inline;" onsubmit="return confirm('Toggle status for {{ m.username }}?');">
-                {% csrf_token %}
-                {% if m.is_active %}
-                <button type="submit" class="btn btn-outline-danger btn-sm" style="font-size: 0.75rem; padding: 4px 8px;">Deactivate</button>
-                {% else %}
-                <button type="submit" class="btn btn-outline-success btn-sm" style="font-size: 0.75rem; padding: 4px 8px;">Activate</button>
-                {% endif %}
-              </form>
-            </div>
+          <td style="padding: 12px 14px; vertical-align: middle; text-align: right; white-space: nowrap;">
+            {% include 'admin/partials/user_action_buttons.html' with target_user=m next_url=request.get_full_path %}
           </td>
         </tr>
         {% empty %}
@@ -203,4 +184,6 @@
     </table>
   </div>
 </div>
+
+{% include 'admin/partials/user_delete_modal.html' %}
 {% endblock %}

@@ -160,23 +160,8 @@
             {% endif %}
           </td>
           <td>{{ m.date_joined|date:"M d, Y" }}</td>
-          <td style="text-align: right;">
-            <div style="display: inline-flex; gap: 6px;">
-              {% if request.user.is_admin_user %}
-              <a href="{% url 'resend_user_invitation' m.pk %}" class="btn btn-secondary btn-sm" title="Resend Welcome Email & Setup Link">Resend Invite</a>
-              {% endif %}
-              <a href="{% url 'sales_head_branch_heads' m.pk %}" class="btn btn-primary btn-sm" title="View Branch Heads for this Sales Head">
-                Branch Heads &rarr;
-              </a>
-              {% if request.user.is_admin_user %}
-              <a href="{% url 'admin_manager_edit' m.pk %}" class="btn btn-secondary btn-sm">Edit</a>
-              <a href="{% url 'admin_set_user_password' m.pk %}?next={% url 'admin_managers_list' %}" class="btn btn-warning btn-sm" title="Reset / Set Password">Password</a>
-              <a href="{% url 'admin_manager_toggle_status' m.pk %}" class="btn btn-sm {% if m.is_active %}btn-secondary{% else %}btn-success{% endif %}" data-confirm="Are you sure you want to change this Sales Head's account status?">
-                {% if m.is_active %}Deactivate{% else %}Activate{% endif %}
-              </a>
-              <a href="{% url 'admin_manager_delete' m.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
-              {% endif %}
-            </div>
+          <td style="text-align: right; white-space: nowrap;">
+            {% include 'admin/partials/user_action_buttons.html' with target_user=m next_url=request.get_full_path %}
           </td>
         </tr>
         {% empty %}
@@ -196,4 +181,6 @@
     </table>
   </div>
 </div>
+
+{% include 'admin/partials/user_delete_modal.html' %}
 {% endblock %}

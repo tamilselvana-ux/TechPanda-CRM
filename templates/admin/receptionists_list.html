@@ -180,23 +180,12 @@
             <div style="font-size: 0.85rem; color: var(--text-muted);">{{ rec.date_joined|date:"M d, Y" }}</div>
           </td>
           <td style="padding: 12px 14px; vertical-align: middle; text-align: right; white-space: nowrap;">
-            <a href="{% url 'resend_user_invitation' rec.id %}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" title="Resend Welcome Email & Setup Link">
-              Invite
-            </a>
-            <a href="{% url 'admin_set_user_password' rec.id %}?next={% url 'admin_receptionists_list' %}" class="btn btn-warning" style="font-size: 0.75rem; padding: 4px 8px;" title="Reset / Set Password">
-              Password
-            </a>
-            <form method="POST" action="{% url 'admin_receptionist_toggle_status' rec.id %}" style="display: inline-block; margin-left: 4px;">
-              {% csrf_token %}
-              <button type="submit" class="btn {% if rec.is_active %}btn-secondary{% else %}btn-primary{% endif %}" style="font-size: 0.75rem; padding: 4px 8px;">
-                {% if rec.is_active %}Deactivate{% else %}Activate{% endif %}
-              </button>
-            </form>
+            {% include 'admin/partials/user_action_buttons.html' with target_user=rec next_url=request.get_full_path %}
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
+          <td colspan="7" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px; color: var(--text-muted);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">No Receptionists Found</div>
             <div style="font-size: 0.85rem; margin-top: 4px; color: var(--text-muted);">Click "+ Add Receptionist" above to create a new front-desk account for a branch.</div>
@@ -226,4 +215,6 @@
   </div>
   {% endif %}
 </div>
+
+{% include 'admin/partials/user_delete_modal.html' %}
 {% endblock %}

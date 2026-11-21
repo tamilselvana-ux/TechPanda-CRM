@@ -151,17 +151,8 @@
             {% endif %}
           </td>
           <td>{{ c.date_joined|date:"M d, Y" }}</td>
-          <td style="text-align: right;">
-            <div style="display: inline-flex; gap: 6px;">
-              <a href="{% url 'resend_user_invitation' c.pk %}" class="btn btn-secondary btn-sm" title="Resend Welcome Email & Setup Link">Resend Invite</a>
-              <a href="{% url 'admin_counselor_leads_drilldown' c.pk %}" class="btn btn-secondary btn-sm" title="Drill down leads">Leads</a>
-              <a href="{% url 'counselor_telecallers' c.pk %}" class="btn btn-primary btn-sm" title="View Telecallers under this Counselor">
-                Telecallers &rarr;
-              </a>
-              {% if request.user.is_admin_user %}
-              <a href="{% url 'admin_set_user_password' c.pk %}?next={% url 'admin_counselors_list' %}" class="btn btn-warning btn-sm" title="Reset / Set Password">Password</a>
-              {% endif %}
-            </div>
+          <td style="text-align: right; white-space: nowrap;">
+            {% include 'admin/partials/user_action_buttons.html' with target_user=c next_url=request.get_full_path %}
           </td>
         </tr>
         {% empty %}
@@ -181,4 +172,6 @@
     </table>
   </div>
 </div>
+
+{% include 'admin/partials/user_delete_modal.html' %}
 {% endblock %}

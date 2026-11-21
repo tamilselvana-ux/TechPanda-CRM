@@ -498,6 +498,8 @@ def universal_user_profile_redirect(request, pk):
         return redirect('admin_receptionist_detail', pk=pk)
     elif target_user.role == UserRole.ACCOUNTANT:
         return redirect('admin_accountant_detail', pk=pk)
+    elif target_user.role == UserRole.BRANCH_ADMIN:
+        return redirect('admin_branch_admin_detail', pk=pk)
     else:
         if request.user.pk == target_user.pk:
             return redirect('user_profile')
@@ -505,6 +507,128 @@ def universal_user_profile_redirect(request, pk):
             'user': target_user,
             'is_target_profile': True,
         })
+
+
+@login_required
+def universal_user_leads_redirect(request, pk):
+    """
+    Universal leads router for any user.
+    - Telecaller -> telecaller_leads
+    - Counselor -> admin_counselor_leads_drilldown
+    - Other roles -> admin_leads_list filtered by assignee
+    """
+    target_user = get_object_or_404(User, pk=pk)
+    if target_user.role == UserRole.TELECALLER:
+        return redirect('telecaller_leads', telecaller_id=pk)
+    elif target_user.role == UserRole.COUNSELOR:
+        return redirect('admin_counselor_leads_drilldown', pk=pk)
+    else:
+        return redirect(f"/admin/leads/?assigned_to={pk}")
+
+
+@admin_required
+def admin_user_edit(request, pk):
+    """
+    Universal user editor for any staff member or administrator.
+    """
+    from .forms import AdminUserEditForm
+    target_user = get_object_or_404(User, pk=pk)
+    next_url = request.GET.get('next') or request.POST.get('next') or reverse('admin_users_list')
+
+    if request.method == 'POST':
+        form = AdminUserEditForm(request.POST, instance=target_user)
+        if form.is_valid():
+            updated_user = form.save()
+            log_activity(
+                user=request.user,
+                action="User Profile Updated",
+                description=f"Admin updated profile for '{updated_user.username}' ({updated_user.get_role_display()}).",
+                object_type="User",
+                object_id=str(updated_user.pk),
+                request=request
+            )
+            messages.success(request, f"User '{updated_user.username}' was successfully updated.")
+            return redirect(next_url)
+    else:
+        form = AdminUserEditForm(instance=target_user)
+
+    return render(request, 'admin/user_edit.html', {
+        'form': form,
+        'target_user': target_user,
+        'next_url': next_url,
+    })
+
+
+@admin_required
+@require_POST
+def admin_user_delete(request, pk):
+    """
+    Universal safe user deletion.
+    Preserves leads, calls, follow-ups, and activities, unassigning them cleanly.
+    """
+    from django.db import transaction
+    from leads.models import Lead, TelecallerLeadSetup
+    from followups.models import FollowUp
+    from calls.models import CallHistory
+    from activities.models import Activity
+
+    target_user = User.objects.filter(pk=pk).first()
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse('admin_users_list')
+
+    if not target_user:
+        messages.error(request, "User not found.")
+        return redirect(next_url)
+
+    if target_user.pk == request.user.pk:
+        messages.error(request, "You cannot delete your own account.")
+        return redirect(next_url)
+
+    with transaction.atomic():
+        username = target_user.username
+        full_name = target_user.get_full_name() or username
+        role_display = target_user.get_role_display()
+
+        # 1. Safely unassign all assigned leads
+        assigned_tele_leads = Lead.objects.filter(assigned_telecaller=target_user)
+        affected_tele = assigned_tele_leads.count()
+        assigned_tele_leads.update(
+            assigned_telecaller=None,
+            assignment_status='Unassigned',
+            pending_assignment_reason=f"Previous telecaller '{full_name}' was deleted."
+        )
+
+        assigned_coun_leads = Lead.objects.filter(assigned_counselor=target_user)
+        affected_coun = assigned_coun_leads.count()
+        assigned_coun_leads.update(
+            assigned_counselor=None,
+            pending_assignment_reason=f"Previous counselor '{full_name}' was deleted."
+        )
+
+        # 2. Preserve follow-ups, calls, and activities
+        FollowUp.objects.filter(telecaller=target_user).update(telecaller=None)
+        FollowUp.objects.filter(assigned_user=target_user).update(assigned_user=None)
+        CallHistory.objects.filter(telecaller=target_user).update(telecaller=None)
+        CallHistory.objects.filter(caller=target_user).update(caller=None)
+        Activity.objects.filter(user=target_user).update(user=None)
+
+        # 3. Clean up lead setup configurations if telecaller
+        TelecallerLeadSetup.objects.filter(telecaller=target_user).delete()
+
+        # 4. Audit activity log
+        log_activity(
+            user=request.user,
+            action="User Deleted",
+            description=f"Admin deleted {role_display} '{username}' ({full_name}). Unassigned {affected_tele + affected_coun} lead(s).",
+            object_type="User",
+            object_id=str(pk),
+            request=request
+        )
+
+        target_user.delete()
+
+    messages.success(request, f"User '{full_name}' (@{username}) was successfully deleted. Any active assigned leads were safely preserved.")
+    return redirect(next_url)
+
 
 
 @login_required

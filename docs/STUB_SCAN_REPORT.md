@@ -1,6 +1,6 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-20 14:45 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-21 18:14 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
 **Blockers:** 0 · **Warnings:** 112 · **Verdict:** ✅ no stubs found
 
@@ -21,7 +21,7 @@ Run: 2026-11-20 14:45 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | chat\static\chat\js\inbox.js | 1277 | `alert(`One-Click Sync Completed!\n\n` +` |
 | alert() used for UX | chat\static\chat\js\inbox.js | 1287 | `alert('Sync error: ' + (data.error // data.detail // 'Unable to sync accounts.'));` |
 | alert() used for UX | chat\static\chat\js\inbox.js | 1290 | `alert('One-Click Sync request failed: ' + err.message);` |
-| Hard-coded localhost URL | config\settings.py | 349 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
+| Hard-coded localhost URL | config\settings.py | 328 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
 | alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 434 | `alert(`One-Click Sync Completed!\n\n` +` |
 | alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 441 | `alert('Sync failed: ' + (data.error // 'Unknown error'));` |
 | alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 448 | `alert('Error running One-Click Sync: ' + err.message);` |
@@ -44,19 +44,19 @@ Run: 2026-11-20 14:45 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | static\js\data-tables-enhanced.js | 261 | `alert('No leads selected.');` |
 | alert() used for UX | templates\accountant\dashboard.html | 591 | `alert('Validation Error: From Date cannot be after To Date.');` |
 | alert() used for UX | templates\accountant\verification_list.html | 270 | `<button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" o` |
-| alert() used for UX | templates\admin\leads_list.html | 1626 | `alert(data.error // 'Failed to load duplicate information.');` |
-| alert() used for UX | templates\admin\leads_list.html | 1936 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2032 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2044 | `alert("Request failed: " + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2368 | `alert('Please select at least one lead from the table or apply a filter.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2462 | `alert(data.error // 'Failed to evaluate recipients');` |
-| alert() used for UX | templates\admin\leads_list.html | 2486 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2514 | `alert('Please select at least one lead from the table.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2844 | `alert('Please enter a name for your custom view tab.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2890 | `alert(data.message // 'Error saving custom view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2895 | `alert('Failed to save custom view. Please check connection.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2925 | `alert(data.message // 'Error deleting view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2930 | `alert('Failed to delete view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1604 | `alert(data.error // 'Failed to load duplicate information.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1914 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2010 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2022 | `alert("Request failed: " + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2344 | `alert('Please select at least one lead from the table or apply a filter.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2438 | `alert(data.error // 'Failed to evaluate recipients');` |
+| alert() used for UX | templates\admin\leads_list.html | 2462 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2490 | `alert('Please select at least one lead from the table.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2820 | `alert('Please enter a name for your custom view tab.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2866 | `alert(data.message // 'Error saving custom view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2871 | `alert('Failed to save custom view. Please check connection.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2901 | `alert(data.message // 'Error deleting view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2906 | `alert('Failed to delete view.');` |
 | alert() used for UX | templates\admin\lead_queues.html | 423 | `alert("Please select at least one lead from the table to assign.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 744 | `alert("Please select at least one target branch.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 748 | `alert("Please select at least one target telecaller.");` |
@@ -77,10 +77,10 @@ Run: 2026-11-20 14:45 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | templates\admin\offline_leads.html | 1561 | `alert('Error: ' + err);` |
 | alert() used for UX | templates\admin\status_leads_list.html | 213 | `alert(data.error // 'Failed to update lead status');` |
 | alert() used for UX | templates\admin\status_leads_list.html | 219 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\telecallers_list.html | 508 | `alert('Please select a counselor.');` |
-| alert() used for UX | templates\admin\telecallers_list.html | 552 | `alert('Please select a branch.');` |
-| alert() used for UX | templates\admin\telecallers_list.html | 661 | `alert('Error updating telecallers: ' + (data.error // 'Server error'));` |
-| alert() used for UX | templates\admin\telecallers_list.html | 672 | `alert('Network error while processing bulk update: ' + err.message);` |
+| alert() used for UX | templates\admin\telecallers_list.html | 462 | `alert('Please select a counselor.');` |
+| alert() used for UX | templates\admin\telecallers_list.html | 506 | `alert('Please select a branch.');` |
+| alert() used for UX | templates\admin\telecallers_list.html | 615 | `alert('Error updating telecallers: ' + (data.error // 'Server error'));` |
+| alert() used for UX | templates\admin\telecallers_list.html | 626 | `alert('Network error while processing bulk update: ' + err.message);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 892 | `alert(`Error updating visitor status: ${data.error // 'Failed'}`);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 895 | `alert(`Error: ${err.message}`);` |
 | alert() used for UX | templates\admin\walkin_desk.html | 928 | `alert(`Visitor Token #${data.token_number} generated! Visitor checked in successfully.`);` |

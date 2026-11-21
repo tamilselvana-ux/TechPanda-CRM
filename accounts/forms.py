@@ -352,7 +352,52 @@ class AdminCreateUserForm(forms.ModelForm):
         return user
 
 
+class AdminUserEditForm(forms.ModelForm):
+    """
+    Unified administrator form to edit any existing user across all roles.
+    """
+    role = forms.ChoiceField(
+        choices=UserRole.choices,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_role'}),
+        help_text="Application access role"
+    )
+    branch = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_branch'}),
+        empty_label="-- Select Branch --"
+    )
+    counselor = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_counselor'}),
+        empty_label="-- Select Counselor (Optional) --"
+    )
 
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'branch', 'counselor', 'is_active']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'user@example.com'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+91 XXXXX XXXXX'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, allowed_branches=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        from branches.models import Branch
+        self.fields['branch'].queryset = allowed_branches if allowed_branches is not None else Branch.objects.filter(status='Active')
+        self.fields['counselor'].queryset = User.objects.filter(role=UserRole.COUNSELOR, is_active=True).order_by('first_name', 'username')
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip()
+        if not email:
+            raise forms.ValidationError("Email address is required.")
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("A user with this email address already exists.")
+        return email
 
 
 class UserProfileUpdateForm(forms.ModelForm):

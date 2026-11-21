@@ -149,22 +149,8 @@
             {% endif %}
           </td>
           <td>{{ bh.date_joined|date:"M d, Y" }}</td>
-          <td style="text-align: right;">
-            <div style="display: inline-flex; gap: 6px;">
-              {% if request.user.is_admin_user or request.user.is_manager %}
-              <a href="{% url 'resend_user_invitation' bh.pk %}" class="btn btn-secondary btn-sm" title="Resend Welcome Email & Setup Link">Resend Invite</a>
-              {% endif %}
-              <a href="{% url 'branch_head_counselors' bh.pk %}" class="btn btn-primary btn-sm" title="View Counselors under this Branch Head">
-                Counselors &rarr;
-              </a>
-              {% if request.user.is_admin_user %}
-              <a href="{% url 'admin_branch_head_edit' bh.pk %}" class="btn btn-secondary btn-sm">Edit</a>
-              <a href="{% url 'admin_set_user_password' bh.pk %}?next={% url 'admin_branch_heads_list' %}" class="btn btn-warning btn-sm" title="Reset / Set Password">Password</a>
-              <a href="{% url 'admin_branch_head_toggle_status' bh.pk %}" class="btn btn-sm {% if bh.is_active %}btn-secondary{% else %}btn-success{% endif %}" data-confirm="Are you sure you want to change this branch head's account status?">
-                {% if bh.is_active %}Deactivate{% else %}Activate{% endif %}
-              </a>
-              {% endif %}
-            </div>
+          <td style="text-align: right; white-space: nowrap;">
+            {% include 'admin/partials/user_action_buttons.html' with target_user=bh next_url=request.get_full_path %}
           </td>
         </tr>
         {% empty %}
@@ -184,4 +170,6 @@
     </table>
   </div>
 </div>
+
+{% include 'admin/partials/user_delete_modal.html' %}
 {% endblock %}

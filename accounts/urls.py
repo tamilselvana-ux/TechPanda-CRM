@@ -62,8 +62,12 @@ urlpatterns = [
 
     path('receptionist/login/', views.receptionist_login, name='receptionist_login'),
 
-    # Universal User Profile Resolver (All Roles)
+    # Universal User Profile & Operations Resolver (All Roles)
     path('users/<int:pk>/profile/', views.universal_user_profile_redirect, name='universal_user_profile'),
+    path('users/<int:pk>/leads/', views.universal_user_leads_redirect, name='universal_user_leads'),
+    path('users/<int:pk>/leads/redirect/', views.universal_user_leads_redirect, name='universal_user_leads_redirect'),
+    path('admin/users/<int:pk>/edit/', views.admin_user_edit, name='admin_user_edit'),
+    path('admin/users/<int:pk>/delete/', views.admin_user_delete, name='admin_user_delete'),
 
     # Admin Receptionist Oversight & Management
     path('admin/receptionists/', receptionist_views.admin_receptionists_list, name='admin_receptionists_list'),
