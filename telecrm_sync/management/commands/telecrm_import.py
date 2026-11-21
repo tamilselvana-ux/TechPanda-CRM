@@ -222,11 +222,16 @@ class Command(BaseCommand):
         target_count = min(total_enterprise_leads, max_limit) if max_limit else total_enterprise_leads
         current_skip = sync_run.cursor.get("skip", 0)
 
-        batch_leads_to_create = []
         page_size = 100
 
-        while current_skip < target_count:
-            fetch_limit = min(page_size, target_count - current_skip)
+        # Run continuous paging if target_count was reported as 0 or unknown
+        has_known_target = target_count > 0
+
+        while (not has_known_target or current_skip < target_count):
+            fetch_limit = min(page_size, target_count - current_skip) if has_known_target else page_size
+            if max_limit and current_skip >= max_limit:
+                break
+
             leads_page = client.list_leads(skip=current_skip, limit=fetch_limit)
             if not leads_page:
                 self.stdout.write(f"  Reached end of leads at skip={current_skip}.")
@@ -260,8 +265,11 @@ class Command(BaseCommand):
             sync_run.cursor["skip"] = current_skip
             sync_run.save(update_fields=["leads_seen", "cursor"])
 
-            pct = (current_skip / target_count) * 100 if target_count else 100
-            self.stdout.write(f"  Leads Extracted: {current_skip}/{target_count} ({pct:.1f}%)")
+            if has_known_target:
+                pct = (current_skip / target_count) * 100
+                self.stdout.write(f"  Leads Extracted: {current_skip}/{target_count} ({pct:.1f}%)")
+            else:
+                self.stdout.write(f"  Leads Extracted: {current_skip} leads...")
 
             if len(leads_page) < fetch_limit:
                 break

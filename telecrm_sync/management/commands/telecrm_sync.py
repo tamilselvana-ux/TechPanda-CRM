@@ -161,7 +161,7 @@ class Command(BaseCommand):
         """Pages /lead/search newest-first and stops when encountering all known leads."""
         skip = 0
         limit = 100
-        max_new_pages = 20  # Safety circuit breaker: max 2,000 new leads in a single 5-minute interval
+        max_new_pages = 500  # Paginates up to 50,000 new leads per run
 
         while max_new_pages > 0:
             page = client.list_leads(skip=skip, limit=limit)

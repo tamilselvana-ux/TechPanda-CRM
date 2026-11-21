@@ -380,8 +380,9 @@ class AutomationEngine:
         elif node_type == 'buttons':
             selected_id = None
             if incoming_data and incoming_data.get('type') == 'button_reply':
-                selected_id = incoming_data.get('id')
-            else:
+                selected_id = incoming_data.get('id') or (incoming_data.get('button_reply') or {}).get('id')
+            
+            if not selected_id:
                 norm_in = normalize_text(incoming_text)
                 options = curr_node.get('options') or data_block.get('options', [])
                 for opt in options:
@@ -415,8 +416,9 @@ class AutomationEngine:
         elif node_type == 'list':
             selected_row_id = None
             if incoming_data and incoming_data.get('type') == 'list_reply':
-                selected_row_id = incoming_data.get('id')
-            else:
+                selected_row_id = incoming_data.get('id') or (incoming_data.get('list_reply') or {}).get('id')
+            
+            if not selected_row_id:
                 norm_in = normalize_text(incoming_text)
                 sections = curr_node.get('sections') or data_block.get('sections', [])
                 for sec in sections:

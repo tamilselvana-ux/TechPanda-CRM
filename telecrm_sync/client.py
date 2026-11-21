@@ -135,10 +135,23 @@ class TeleCRMClient:
         """
         Retrieves total count of leads in TeleCRM enterprise.
         POST /lead/search?onlyCount=true body {}
+        Supports totalCount, total_count, count, and total JSON keys.
         """
         data = self._request("POST", "/lead/search", params={"onlyCount": "true"}, json_data={})
         if isinstance(data, dict):
-            return int(data.get("total_count", 0))
+            val = (
+                data.get("totalCount") or
+                data.get("total_count") or
+                data.get("count") or
+                data.get("total") or
+                0
+            )
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                return 0
+        elif isinstance(data, (int, float)):
+            return int(data)
         return 0
 
     def list_leads(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:

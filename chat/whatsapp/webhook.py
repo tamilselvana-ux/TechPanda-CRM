@@ -168,11 +168,21 @@ def process_incoming_message(value: Dict[str, Any], default_business_account: Op
             if itype == 'button_reply':
                 btn = interactive.get('button_reply', {})
                 text_content = btn.get('title', '')
-                interactive_info = {'type': 'button_reply', 'button_reply': btn}
+                interactive_info = {
+                    'type': 'button_reply',
+                    'id': btn.get('id', ''),
+                    'title': btn.get('title', ''),
+                    'button_reply': btn
+                }
             elif itype == 'list_reply':
                 lst = interactive.get('list_reply', {})
                 text_content = lst.get('title', '')
-                interactive_info = {'type': 'list_reply', 'list_reply': lst}
+                interactive_info = {
+                    'type': 'list_reply',
+                    'id': lst.get('id', ''),
+                    'title': lst.get('title', ''),
+                    'list_reply': lst
+                }
             else:
                 text_content = '[Interactive Selection]'
             msg_type = 'text'

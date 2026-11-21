@@ -27,6 +27,14 @@ def telecrm_sync_dashboard(request):
     Displays health indicators, last run status, execution history, unmapped metadata,
     and manual trigger controls.
     """
+    # Automatically mark abandoned runs older than 30 minutes as FAILED
+    from django.utils import timezone
+    stale_cutoff = timezone.now() - timezone.timedelta(minutes=30)
+    TeleCRMSyncRun.objects.filter(status="RUNNING", started_at__lt=stale_cutoff).update(
+        status="FAILED",
+        finished_at=timezone.now()
+    )
+
     last_run = TeleCRMSyncRun.objects.order_by("-started_at").first()
     recent_runs = TeleCRMSyncRun.objects.order_by("-started_at")[:15]
 
