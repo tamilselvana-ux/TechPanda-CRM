@@ -35,9 +35,14 @@ def role_required(*allowed_roles):
             messages.error(request, "Access denied: You do not have permission to access this resource.")
             if request.user.is_superuser or request.user.role in (UserRole.ADMIN, UserRole.SUPERADMIN):
                 return redirect('admin_dashboard')
-            return redirect(_ROLE_DASHBOARD_URL_NAMES.get(request.user.role, 'root'))
+            from django.urls import reverse
+            target = _ROLE_DASHBOARD_URL_NAMES.get(request.user.role, 'root')
+            if reverse(target) == request.path:
+                raise PermissionDenied
+            return redirect(target)
         return _wrapped_view
     return decorator
+	
 
 def admin_required(view_func):
     return role_required(UserRole.ADMIN, UserRole.SUPERADMIN)(view_func)
