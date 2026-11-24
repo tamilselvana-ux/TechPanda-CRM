@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env
-load_dotenv(BASE_DIR / '.env', override=True)
+load_dotenv(BASE_DIR / '.env', override=False)
 
 # Security settings
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-techpanda-crm-default-key-change-in-prod')
