@@ -31,7 +31,22 @@ class MarketingLoginAndDashboardTests(TestCase):
         self.assertRedirects(res, reverse('marketing_dashboard'))
 
     def test_marketing_dashboard_renders_for_marketing_user(self):
-        """Marketing user can view marketing_dashboard with 200 OK and navigation."""
+        """Marketing user can view marketing_dashboard with 200 OK and navigation, including linked FB leads."""
+        from leads.models import Lead
+        from fb_leads.models import FacebookLead, FacebookPage, FacebookAccount
+        account = FacebookAccount.objects.create(account_name="Test Meta Account", access_token="test_tok")
+        page = FacebookPage.objects.create(account=account, page_id="123456789", page_name="Test Page", page_access_token="test_tok")
+        lead = Lead.objects.create(name="Student Candidate", phone="9988776655", branch=self.branch)
+        FacebookLead.objects.create(
+            leadgen_id="fb_lead_123",
+            lead=lead,
+            fb_page=page,
+            form_id="form_1",
+            form_name="Full Stack Course",
+            full_name="Student Candidate",
+            phone="9988776655",
+        )
+
         self.client.force_login(self.marketing_user)
         res = self.client.get(reverse('marketing_dashboard'))
         self.assertEqual(res.status_code, 200)
@@ -39,6 +54,8 @@ class MarketingLoginAndDashboardTests(TestCase):
         self.assertContains(res, 'Facebook Leads')
         self.assertContains(res, 'WhatsApp Campaigns')
         self.assertContains(res, 'Meta Connections')
+        self.assertContains(res, reverse('admin_lead_detail', args=[lead.id]))
+        self.assertContains(res, 'Student Candidate')
 
     def test_marketing_user_sidebar_navigation(self):
         """Sidebar renders marketing-specific links when logged in as marketing."""

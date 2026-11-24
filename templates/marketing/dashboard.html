@@ -130,7 +130,7 @@
         <tr style="border-bottom: 1px solid #f1f5f9;">
           <td style="padding: 12px 16px; font-weight: 600; color: #0f172a;">
             {% if fb.lead %}
-            <a href="{% url 'lead_detail' fb.lead.id %}" style="color: #2563eb; text-decoration: none;">{{ fb.full_name|default:fb.lead.name }}</a>
+            <a href="{% url 'admin_lead_detail' fb.lead.id %}" style="color: #2563eb; text-decoration: none;">{{ fb.full_name|default:fb.lead.name }}</a>
             {% else %}
             {{ fb.full_name|default:"Unknown" }}
             {% endif %}
