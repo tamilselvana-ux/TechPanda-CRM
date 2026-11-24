@@ -27,7 +27,7 @@ from datetime import datetime, timedelta, timezone as dt_timezone
 from django.db import IntegrityError, transaction
 from django.db.models import Count, F, Q
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.module_loading import import_string
 
 from accounts.models import User, UserRole
@@ -286,12 +286,18 @@ def _google_ads_channel():
 
 def ingest_calls(device, calls):
     """Google Ads number calls from the phone's call log. Returns a summary dict for the app."""
-    result = {"created": 0, "duplicates": 0, "new_leads": 0, "errors": []}
+    result = {"created": 0, "duplicates": 0, "new_leads": 0, "skipped_cutoff": 0, "errors": []}
     on_missed = conf.get("ON_MISSED_CALL")
     on_missed = import_string(on_missed) if on_missed else None
     receiver = device.user
     author = display_name(receiver)
     source = conf.get("GOOGLE_CALL_SOURCE")
+
+    effective_cutoff = device.sync_cutoff_date
+    if not effective_cutoff:
+        cfg_cutoff = conf.get("SYNC_CUTOFF_DATE")
+        if cfg_cutoff:
+            effective_cutoff = parse_date(cfg_cutoff) if isinstance(cfg_cutoff, str) else cfg_cutoff
 
     for i, item in enumerate(calls):
         try:
@@ -299,6 +305,13 @@ def ingest_calls(device, calls):
         except (KeyError, TypeError, ValueError) as e:
             result["errors"].append({"index": i, "error": str(e)})
             continue
+
+        # Enforce historical cutoff date: skip calls started prior to cutoff
+        if effective_cutoff and data.get("started_at"):
+            call_dt = data["started_at"]
+            if hasattr(call_dt, "date") and call_dt.date() < effective_cutoff:
+                result["skipped_cutoff"] += 1
+                continue
 
         if CallEvent.objects.filter(device=device, raw_number=data["raw_number"],
                                     started_at=data["started_at"]).exists():

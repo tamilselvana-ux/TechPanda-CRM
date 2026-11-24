@@ -113,6 +113,11 @@ class CallDevice(models.Model):
     last_seen_at = models.DateTimeField(null=True, blank=True)
     last_call_sync_at = models.DateTimeField(null=True, blank=True)
     last_recording_at = models.DateTimeField(null=True, blank=True)
+    sync_cutoff_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Historical cutoff date for call logs and recordings",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

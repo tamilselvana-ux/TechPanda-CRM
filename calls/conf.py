@@ -45,6 +45,7 @@ DEFAULTS = {
     "ALLOWED_AUDIO_EXTENSIONS": (
         "mp3", "m4a", "aac", "amr", "awb", "wav", "ogg", "oga", "opus", "3gp", "3gpp", "mp4", "webm", "flac",
     ),
+    "SYNC_CUTOFF_DATE": None,
 }
 
 

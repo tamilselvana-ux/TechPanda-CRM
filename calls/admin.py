@@ -14,7 +14,8 @@ from .models import CallDevice, CallEvent
 
 @admin.register(CallDevice)
 class CallDeviceAdmin(admin.ModelAdmin):
-    list_display = ('user', 'google_sim_label', 'app_version', 'last_seen_at', 'last_call_sync_at', 'last_recording_at')
+    list_display = ('user', 'google_sim_label', 'sync_cutoff_date', 'app_version', 'last_seen_at', 'last_call_sync_at', 'last_recording_at')
+    list_editable = ('sync_cutoff_date',)
     search_fields = ('user__username', 'user__first_name', 'user__last_name')
     readonly_fields = ('created_at',)
 

@@ -10,6 +10,7 @@ import logging
 
 from django.db.models import Q
 
+from accounts.models import UserRole
 from leads.duplicates import normalize_phone
 from leads.models import Lead
 

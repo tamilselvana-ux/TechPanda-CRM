@@ -75,6 +75,11 @@ class FacebookPage(models.Model):
         choices=SYNC_INTERVAL_CHOICES,
         help_text="Auto-sync interval in minutes"
     )
+    sync_cutoff_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Historical cutoff date. Leads created before this date will never be synced."
+    )
     next_sync_at = models.DateTimeField(
         null=True,
         blank=True,

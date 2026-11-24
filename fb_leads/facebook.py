@@ -2,11 +2,13 @@
 Supports multi-account and multi-page routing while maintaining fallback to settings.
 """
 
+import json
 import logging
 import requests
+from datetime import date, datetime, timezone as dt_timezone
 from django.conf import settings
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime
 
 from .models import FacebookAccount, FacebookPage, FacebookLead
 
@@ -191,8 +193,10 @@ def sync_pages_for_account(account, default_branch=None):
     return pages_synced
 
 
-def save_lead(lead, page_id="", form_name=""):
-    """Save one lead dict (as returned by Facebook). Returns (obj, created)."""
+def save_lead(lead, page_id="", form_name="", cutoff_date=None):
+    """Save one lead dict (as returned by Facebook). Returns (obj, created).
+    Skips leads created before cutoff_date (returns (None, False)).
+    """
     answers = {}
     for item in lead.get("field_data", []):
         values = item.get("values") or []
@@ -207,6 +211,19 @@ def save_lead(lead, page_id="", form_name=""):
         fb_page = FacebookPage.objects.filter(page_id=page_id).first()
         if fb_page:
             account = fb_page.account
+
+    # Determine cutoff date
+    if cutoff_date is None and fb_page and fb_page.sync_cutoff_date:
+        cutoff_date = fb_page.sync_cutoff_date
+
+    created_dt = parse_datetime(lead["created_time"]) if lead.get("created_time") else None
+    if cutoff_date:
+        if isinstance(cutoff_date, str):
+            cutoff_date = parse_date(cutoff_date)
+        if created_dt and cutoff_date and created_dt.date() < cutoff_date:
+            log.info("Skipping Facebook lead %s created on %s (before cutoff date %s)",
+                     lead.get("id"), created_dt, cutoff_date)
+            return None, False
 
     obj, created = FacebookLead.objects.update_or_create(
         leadgen_id=lead["id"],
@@ -225,7 +242,7 @@ def save_lead(lead, page_id="", form_name=""):
             "campaign_name": lead.get("campaign_name", ""),
             "platform": (lead.get("platform") or "").strip(),
             "all_answers": answers,
-            "created_on_facebook": parse_datetime(lead["created_time"]) if lead.get("created_time") else None,
+            "created_on_facebook": created_dt,
         },
     )
     # CRM: every Facebook lead becomes (or updates) a CRM lead with source "Facebook".
@@ -247,43 +264,59 @@ def fetch_and_save_lead(leadgen_id, page_id=""):
     return save_lead(lead, page_id=page_id, form_name=form_name)
 
 
-def sync_page_leads(page_id):
+def sync_page_leads(page_id, since_date=None):
     """Pull leads for a specific Facebook Page. Returns new count."""
     token = get_token_for_page(page_id)
     new_count = 0
+    fb_page = FacebookPage.objects.filter(page_id=page_id).first()
+
+    effective_cutoff = since_date or (fb_page.sync_cutoff_date if fb_page else None)
+    if isinstance(effective_cutoff, str) and effective_cutoff:
+        effective_cutoff = parse_date(effective_cutoff)
+
     forms = _get(f"{page_id}/leadgen_forms", {"fields": "id,name", "limit": 100}, token=token)
     for form in forms.get("data", []):
-        url_path, params = f"{form['id']}/leads", {"fields": LEAD_FIELDS, "limit": 100}
+        url_path = f"{form['id']}/leads"
+        params = {"fields": LEAD_FIELDS, "limit": 100}
+        if effective_cutoff:
+            cutoff_dt = datetime.combine(effective_cutoff, datetime.min.time(), tzinfo=dt_timezone.utc)
+            params["filtering"] = json.dumps([
+                {"field": "time_created", "operator": "GREATER_THAN_OR_EQUAL", "value": int(cutoff_dt.timestamp())}
+            ])
+
         while True:
             page = _get(url_path, params, token=token)
             for lead in page.get("data", []):
-                _, created = save_lead(lead, page_id=page_id, form_name=form.get("name", ""))
-                new_count += int(created)
+                res = save_lead(lead, page_id=page_id, form_name=form.get("name", ""), cutoff_date=effective_cutoff)
+                if res and res[0] is not None:
+                    _, created = res
+                    new_count += int(created)
             after = page.get("paging", {}).get("cursors", {}).get("after")
             if not page.get("paging", {}).get("next") or not after:
                 break
-            params = {"fields": LEAD_FIELDS, "limit": 100, "after": after}
+            params["after"] = after
 
+    cutoff_label = f" (from {effective_cutoff})" if effective_cutoff else ""
     FacebookPage.objects.filter(page_id=page_id).update(
         last_sync_at=timezone.now(),
-        last_sync_status=f"Synced {new_count} new leads",
+        last_sync_status=f"Synced {new_count} new leads{cutoff_label}",
         last_error=""
     )
     return new_count
 
 
-def sync_all_leads():
+def sync_all_leads(since_date=None):
     """Pull every lead from every connected Page or default page. Returns total new count."""
     connected_pages = FacebookPage.objects.filter(status='CONNECTED')
     total_new = 0
     if connected_pages.exists():
         for p in connected_pages:
             try:
-                total_new += sync_page_leads(p.page_id)
+                total_new += sync_page_leads(p.page_id, since_date=since_date)
             except Exception as e:
                 log.warning("Failed to sync leads for page %s: %s", p.page_id, e)
         return total_new
 
     # Fallback to single page settings
     page_id = settings.FB_PAGE_ID
-    return sync_page_leads(page_id)
+    return sync_page_leads(page_id, since_date=since_date)

@@ -112,6 +112,10 @@ def ensure_scheduler_running():
     Idempotent call to start the background auto-sync worker thread if not running.
     Safe to call on requests, views, or application readiness.
     """
+    import sys
+    if 'test' in sys.argv:
+        return False
+
     global _worker_thread, _stop_event
     with _scheduler_lock:
         if _worker_thread is not None and _worker_thread.is_alive():
@@ -138,7 +142,7 @@ def stop_auto_sync_background_worker():
             _worker_thread = None
 
 
-def trigger_immediate_page_sync(page_id: str) -> int:
+def trigger_immediate_page_sync(page_id: str, since_date=None) -> int:
     """
     Manually triggers immediate synchronization for a FacebookPage,
     resetting its next_sync_at schedule timer.
@@ -150,14 +154,15 @@ def trigger_immediate_page_sync(page_id: str) -> int:
     if not page:
         raise ValueError(f"FacebookPage with page_id {page_id} not found.")
 
-    new_count = sync_page_leads(page_id)
+    new_count = sync_page_leads(page_id, since_date=since_date)
     interval_mins = page.sync_interval_minutes or 3
     next_due = timezone.now() + timedelta(minutes=interval_mins)
 
+    cutoff_label = f" (from {since_date})" if since_date else ""
     FacebookPage.objects.filter(id=page.id).update(
         last_sync_at=timezone.now(),
         next_sync_at=next_due,
-        last_sync_status=f"Synced {new_count} new lead(s)",
+        last_sync_status=f"Synced {new_count} new lead(s){cutoff_label}",
         last_error=""
     )
     return new_count

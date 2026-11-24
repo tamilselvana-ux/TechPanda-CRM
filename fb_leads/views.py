@@ -246,16 +246,18 @@ def sync_leads(request):
     """Button: link the Page for automatic leads, then pull all existing leads (each becomes a CRM lead)."""
     if not _can_manage(request.user):
         raise PermissionDenied("Only Admin and Sales Head can sync Facebook leads.")
+    sync_from_date = request.POST.get("sync_from_date", "").strip() or request.GET.get("sync_from_date", "").strip()
     try:
         if subscribe_page():
             messages.success(request, "Page linked: new Facebook leads will now arrive automatically.")
     except Exception as exc:
         messages.error(request, f"{exc}")
     try:
-        n = sync_all_leads()
-        messages.success(request, f"Sync done. {n} new Facebook lead(s) added to the CRM.")
+        n = sync_all_leads(since_date=sync_from_date or None)
+        date_msg = f" from {sync_from_date}" if sync_from_date else ""
+        messages.success(request, f"Sync done. {n} new Facebook lead(s){date_msg} added to the CRM.")
         log_activity(user=request.user, action="Facebook Leads Synced",
-                     description=f"Facebook Lead Ads sync: {n} new lead(s).", object_type="FacebookLead",
+                     description=f"Facebook Lead Ads sync{date_msg}: {n} new lead(s).", object_type="FacebookLead",
                      request=request)
     except Exception as exc:
         messages.error(request, f"Sync failed: {exc}")
@@ -471,6 +473,62 @@ def fb_page_toggle_webhook(request, page_id):
 
 @login_required
 @require_POST
+def fb_page_update_cutoff_date(request, page_id):
+    """Update historical cutoff date for a Facebook Page."""
+    if not _can_manage(request.user):
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "error": "Permission denied"}, status=403)
+        raise PermissionDenied("Only Admin and Sales Head can configure cutoff date.")
+
+    from .models import FacebookPage
+    from django.utils.dateparse import parse_date
+
+    page = FacebookPage.objects.filter(id=page_id).first()
+    if not page:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "error": "Facebook Page not found"}, status=404)
+        messages.error(request, "Facebook Page not found.")
+        return redirect("fb_leads:fb_accounts")
+
+    cutoff_str = request.POST.get("cutoff_date", "").strip()
+    if cutoff_str:
+        try:
+            parsed = parse_date(cutoff_str)
+            if not parsed:
+                return JsonResponse({"success": False, "error": "Invalid date format. Expected YYYY-MM-DD."}, status=400)
+            page.sync_cutoff_date = parsed
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
+    else:
+        page.sync_cutoff_date = None
+
+    page.save(update_fields=["sync_cutoff_date"])
+
+    cutoff_display = page.sync_cutoff_date.strftime("%d %b %Y") if page.sync_cutoff_date else "None (Sync all)"
+    msg = f"Updated sync cutoff date to {cutoff_display} for '{page.page_name}'."
+    log_activity(
+        user=request.user,
+        action="Facebook Page Cutoff Date Updated",
+        description=msg,
+        object_type="FacebookPage",
+        object_id=str(page.id),
+        request=request
+    )
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.POST.get("format") == "json":
+        return JsonResponse({
+            "success": True,
+            "message": msg,
+            "cutoff_date": str(page.sync_cutoff_date) if page.sync_cutoff_date else "",
+            "cutoff_display": cutoff_display,
+        })
+
+    messages.success(request, msg)
+    return redirect("fb_leads:fb_accounts")
+
+
+@login_required
+@require_POST
 def fb_page_sync(request, page_id):
     """Sync leads specifically for one Facebook Page (supports both HTTP form POST and AJAX)."""
     if not _can_manage(request.user):
@@ -488,8 +546,9 @@ def fb_page_sync(request, page_id):
         messages.error(request, "Facebook Page not found.")
         return redirect("fb_leads:fb_accounts")
 
+    sync_from_date = request.POST.get("sync_from_date", "").strip() or None
     try:
-        n = trigger_immediate_page_sync(page.page_id)
+        n = trigger_immediate_page_sync(page.page_id, since_date=sync_from_date)
         page.refresh_from_db()
         msg = f"Sync complete for '{page.page_name}': {n} new lead(s) imported."
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
