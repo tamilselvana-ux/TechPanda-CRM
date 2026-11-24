@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Marketing Workspace - TechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+  <div class="page-title-group">
+    <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--tp-text-primary); margin: 0 0 6px 0;">Marketing Workspace</h1>
+    <p style="font-size: 0.9rem; color: var(--tp-text-muted); margin: 0;">Welcome, <strong>{{ user.get_full_name|default:user.username }}</strong>! Monitor inbound acquisition, ad forms, and broadcast campaigns.</p>
+  </div>
+  <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="{% url 'fb_leads:facebook_leads' %}" class="btn btn-primary tp-btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+      Facebook Leads
+    </a>
+    <a href="{% url 'whatsapp_campaigns_list' %}" class="btn btn-secondary tp-btn-secondary" style="display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      WhatsApp Campaigns
+    </a>
+    <a href="{% url 'fb_leads:fb_accounts' %}" class="btn btn-secondary tp-btn-secondary" style="display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      Meta Connections
+    </a>
+  </div>
+</div>
+
+<!-- KPI SUMMARY CARDS -->
+<div class="kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <!-- Card 1: Total Facebook Leads -->
+  <a href="{% url 'fb_leads:facebook_leads' %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: space-between; border-radius: 12px; border-left: 4px solid #2563eb; padding: 18px 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+    <div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Total Facebook Leads</div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-top: 4px;">{{ total_fb_leads }}</div>
+      <span style="font-size: 0.78rem; color: #2563eb; font-weight: 600;">View all leads &rarr;</span>
+    </div>
+    <div style="width: 44px; height: 44px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+    </div>
+  </a>
+
+  <!-- Card 2: Today's Facebook Leads -->
+  <a href="{% url 'fb_leads:facebook_leads' %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: space-between; border-radius: 12px; border-left: 4px solid #10b981; padding: 18px 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+    <div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Fresh Leads Today</div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-top: 4px;">{{ today_fb_leads }}</div>
+      <span style="font-size: 0.78rem; color: #10b981; font-weight: 600;">Today's intake &rarr;</span>
+    </div>
+    <div style="width: 44px; height: 44px; border-radius: 10px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; color: #10b981;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+    </div>
+  </a>
+
+  <!-- Card 3: Connected Meta Pages -->
+  <a href="{% url 'fb_leads:fb_accounts' %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: space-between; border-radius: 12px; border-left: 4px solid #8b5cf6; padding: 18px 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+    <div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Connected Pages</div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-top: 4px;">{{ connected_pages_count }}</div>
+      <span style="font-size: 0.78rem; color: #8b5cf6; font-weight: 600;">Manage connections &rarr;</span>
+    </div>
+    <div style="width: 44px; height: 44px; border-radius: 10px; background: #f5f3ff; display: flex; align-items: center; justify-content: center; color: #8b5cf6;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    </div>
+  </a>
+
+  <!-- Card 4: WhatsApp Campaigns -->
+  <a href="{% url 'whatsapp_campaigns_list' %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: space-between; border-radius: 12px; border-left: 4px solid #f59e0b; padding: 18px 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+    <div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Broadcast Campaigns</div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-top: 4px;">{{ total_campaigns }}</div>
+      <span style="font-size: 0.78rem; color: #f59e0b; font-weight: 600;">{{ active_campaigns }} active &rarr;</span>
+    </div>
+    <div style="width: 44px; height: 44px; border-radius: 10px; background: #fffbeb; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"></path><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </div>
+  </a>
+</div>
+
+<!-- MARKETING TOOLS HUB -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <div class="tp-card" style="padding: 20px; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+      <div style="width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+      </div>
+      <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #0f172a;">Meta Lead Ads Management</h3>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--tp-text-muted); margin: 0 0 14px 0;">Configure Facebook and Instagram pages, subscribe to real-time lead webhooks, and set branch-level routing.</p>
+    <div style="display: flex; gap: 8px;">
+      <a href="{% url 'fb_leads:facebook_leads' %}" class="btn btn-sm btn-primary" style="font-size: 0.8rem; padding: 5px 12px;">View All Leads</a>
+      <a href="{% url 'fb_leads:fb_accounts' %}" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; padding: 5px 12px;">Sync Settings</a>
+    </div>
+  </div>
+
+  <div class="tp-card" style="padding: 20px; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+      <div style="width: 32px; height: 32px; border-radius: 8px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; color: #10b981;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      </div>
+      <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #0f172a;">WhatsApp Marketing & Campaigns</h3>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--tp-text-muted); margin: 0 0 14px 0;">Launch personalized bulk template broadcasts, track delivery rates in real time, and converse with prospects.</p>
+    <div style="display: flex; gap: 8px;">
+      <a href="{% url 'whatsapp_campaigns_list' %}" class="btn btn-sm btn-primary" style="font-size: 0.8rem; padding: 5px 12px;">All Campaigns</a>
+      <a href="{% url 'whatsapp_campaign_create' %}" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; padding: 5px 12px;">+ New Campaign</a>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT INBOUND LEADS TABLE -->
+<div class="crm-card" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+  <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #0f172a;">Recent Facebook Inbound Leads</h3>
+    <a href="{% url 'fb_leads:facebook_leads' %}" style="font-size: 0.82rem; font-weight: 600; color: #2563eb; text-decoration: none;">View All &rarr;</a>
+  </div>
+
+  {% if recent_fb_leads %}
+  <div class="table-responsive">
+    <table class="crm-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+      <thead>
+        <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; text-align: left; color: #64748b; font-size: 0.78rem; text-transform: uppercase;">
+          <th style="padding: 10px 16px;">Lead Name</th>
+          <th style="padding: 10px 16px;">Phone</th>
+          <th style="padding: 10px 16px;">Form / Ad</th>
+          <th style="padding: 10px 16px;">Page</th>
+          <th style="padding: 10px 16px;">Received At</th>
+          <th style="padding: 10px 16px; text-align: right;">CRM Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fb in recent_fb_leads %}
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #0f172a;">
+            {% if fb.lead %}
+            <a href="{% url 'lead_detail' fb.lead.id %}" style="color: #2563eb; text-decoration: none;">{{ fb.full_name|default:fb.lead.name }}</a>
+            {% else %}
+            {{ fb.full_name|default:"Unknown" }}
+            {% endif %}
+          </td>
+          <td style="padding: 12px 16px; color: #334155;">{{ fb.phone|default:"-" }}</td>
+          <td style="padding: 12px 16px; color: #64748b;">
+            <div style="font-weight: 500; color: #334155;">{{ fb.form_name|default:"-" }}</div>
+            {% if fb.ad_name %}<div style="font-size: 0.75rem; color: #94a3b8;">{{ fb.ad_name }}</div>{% endif %}
+          </td>
+          <td style="padding: 12px 16px; color: #64748b;">{{ fb.fb_page.page_name|default:fb.page_id|default:"-" }}</td>
+          <td style="padding: 12px 16px; color: #64748b;">{{ fb.received_at|date:"d M Y, h:i A" }}</td>
+          <td style="padding: 12px 16px; text-align: right;">
+            {% if fb.lead %}
+            <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">In CRM</span>
+            {% else %}
+            <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">Pending Intake</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="padding: 32px 20px; text-align: center; color: #64748b;">
+    <p style="margin: 0; font-size: 0.9rem;">No inbound Facebook leads received yet.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

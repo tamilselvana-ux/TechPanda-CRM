@@ -52,6 +52,8 @@ def login_redirect(request):
         return redirect('accountant_dashboard')
     elif getattr(user, 'is_finance_head_user', False):
         return redirect('finance_dashboard')
+    elif getattr(user, 'is_marketing_user', False):
+        return redirect('marketing_dashboard')
     elif user.is_staff:
         return redirect('admin_dashboard')
 

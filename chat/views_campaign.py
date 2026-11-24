@@ -36,21 +36,25 @@ from chat.tasks import trigger_campaign_execution_async
 
 
 def is_campaign_authorized(user) -> bool:
-    """Verifies that the user has permission to manage or view campaigns: Admin, Superadmin, and Sales Head only."""
+    """Verifies that the user has permission to manage or view campaigns: Admin, Superadmin, Sales Head, and Marketing."""
     if not (user and user.is_authenticated and user.is_active):
         return False
     return bool(
         getattr(user, 'is_admin_user', False)
         or getattr(user, 'is_sales_head_user', False)
         or getattr(user, 'role', '') == 'SALES_HEAD'
+        or getattr(user, 'is_marketing_user', False)
+        or getattr(user, 'role', '') == 'MARKETING'
     )
 
 
 def can_manage_campaign(user, campaign: WhatsAppCampaign = None) -> bool:
-    """Verifies that the user has permission to manage or view this campaign: Admin, Superadmin, and Sales Head only."""
+    """Verifies that the user has permission to manage or view this campaign: Admin, Superadmin, Sales Head, and Marketing."""
     if not is_campaign_authorized(user):
         return False
     if getattr(user, 'is_admin_user', False):
+        return True
+    if getattr(user, 'is_marketing_user', False) or getattr(user, 'role', '') == 'MARKETING':
         return True
     if campaign and campaign.created_by == user:
         return True

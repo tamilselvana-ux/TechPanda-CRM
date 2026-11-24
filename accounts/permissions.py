@@ -16,7 +16,7 @@ _ROLE_DASHBOARD_URL_NAMES = {
     UserRole.RECEPTIONIST: 'receptionist_dashboard',
     UserRole.ACCOUNTANT: 'accountant_dashboard',
     UserRole.FINANCE_HEAD: 'finance_dashboard',
-    UserRole.MARKETING: 'admin_marketing_users_list',
+    UserRole.MARKETING: 'marketing_dashboard',
 }
 
 def role_required(*allowed_roles):
@@ -68,6 +68,9 @@ def telecaller_required(view_func):
 def receptionist_required(view_func):
     return role_required(UserRole.RECEPTIONIST)(view_func)
 
+def marketing_required(view_func):
+    return role_required(UserRole.MARKETING, UserRole.ADMIN, UserRole.SUPERADMIN)(view_func)
+
 def accountant_required(view_func):
     return role_required(UserRole.ACCOUNTANT, UserRole.ADMIN, UserRole.SUPERADMIN)(view_func)
 
@@ -117,7 +120,7 @@ def can_access_lead(user, lead):
         if lead.assigned_telecaller and getattr(lead.assigned_telecaller, 'counselor_id', None) == user.id:
             return True
         return False
-    if user.role in (UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.RECEPTIONIST, UserRole.ACCOUNTANT, UserRole.FINANCE_HEAD):
+    if user.role in (UserRole.BRANCH_HEAD, UserRole.BRANCH_ADMIN, UserRole.RECEPTIONIST, UserRole.ACCOUNTANT, UserRole.FINANCE_HEAD, UserRole.MARKETING):
         return not user.branch_id or lead.branch_id == user.branch_id
     if user.is_telecaller_user:
         return lead.assigned_telecaller_id == user.id

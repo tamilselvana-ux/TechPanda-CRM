@@ -25,7 +25,12 @@ log = logging.getLogger("crm")
 
 
 def _can_manage(user):
-    return user.is_authenticated and (user.is_admin_user or user.is_sales_head_user)
+    return user.is_authenticated and (
+        user.is_admin_user or
+        user.is_sales_head_user or
+        getattr(user, 'is_marketing_user', False) or
+        getattr(user, 'role', '') == 'MARKETING'
+    )
 
 
 @csrf_exempt

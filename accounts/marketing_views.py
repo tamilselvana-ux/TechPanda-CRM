@@ -1,6 +1,8 @@
 import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 
@@ -10,6 +12,47 @@ from branches.models import Branch
 from activities.utils import log_activity
 
 logger = logging.getLogger(__name__)
+
+
+@login_required
+def marketing_dashboard(request):
+    """
+    Dedicated workspace dashboard for Marketing team members (and Admins).
+    Surfaces key acquisition metrics: Facebook leads, WhatsApp campaigns, automations,
+    and recent campaign performance.
+    """
+    user = request.user
+    if not (user.is_superuser or user.role in (UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.MARKETING)):
+        raise PermissionDenied("Access denied: You do not have permission to view the Marketing Dashboard.")
+
+    from django.utils import timezone
+    from fb_leads.models import FacebookLead, FacebookPage
+    from chat.models import WhatsAppCampaign, AutomationFlow
+
+    today = timezone.localdate()
+
+    total_fb_leads = FacebookLead.objects.count()
+    today_fb_leads = FacebookLead.objects.filter(received_at__date=today).count()
+    connected_pages_count = FacebookPage.objects.filter(status='CONNECTED').count()
+
+    total_campaigns = WhatsAppCampaign.objects.count()
+    active_campaigns = WhatsAppCampaign.objects.filter(status__in=['SCHEDULED', 'RUNNING', 'SENDING']).count()
+
+    active_flows = AutomationFlow.objects.filter(is_active=True).count()
+
+    recent_fb_leads = FacebookLead.objects.select_related('lead', 'fb_page').order_by('-received_at')[:10]
+
+    context = {
+        'total_fb_leads': total_fb_leads,
+        'today_fb_leads': today_fb_leads,
+        'connected_pages_count': connected_pages_count,
+        'total_campaigns': total_campaigns,
+        'active_campaigns': active_campaigns,
+        'active_flows': active_flows,
+        'recent_fb_leads': recent_fb_leads,
+        'portal_title': 'Marketing Portal',
+    }
+    return render(request, 'marketing/dashboard.html', context)
 
 
 @admin_required
