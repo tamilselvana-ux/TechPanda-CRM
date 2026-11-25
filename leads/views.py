@@ -384,7 +384,7 @@ def _get_safe_saved_views(request_or_user):
 # ADMIN: LEAD MANAGEMENT
 # ==========================================
 
-@admin_required
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.MARKETING)
 def admin_leads_list(request):
 
     active_view = request.GET.get('view', 'all_active').strip()

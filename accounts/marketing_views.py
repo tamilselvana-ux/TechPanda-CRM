@@ -26,13 +26,26 @@ def marketing_dashboard(request):
         raise PermissionDenied("Access denied: You do not have permission to view the Marketing Dashboard.")
 
     from django.utils import timezone
+    from leads.models import Lead, LeadStatus
     from fb_leads.models import FacebookLead, FacebookPage
     from chat.models import WhatsAppCampaign, AutomationFlow
 
     today = timezone.localdate()
 
+    # Exact CRM lead counts matching SuperAdmin All Leads
+    total_leads = Lead.objects.count()
+    today_leads = Lead.objects.filter(created_at__date=today).count()
+    meta_leads_count = Lead.objects.filter(
+        Q(channel__name__icontains='meta') | Q(channel__name__icontains='facebook') |
+        Q(source__icontains='meta') | Q(source__icontains='facebook')
+    ).count()
+    today_meta_leads = Lead.objects.filter(
+        Q(channel__name__icontains='meta') | Q(channel__name__icontains='facebook') |
+        Q(source__icontains='meta') | Q(source__icontains='facebook'),
+        created_at__date=today
+    ).count()
+
     total_fb_leads = FacebookLead.objects.count()
-    today_fb_leads = FacebookLead.objects.filter(received_at__date=today).count()
     connected_pages_count = FacebookPage.objects.filter(status='CONNECTED').count()
 
     total_campaigns = WhatsAppCampaign.objects.count()
@@ -43,13 +56,17 @@ def marketing_dashboard(request):
     recent_fb_leads = FacebookLead.objects.select_related('lead', 'fb_page').order_by('-received_at')[:10]
 
     context = {
+        'total_leads': total_leads,
+        'today_leads': today_leads,
+        'meta_leads_count': meta_leads_count,
+        'today_meta_leads': today_meta_leads,
         'total_fb_leads': total_fb_leads,
-        'today_fb_leads': today_fb_leads,
         'connected_pages_count': connected_pages_count,
         'total_campaigns': total_campaigns,
         'active_campaigns': active_campaigns,
         'active_flows': active_flows,
         'recent_fb_leads': recent_fb_leads,
+        'today': today,
         'portal_title': 'Marketing Portal',
     }
     return render(request, 'marketing/dashboard.html', context)

@@ -52,29 +52,59 @@
 
 <div class="filter-card" style="margin-bottom: 20px; padding: 16px 20px;">
   <form method="get" class="filter-form" style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;">
-    <div class="filter-col" style="flex: 2; min-width: 220px;">
+    <div class="filter-col" style="flex: 2; min-width: 200px;">
       <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Search</label>
       <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Name, phone, email, form...">
     </div>
 
-    <div class="filter-col" style="flex: 2; min-width: 200px;">
+    <div class="filter-col" style="flex: 1.5; min-width: 170px;">
       <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Instant Form</label>
       <select name="form" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
-        <option value="">All Facebook Forms ({{ available_forms|length }})</option>
+        <option value="">All Forms ({{ available_forms|length }})</option>
         {% for f in available_forms %}
         <option value="{{ f }}" {% if selected_form == f %}selected{% endif %}>{{ f }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="filter-col" style="flex: 2; min-width: 200px;">
+    <div class="filter-col" style="flex: 1.5; min-width: 170px;">
       <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Ad Creative</label>
       <select name="ad" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
-        <option value="">All Ad Creatives ({{ available_ads|length }})</option>
+        <option value="">All Ads ({{ available_ads|length }})</option>
         {% for a in available_ads %}
         <option value="{{ a }}" {% if selected_ad == a %}selected{% endif %}>{{ a }}</option>
         {% endfor %}
       </select>
+    </div>
+
+    <div class="filter-col" style="flex: 1.2; min-width: 140px;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Branch</label>
+      <select name="branch" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
+        <option value="">All Branches</option>
+        {% for b in branches %}
+        <option value="{{ b.id }}" {% if branch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col" style="flex: 1.2; min-width: 140px;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">CRM Status</label>
+      <select name="status" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
+        <option value="">All Statuses</option>
+        {% for val, label in lead_statuses %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col" style="flex: 1; min-width: 130px;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Date From</label>
+      <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="border-radius: 8px; font-size: 0.82rem; padding: 6px 8px;">
+    </div>
+
+    <div class="filter-col" style="flex: 1; min-width: 130px;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Date To</label>
+      <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="border-radius: 8px; font-size: 0.82rem; padding: 6px 8px;">
     </div>
 
     {% if crm_filter == 'error' %}
@@ -87,30 +117,47 @@
     </div>
   </form>
 
-  {% if selected_form or selected_ad or crm_filter == 'error' %}
+  {% if selected_form or selected_ad or crm_filter == 'error' or branch_id or status_filter or date_from or date_to %}
   <!-- Active Filter Pills -->
   <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--tp-surface-border, #e2e8f0); display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
     <span style="font-size: 0.78rem; font-weight: 700; color: var(--tp-text-muted);">Active Filters:</span>
     {% if selected_form %}
     <span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
       Form: {{ selected_form }}
-      <a href="?{% if selected_ad %}ad={{ selected_ad|urlencode }}&{% endif %}{% if q %}q={{ q|urlencode }}&{% endif %}{% if crm_filter %}crm={{ crm_filter }}{% endif %}" style="color: #0369a1; text-decoration: none; font-weight: 800;">&times;</a>
     </span>
     {% endif %}
 
     {% if selected_ad %}
     <span class="badge" style="background: #f3e8ff; color: #7e22ce; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
       Ad: {{ selected_ad }}
-      <a href="?{% if selected_form %}form={{ selected_form|urlencode }}&{% endif %}{% if q %}q={{ q|urlencode }}&{% endif %}{% if crm_filter %}crm={{ crm_filter }}{% endif %}" style="color: #7e22ce; text-decoration: none; font-weight: 800;">&times;</a>
+    </span>
+    {% endif %}
+
+    {% if branch_id %}
+    <span class="badge" style="background: #fef3c7; color: #b45309; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+      Branch ID: {{ branch_id }}
+    </span>
+    {% endif %}
+
+    {% if status_filter %}
+    <span class="badge" style="background: #ede9fe; color: #6d28d9; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+      Status: {{ status_filter }}
+    </span>
+    {% endif %}
+
+    {% if date_from or date_to %}
+    <span class="badge" style="background: #dcfce7; color: #15803d; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+      Date: {{ date_from|default:"Earliest" }} &rarr; {{ date_to|default:"Today" }}
     </span>
     {% endif %}
 
     {% if crm_filter == 'error' %}
     <span class="badge" style="background: #fee2e2; color: #b91c1c; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
       Status: Error Only
-      <a href="?{% if selected_form %}form={{ selected_form|urlencode }}&{% endif %}{% if selected_ad %}ad={{ selected_ad|urlencode }}&{% endif %}{% if q %}q={{ q|urlencode }}{% endif %}" style="color: #b91c1c; text-decoration: none; font-weight: 800;">&times;</a>
     </span>
     {% endif %}
+
+    <a href="{% url 'fb_leads:facebook_leads' %}" style="font-size: 0.75rem; color: #dc2626; text-decoration: underline; margin-left: 6px;">Clear All</a>
   </div>
   {% endif %}
 </div>

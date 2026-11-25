@@ -476,9 +476,7 @@
  <div class="cv-field-item {% if status_filter %}active-field{% endif %}" data-field="status" onclick="activateConditionCard('status')">
  <span class="cv-field-icon"></span> <span class="cv-field-name">Status</span>
  </div>
- <div class="cv-field-item {% if rating_filter %}active-field{% endif %}" data-field="rating" onclick="activateConditionCard('rating')">
- <span class="cv-field-icon">&#9733;</span> <span class="cv-field-name">Rating</span>
- </div>
+
  <div class="cv-field-item {% if telecaller_filter %}active-field{% endif %}" data-field="telecaller" onclick="activateConditionCard('telecaller')">
  <span class="cv-field-icon"></span> <span class="cv-field-name">Assignee</span>
  </div>
@@ -631,27 +629,7 @@
  </select>
  </div>
 
- <!-- CARD: Rating -->
- <div class="active-condition-card" id="card_rating" style="display: {% if rating_filter %}block{% else %}none{% endif %};">
- <div class="card-head">
- <span class="card-icon-title">
- &#9733; Priority Rating
- <select name="op_rating" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
- <option value="is" {% if op_rating == 'is' or not op_rating %}selected{% endif %}>Is</option>
- <option value="is_not" {% if op_rating == 'is_not' %}selected{% endif %}>Is not</option>
- </select>
- </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('rating')" title="Remove condition"></button>
- </div>
- <select name="rating" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
- <option value="">All Ratings</option>
- <option value="5" {% if rating_filter == "5" %}selected{% endif %}>&#9733;&#9733;&#9733;&#9733;&#9733; (5 Stars)</option>
- <option value="4" {% if rating_filter == "4" %}selected{% endif %}>&#9733;&#9733;&#9733;&#9733;&#9734; (4 Stars)</option>
- <option value="3" {% if rating_filter == "3" %}selected{% endif %}>&#9733;&#9733;&#9733;&#9734;&#9734; (3 Stars)</option>
- <option value="2" {% if rating_filter == "2" %}selected{% endif %}>&#9733;&#9733;&#9734;&#9734;&#9734; (2 Stars)</option>
- <option value="1" {% if rating_filter == "1" %}selected{% endif %}>&#9733;&#9734;&#9734;&#9734;&#9734; (1 Star)</option>
- </select>
- </div>
+
 
  <!-- CARD: Created By -->
  <div class="active-condition-card" id="card_created_by" style="display: {% if created_by %}block{% else %}none{% endif %};">
@@ -992,11 +970,7 @@
  Status {% if sort_by == 'status' %}▴{% elif sort_by == '-status' %}▾{% endif %}
  </a>
  </th>
- <th style="min-width: 120px; text-align: center;">
- <a href="?view={{ active_view }}&sort={% if sort_by == '-rating' %}rating{% else %}-rating{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if telecaller_filter %}&telecaller={{ telecaller_filter }}{% endif %}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" title="Sort by priority rating">
- Rating <span style="font-size: 0.75rem; color: #94a3b8;">⇅</span>
- </a>
- </th>
+
  <th style="min-width: 170px;">Assignee</th>
  <th style="min-width: 110px;">
  <a href="?view={{ active_view }}&sort={% if sort_by == 'created_at' %}-created_at{% else %}created_at{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if telecaller_filter %}&telecaller={{ telecaller_filter }}{% endif %}" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
@@ -1065,14 +1039,7 @@
  {% endif %}
  </td>
 
- <!-- 4. Rating (Star ratings widget &#9734;&#9734;&#9734;&#9734;&#9734; / &#9733;&#9733;&#9733;&#9733;&#9734;) -->
- <td class="lead-rating-col" style="text-align: center; white-space: nowrap;">
- <div class="lead-star-rating" data-lead-id="{{ ld.id }}" data-current-rating="{{ ld.rating|default:1 }}" style="display: inline-flex; gap: 2px; cursor: pointer;" title="Priority: {{ ld.rating|default:1 }} of 5 Stars (Click to update)">
- {% for s in 1|star_range %}
- <span class="star-item star-{{ s }}" data-star="{{ s }}" onclick="setLeadRating(event, '{{ ld.id }}', {{ s }})" onmouseover="hoverLeadRating('{{ ld.id }}', {{ s }})" onmouseout="resetLeadRating('{{ ld.id }}')" style="font-size: 1.15rem; color: {% if ld.rating and ld.rating >= s %}#f59e0b{% else %}#cbd5e1{% endif %}; line-height: 1; user-select: none;">&#9733;</span>
- {% endfor %}
- </div>
- </td>
+
 
  <!-- 5. Assignee (Avatar circle with uppercase initials + staff name) -->
  <td>

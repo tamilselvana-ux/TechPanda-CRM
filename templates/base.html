@@ -56,10 +56,44 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
  <span class="nav-text">All Leads</span>
  </a>
- <a href="{% url 'leads_kanban' %}" class="nav-item {% if request.resolver_match.url_name == 'leads_kanban' %}active{% endif %}">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="10"></rect></svg>
- <span class="nav-text">Pipeline (Kanban)</span>
+ <!-- 3. Calls & WhatsApp -->
+ <div class="nav-group" id="nav-group-admin-comms">
+ <div class="nav-group-header" data-target="admin-comms-nav">
+ <div class="nav-group-title">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+ <span>Calls & WhatsApp</span>
+ </div>
+ <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+ </div>
+ <div class="nav-group-children" id="admin-comms-nav">
+ <a href="{% url 'admin_followups_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_followups_list admin_followup_create admin_followup_edit admin_followup_reschedule' %}active{% endif %}">
+ <span class="nav-text">Follow-ups</span>
  </a>
+ <a href="{% url 'missed_calls_list' %}" class="nav-item {% if request.resolver_match.url_name == 'missed_calls_list' %}active{% endif %}">
+ <span class="nav-text">Missed Calls{% missed_callbacks_count as missed_cb %}{% if missed_cb %} <span class="badge" style="background:#dc2626;color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px;">{{ missed_cb }}</span>{% endif %}</span>
+ </a>
+ <a href="{% url 'inbox' %}" class="nav-item {% if request.resolver_match.url_name == 'inbox' %}active{% endif %}">
+ <span class="nav-text">WhatsApp Chats</span>
+ </a>
+ <a href="{% url 'whatsapp_campaigns_list' %}" class="nav-item {% if request.resolver_match.url_name in 'whatsapp_campaigns_list whatsapp_campaign_create whatsapp_campaign_detail' %}active{% endif %}">
+ <span class="nav-text">WhatsApp Campaigns</span>
+ </a>
+ <a href="{% url 'automation-list' %}" class="nav-item {% if request.resolver_match.url_name in 'automation-list flow-builder flow-builder-detail' %}active{% endif %}">
+ <span class="nav-text">WhatsApp Automations</span>
+ </a>
+ <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' and request.resolver_match.url_name == 'facebook_leads' %}active{% endif %}">
+ <span class="nav-text">Facebook Leads</span>
+ </a>
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if 'telecrm' in request.resolver_match.url_name %}active{% endif %}">
+ <span class="nav-text">TeleCRM Sync</span>
+ </a>
+ <a href="{% url 'telecaller_rnr_report' %}" class="nav-item {% if request.resolver_match.url_name == 'telecaller_rnr_report' %}active{% endif %}">
+ <span class="nav-text">Telecaller RNR Report</span>
+ </a>
+ </div>
+ </div>
+
+ <!-- 4. Reports & Analytics -->
  <a href="{% url 'admin_reports' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_reports' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
  <span class="nav-text">Reports & Analytics</span>
@@ -127,42 +161,7 @@
         </div>
  </div>
 
- <!-- GROUP: Calls & Omnichannel -->
- <div class="nav-group" id="nav-group-admin-comms">
- <div class="nav-group-header" data-target="admin-comms-nav">
- <div class="nav-group-title">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
- <span>Calls & WhatsApp</span>
- </div>
- <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
- </div>
- <div class="nav-group-children" id="admin-comms-nav">
- <a href="{% url 'admin_followups_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_followups_list admin_followup_create admin_followup_edit admin_followup_reschedule' %}active{% endif %}">
- <span class="nav-text">Follow-ups</span>
- </a>
- <a href="{% url 'missed_calls_list' %}" class="nav-item {% if request.resolver_match.url_name == 'missed_calls_list' %}active{% endif %}">
- <span class="nav-text">Missed Calls{% missed_callbacks_count as missed_cb %}{% if missed_cb %} <span class="badge" style="background:#dc2626;color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px;">{{ missed_cb }}</span>{% endif %}</span>
- </a>
- <a href="{% url 'inbox' %}" class="nav-item {% if request.resolver_match.url_name == 'inbox' %}active{% endif %}">
- <span class="nav-text">WhatsApp Chats</span>
- </a>
- <a href="{% url 'whatsapp_campaigns_list' %}" class="nav-item {% if request.resolver_match.url_name in 'whatsapp_campaigns_list whatsapp_campaign_create whatsapp_campaign_detail' %}active{% endif %}">
- <span class="nav-text">WhatsApp Campaigns</span>
- </a>
- <a href="{% url 'automation-list' %}" class="nav-item {% if request.resolver_match.url_name in 'automation-list flow-builder flow-builder-detail' %}active{% endif %}">
- <span class="nav-text">WhatsApp Automations</span>
- </a>
- <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' and request.resolver_match.url_name == 'facebook_leads' %}active{% endif %}">
- <span class="nav-text">Facebook Leads</span>
- </a>
- <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if 'telecrm' in request.resolver_match.url_name %}active{% endif %}">
- <span class="nav-text">TeleCRM Sync</span>
- </a>
- <a href="{% url 'telecaller_rnr_report' %}" class="nav-item {% if request.resolver_match.url_name == 'telecaller_rnr_report' %}active{% endif %}">
- <span class="nav-text">Telecaller RNR Report</span>
- </a>
- </div>
- </div>
+
 
  <!-- GROUP: Finance & Accounts -->
  <div class="nav-group" id="nav-group-admin-finance">
@@ -536,6 +535,10 @@
  <a href="{% url 'marketing_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'marketing_dashboard' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
  <span class="nav-text">Marketing Dashboard</span>
+ </a>
+ <a href="{% url 'admin_leads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'admin_leads_list admin_lead_detail' %}active{% endif %}">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+ <span class="nav-text">All Leads</span>
  </a>
  <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if 'facebook-leads' in request.path and 'accounts' not in request.path %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>

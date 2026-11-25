@@ -1,6 +1,6 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-21 18:26 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-25 09:56 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
 **Blockers:** 0 · **Warnings:** 112 · **Verdict:** ✅ no stubs found
 
@@ -22,9 +22,9 @@ Run: 2026-11-21 18:26 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | chat\static\chat\js\inbox.js | 1287 | `alert('Sync error: ' + (data.error // data.detail // 'Unable to sync accounts.'));` |
 | alert() used for UX | chat\static\chat\js\inbox.js | 1290 | `alert('One-Click Sync request failed: ' + err.message);` |
 | Hard-coded localhost URL | config\settings.py | 328 | `CRM_BASE_URL = os.getenv('CRM_BASE_URL', 'http://127.0.0.1:8000')` |
-| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 434 | `alert(`One-Click Sync Completed!\n\n` +` |
-| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 441 | `alert('Sync failed: ' + (data.error // 'Unknown error'));` |
-| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 448 | `alert('Error running One-Click Sync: ' + err.message);` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 483 | `alert(`One-Click Sync Completed!\n\n` +` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 490 | `alert('Sync failed: ' + (data.error // 'Unknown error'));` |
+| alert() used for UX | fb_leads\templates\fb_leads\accounts.html | 497 | `alert('Error running One-Click Sync: ' + err.message);` |
 | Hard-coded localhost URL | scratch\add_track_aa_todo.py | 18 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
 | Hard-coded localhost URL | scratch\mark_todo_track_aa_done.py | 14 | `- What: Verify in Chrome headless against live server (`http://127.0.0.1:8001/admin/dashboard/`) that clicking` |
 | Hard-coded localhost URL | scratch\mark_todo_track_z_done.py | 64 | `- Proof: Executed `test_new_enquiry_form.py` against live server (`http://127.0.0.1:8001/enquiry/` -> HTTP 200` |
@@ -44,19 +44,19 @@ Run: 2026-11-21 18:26 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | static\js\data-tables-enhanced.js | 261 | `alert('No leads selected.');` |
 | alert() used for UX | templates\accountant\dashboard.html | 591 | `alert('Validation Error: From Date cannot be after To Date.');` |
 | alert() used for UX | templates\accountant\verification_list.html | 270 | `<button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" o` |
-| alert() used for UX | templates\admin\leads_list.html | 1604 | `alert(data.error // 'Failed to load duplicate information.');` |
-| alert() used for UX | templates\admin\leads_list.html | 1914 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2010 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2022 | `alert("Request failed: " + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2344 | `alert('Please select at least one lead from the table or apply a filter.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2438 | `alert(data.error // 'Failed to evaluate recipients');` |
-| alert() used for UX | templates\admin\leads_list.html | 2462 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2490 | `alert('Please select at least one lead from the table.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2820 | `alert('Please enter a name for your custom view tab.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2866 | `alert(data.message // 'Error saving custom view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2871 | `alert('Failed to save custom view. Please check connection.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2901 | `alert(data.message // 'Error deleting view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2906 | `alert('Failed to delete view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1571 | `alert(data.error // 'Failed to load duplicate information.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1881 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 1977 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1989 | `alert("Request failed: " + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2311 | `alert('Please select at least one lead from the table or apply a filter.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2405 | `alert(data.error // 'Failed to evaluate recipients');` |
+| alert() used for UX | templates\admin\leads_list.html | 2429 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2457 | `alert('Please select at least one lead from the table.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2787 | `alert('Please enter a name for your custom view tab.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2833 | `alert(data.message // 'Error saving custom view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2838 | `alert('Failed to save custom view. Please check connection.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2868 | `alert(data.message // 'Error deleting view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2873 | `alert('Failed to delete view.');` |
 | alert() used for UX | templates\admin\lead_queues.html | 423 | `alert("Please select at least one lead from the table to assign.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 744 | `alert("Please select at least one target branch.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 748 | `alert("Please select at least one target telecaller.");` |

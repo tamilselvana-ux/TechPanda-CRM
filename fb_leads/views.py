@@ -103,13 +103,20 @@ def webhook(request):
 
 @login_required
 def lead_list(request):
-    """All Facebook leads with search, form/ad filters, and clickable KPIs."""
+    """All Facebook leads with search, form/ad filters, branch/status filters, date range, and clickable KPIs."""
     if not _can_manage(request.user):
         raise PermissionDenied("Only Admin and Sales Head can view Facebook leads.")
+    from branches.models import Branch
+    from leads.models import LeadStatus
+
     q = request.GET.get("q", "").strip()
     selected_form = request.GET.get("form", "").strip()
     selected_ad = request.GET.get("ad", "").strip()
     crm_filter = request.GET.get("crm", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    branch_id = request.GET.get("branch", "").strip()
+    status_filter = request.GET.get("status", "").strip()
 
     available_forms = list(
         FacebookLead.objects.exclude(form_name__isnull=True).exclude(form_name="")
@@ -120,7 +127,7 @@ def lead_list(request):
         .values_list("ad_name", flat=True).distinct().order_by("ad_name")
     )
 
-    leads = FacebookLead.objects.select_related("lead", "lead__assigned_telecaller", "lead__branch")
+    leads = FacebookLead.objects.select_related("lead", "lead__assigned_telecaller", "lead__branch", "fb_page", "fb_page__branch")
     base_qs = FacebookLead.objects.all()
 
     if selected_form:
@@ -132,6 +139,27 @@ def lead_list(request):
         ad_q = Q(ad_name=selected_ad) | Q(ad_id=selected_ad)
         leads = leads.filter(ad_q)
         base_qs = base_qs.filter(ad_q)
+
+    if date_from:
+        d_from_q = Q(created_on_facebook__date__gte=date_from) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__gte=date_from))
+        leads = leads.filter(d_from_q)
+        base_qs = base_qs.filter(d_from_q)
+
+    if date_to:
+        d_to_q = Q(created_on_facebook__date__lte=date_to) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__lte=date_to))
+        leads = leads.filter(d_to_q)
+        base_qs = base_qs.filter(d_to_q)
+
+    if branch_id and branch_id.isdigit():
+        b_id = int(branch_id)
+        b_q = Q(lead__branch_id=b_id) | Q(fb_page__branch_id=b_id)
+        leads = leads.filter(b_q)
+        base_qs = base_qs.filter(b_q)
+
+    if status_filter:
+        s_q = Q(lead__status=status_filter)
+        leads = leads.filter(s_q)
+        base_qs = base_qs.filter(s_q)
 
     if q:
         search_q = (
@@ -147,6 +175,8 @@ def lead_list(request):
     if crm_filter == "error":
         leads = leads.filter(crm_result="error")
 
+    branches = Branch.objects.filter(status='Active').order_by('name')
+
     page = Paginator(leads, 25).get_page(request.GET.get("page"))
     return render(request, "fb_leads/leads.html", {
         "page": page,
@@ -156,6 +186,12 @@ def lead_list(request):
         "available_forms": available_forms,
         "available_ads": available_ads,
         "crm_filter": crm_filter,
+        "date_from": date_from,
+        "date_to": date_to,
+        "branch_id": branch_id,
+        "status_filter": status_filter,
+        "branches": branches,
+        "lead_statuses": LeadStatus.choices,
         "total": total_kpi,
         "errors": error_kpi,
         "configured": bool(getattr(settings, "FB_PAGE_TOKEN", "") and getattr(settings, "FB_PAGE_ID", "")),
