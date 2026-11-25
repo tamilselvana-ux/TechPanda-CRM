@@ -1,6 +1,6 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-25 09:56 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-25 12:48 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
 **Blockers:** 0 · **Warnings:** 112 · **Verdict:** ✅ no stubs found
 
@@ -44,19 +44,19 @@ Run: 2026-11-25 09:56 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | static\js\data-tables-enhanced.js | 261 | `alert('No leads selected.');` |
 | alert() used for UX | templates\accountant\dashboard.html | 591 | `alert('Validation Error: From Date cannot be after To Date.');` |
 | alert() used for UX | templates\accountant\verification_list.html | 270 | `<button type="button" class="btn btn-sm btn-outline-secondary" style="padding: 3px 8px; font-size: 0.75rem;" o` |
-| alert() used for UX | templates\admin\leads_list.html | 1571 | `alert(data.error // 'Failed to load duplicate information.');` |
-| alert() used for UX | templates\admin\leads_list.html | 1881 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 1977 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
-| alert() used for UX | templates\admin\leads_list.html | 1989 | `alert("Request failed: " + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2311 | `alert('Please select at least one lead from the table or apply a filter.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2405 | `alert(data.error // 'Failed to evaluate recipients');` |
-| alert() used for UX | templates\admin\leads_list.html | 2429 | `alert('Communication error: ' + err);` |
-| alert() used for UX | templates\admin\leads_list.html | 2457 | `alert('Please select at least one lead from the table.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2787 | `alert('Please enter a name for your custom view tab.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2833 | `alert(data.message // 'Error saving custom view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2838 | `alert('Failed to save custom view. Please check connection.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2868 | `alert(data.message // 'Error deleting view.');` |
-| alert() used for UX | templates\admin\leads_list.html | 2873 | `alert('Failed to delete view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1575 | `alert(data.error // 'Failed to load duplicate information.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1885 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 1981 | `alert(data.error // 'Failed to dispatch counselor alert.');` |
+| alert() used for UX | templates\admin\leads_list.html | 1993 | `alert("Request failed: " + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2319 | `alert('Please select at least one lead from the table or apply a filter.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2413 | `alert(data.error // 'Failed to evaluate recipients');` |
+| alert() used for UX | templates\admin\leads_list.html | 2437 | `alert('Communication error: ' + err);` |
+| alert() used for UX | templates\admin\leads_list.html | 2465 | `alert('Please select at least one lead from the table.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2797 | `alert('Please enter a name for your custom view tab.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2843 | `alert(data.message // 'Error saving custom view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2848 | `alert('Failed to save custom view. Please check connection.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2878 | `alert(data.message // 'Error deleting view.');` |
+| alert() used for UX | templates\admin\leads_list.html | 2883 | `alert('Failed to delete view.');` |
 | alert() used for UX | templates\admin\lead_queues.html | 423 | `alert("Please select at least one lead from the table to assign.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 744 | `alert("Please select at least one target branch.");` |
 | alert() used for UX | templates\admin\lead_queues.html | 748 | `alert("Please select at least one target telecaller.");` |

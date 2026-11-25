@@ -77,7 +77,7 @@ def run_auto_sync_cycle():
                 status_desc = "Auth Error (Check Token)"
             else:
                 backoff_time = timezone.now() + timedelta(minutes=interval_mins)
-                status_desc = f"Sync error: {err_msg[:45]}"
+                status_desc = f"Sync error: {err_msg[:35]}"[:50]
 
             FacebookPage.objects.filter(id=page.id).update(
                 last_sync_at=timezone.now(),

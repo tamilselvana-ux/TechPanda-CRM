@@ -88,3 +88,70 @@ class MarketingLoginAndDashboardTests(TestCase):
         self.assertIn(res.status_code, [302, 403])
         if res.status_code == 302:
             self.assertRedirects(res, reverse('marketing_dashboard'))
+
+    def test_marketing_user_can_access_lead_import(self):
+        """Marketing user has permission to access the bulk lead import view."""
+        self.client.force_login(self.marketing_user)
+        res = self.client.get(reverse('admin_leads_import'))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'Bulk Lead Import')
+        self.assertContains(res, 'Upload Excel (.xlsx) or CSV (.csv)')
+
+    def test_marketing_user_can_export_leads_xlsx(self):
+        """Marketing user can export leads to Excel (.xlsx) with filtered results."""
+        from leads.models import Lead, LeadStatus
+        l1 = Lead.objects.create(name="Filtered Student A", phone="9111111111", branch=self.branch, status=LeadStatus.NEW)
+        other_branch, _ = Branch.objects.get_or_create(name="Anna Nagar Center", defaults={"status": "Active"})
+        l2 = Lead.objects.create(name="Other Branch Student", phone="9222222222", branch=other_branch, status=LeadStatus.ENROLLED)
+
+        self.client.force_login(self.marketing_user)
+        # Filter by branch and status
+        res = self.client.get(reverse('export_leads_csv') + f'?format=xlsx&branch={self.branch.id}&status=New')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        self.assertIn('leads_export_', res['Content-Disposition'])
+
+        # Verify Excel content has only filtered lead
+        import io
+        import openpyxl
+        wb = openpyxl.load_workbook(io.BytesIO(res.content))
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        self.assertGreater(len(rows), 1)
+        names = [r[1] for r in rows[1:]]
+        self.assertIn("Filtered Student A", names)
+        self.assertNotIn("Other Branch Student", names)
+
+    def test_marketing_user_can_export_facebook_leads_xlsx(self):
+        """Marketing user can export filtered Facebook leads to Excel."""
+        from fb_leads.models import FacebookLead, FacebookPage, FacebookAccount
+        account = FacebookAccount.objects.create(account_name="Meta Acc 2", access_token="tok2")
+        page = FacebookPage.objects.create(account=account, page_id="998877", page_name="Main FB Page")
+        fb1 = FacebookLead.objects.create(
+            leadgen_id="fb_lead_filter_1",
+            fb_page=page,
+            form_name="React Masterclass",
+            full_name="React Student",
+            phone="9333333333"
+        )
+        fb2 = FacebookLead.objects.create(
+            leadgen_id="fb_lead_filter_2",
+            fb_page=page,
+            form_name="Python Masterclass",
+            full_name="Python Student",
+            phone="9444444444"
+        )
+
+        self.client.force_login(self.marketing_user)
+        res = self.client.get(reverse('fb_leads:export_facebook_leads') + '?format=xlsx&form=React Masterclass')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+        import io
+        import openpyxl
+        wb = openpyxl.load_workbook(io.BytesIO(res.content))
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        names = [r[1] for r in rows[1:]]
+        self.assertIn("React Student", names)
+        self.assertNotIn("Python Student", names)

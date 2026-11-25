@@ -327,9 +327,13 @@
  <span>More ▾</span>
  </button>
  <div id="leadsActionsDropdown" class="tp-dropdown-menu" role="menu">
- <button type="button" class="tp-dropdown-item" onclick="triggerExportAction()">
+ <button type="button" class="tp-dropdown-item" onclick="triggerExportAction('xlsx')" title="Export filtered leads to Excel spreadsheet (.xlsx)">
  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
- Export
+ Export Excel (Filtered)
+ </button>
+ <button type="button" class="tp-dropdown-item" onclick="triggerExportAction('csv')" title="Export filtered leads to CSV">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+ Export CSV
  </button>
  </div>
  </div>
@@ -2068,9 +2072,9 @@ function closeDuplicateModal() {
 
 
 
- <button type="button" class="btn btn-sm btn-secondary tp-btn-secondary" onclick="triggerExportAction()" style="padding: 5px 12px; font-weight: 600;">
+ <button type="button" class="btn btn-sm btn-secondary tp-btn-secondary" onclick="triggerExportAction('xlsx')" title="Export filtered/selected leads to Excel (.xlsx)" style="padding: 5px 12px; font-weight: 600;">
 
- Export
+ Export Excel
 
  </button>
 
@@ -2262,9 +2266,13 @@ function getActiveFilterParams() {
 
  var params = {};
 
- ['search', 'branch', 'status', 'telecaller', 'channel', 'product', 'assignment_status'].forEach(function(k) {
+ urlParams.forEach(function(val, key) {
 
- if (urlParams.get(k)) params[k] = urlParams.get(k);
+ if (key !== 'page' && key !== 'lead_ids' && val) {
+
+ params[key] = val;
+
+ }
 
  });
 
@@ -2474,7 +2482,9 @@ function triggerBulkEditFocus() {
 
 
 
-function triggerExportAction() {
+function triggerExportAction(format) {
+
+ format = format || 'xlsx';
 
  var ids = getSelectedLeadIds();
 
@@ -2484,17 +2494,17 @@ function triggerExportAction() {
 
 
 
- var exportUrl = '/leads/export/';
+ var exportUrl = '/leads/export/?format=' + encodeURIComponent(format);
 
  if (!isAllMatching && ids.length >0) {
 
- exportUrl += '?lead_ids=' + ids.join(',');
+ exportUrl += '&lead_ids=' + ids.join(',');
 
  } else {
 
  var qs = new URLSearchParams(filters).toString();
 
- if (qs) exportUrl += '?' + qs;
+ if (qs) exportUrl += '&' + qs;
 
  }
 

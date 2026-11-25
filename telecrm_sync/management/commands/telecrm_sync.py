@@ -1,7 +1,8 @@
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import mail_admins
@@ -14,12 +15,15 @@ from telecrm_sync.mapper import (
     ingest_or_merge_lead,
     ms_to_datetime,
     normalize_telecrm_phone,
+    resolve_crm_status,
     suppress_sync_side_effects,
 )
 from telecrm_sync.models import (
     TeleCRMAction,
     TeleCRMLead,
+    TeleCRMStatusMap,
     TeleCRMSyncRun,
+    TeleCRMUser,
 )
 
 logger = logging.getLogger("telecrm_sync")
@@ -33,7 +37,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--force",
             action="store_true",
-            help="Run even if TELECRM_SYNC_ENABLED is False in settings"
+            help="Run even if TELECRM_SYNC_ENABLED is False in settings, and clear stale/active locks"
         )
         parser.add_argument(
             "--token",
@@ -53,12 +57,19 @@ class Command(BaseCommand):
             default=None,
             help="Override lookback window in minutes"
         )
+        parser.add_argument(
+            "--max-pages",
+            type=int,
+            default=5,
+            help="Maximum pages of new leads to check per cron run (default: 5, max 500 leads)"
+        )
 
     def handle(self, *args, **options):
         force_flag: bool = options["force"]
         token: Optional[str] = options["token"]
         enterprise_id: Optional[str] = options["enterprise_id"]
         window_minutes_override: Optional[int] = options["window_minutes"]
+        max_pages: int = max(1, options.get("max_pages") or 5)
 
         # 1. Feature Flag Gate
         sync_enabled = getattr(settings, "TELECRM_SYNC_ENABLED", False)
@@ -67,7 +78,7 @@ class Command(BaseCommand):
             return
 
         # 2. Concurrency Lock: Check if another sync is currently RUNNING
-        stale_threshold = timezone.now() - timedelta(minutes=30)
+        stale_threshold = timezone.now() - timedelta(minutes=10)
         active_run = TeleCRMSyncRun.objects.filter(kind="sync", status="RUNNING", started_at__gte=stale_threshold).first()
         if active_run:
             self.stdout.write(
@@ -75,7 +86,7 @@ class Command(BaseCommand):
             )
             return
 
-        # Clear stale locks older than 30 minutes
+        # Clear stale locks older than 10 minutes
         TeleCRMSyncRun.objects.filter(kind="sync", status="RUNNING", started_at__lt=stale_threshold).update(
             status="FAILED",
             finished_at=timezone.now()
@@ -85,6 +96,9 @@ class Command(BaseCommand):
         if not client.token:
             self.stdout.write("Error: TELECRM_TOKEN is not configured. Exiting.")
             return
+
+        # Step 0: Ensure team members and pipeline status metadata are synchronized
+        self._sync_metadata(client)
 
         start_time = time.time()
         window_to = timezone.now()
@@ -99,8 +113,8 @@ class Command(BaseCommand):
                 # 10 minutes overlap for clock skew safety
                 window_from = ref_time - timedelta(minutes=10)
             else:
-                # First run lookback fallback: 1 day
-                window_from = window_to - timedelta(days=1)
+                # First run lookback fallback: 2 hours (efficient incremental intake)
+                window_from = window_to - timedelta(hours=2)
 
         sync_run = TeleCRMSyncRun.objects.create(
             kind="sync",
@@ -118,8 +132,8 @@ class Command(BaseCommand):
             target_lead_ids: Set[str] = set()
             raw_leads_by_id: Dict[str, Dict[str, Any]] = {}
 
-            # 4. Discover New Leads (newest-first until page has only known leads)
-            self._discover_new_leads(client, target_lead_ids, raw_leads_by_id)
+            # 4. Discover New Leads (newest-first, bounded by max_pages)
+            self._discover_new_leads(client, target_lead_ids, raw_leads_by_id, max_pages=max_pages)
 
             # 5. Discover Leads with Activity in Window
             self._discover_changed_leads(client, window_from, window_to, target_lead_ids, raw_leads_by_id)
@@ -127,7 +141,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Total leads identified for update/sync: {len(target_lead_ids)}")
             sync_run.leads_seen = len(target_lead_ids)
 
-            # 6. Fetch New Actions for New/Changed Leads
+            # 6. Fetch New Actions for New/Changed Leads concurrently
             actions_by_lead_id = self._fetch_new_actions(client, target_lead_ids)
 
             # 7. Map & Ingest into CRM under side-effect suppression
@@ -152,18 +166,55 @@ class Command(BaseCommand):
             self._handle_failure_streak(sync_run, exc)
             raise CommandError(f"Sync failed: {exc}") from exc
 
+    def _sync_metadata(self, client: TeleCRMClient):
+        """Ensures team members and pipeline statuses from TeleCRM are up to date."""
+        try:
+            members = client.get_team_members()
+            for m in members:
+                uid = str(m.get("uid") or m.get("id") or m.get("userId") or "").strip()
+                email = str(m.get("email") or "").strip().lower()
+                name = str(m.get("name") or "").strip()
+                if not uid and not email:
+                    continue
+                crm_u = None
+                if email:
+                    crm_u = User.objects.filter(email__iexact=email).first()
+                TeleCRMUser.objects.update_or_create(
+                    uid=uid or email,
+                    defaults={"email": email, "name": name, "crm_user": crm_u}
+                )
+        except Exception as exc:
+            logger.warning("TeleCRM team members metadata sync skipped: %s", exc)
+
+        try:
+            pipeline = client.get_lead_stage_pipeline()
+            statuses = pipeline.get("statuses") or []
+            for st in statuses:
+                s_id = str(st.get("id") or "").strip()
+                label = str(st.get("label") or st.get("name") or "").strip()
+                if not label:
+                    continue
+                crm_st = resolve_crm_status(label, s_id)
+                TeleCRMStatusMap.objects.update_or_create(
+                    telecrm_status_name=label,
+                    defaults={"telecrm_status_id": s_id, "crm_status": crm_st}
+                )
+        except Exception as exc:
+            logger.warning("TeleCRM pipeline metadata sync skipped: %s", exc)
+
     def _discover_new_leads(
         self,
         client: TeleCRMClient,
         target_lead_ids: Set[str],
-        raw_leads_by_id: Dict[str, Dict[str, Any]]
+        raw_leads_by_id: Dict[str, Dict[str, Any]],
+        max_pages: int = 5
     ):
-        """Pages /lead/search newest-first and stops when encountering all known leads."""
+        """Pages /lead/search newest-first and stops when encountering all known leads or hitting max_pages limit."""
         skip = 0
         limit = 100
-        max_new_pages = 500  # Paginates up to 50,000 new leads per run
+        remaining_pages = max_pages
 
-        while max_new_pages > 0:
+        while remaining_pages > 0:
             page = client.list_leads(skip=skip, limit=limit)
             if not page:
                 break
@@ -185,7 +236,7 @@ class Command(BaseCommand):
                 break
 
             skip += len(page)
-            max_new_pages -= 1
+            remaining_pages -= 1
 
     def _discover_changed_leads(
         self,
@@ -219,35 +270,51 @@ class Command(BaseCommand):
         client: TeleCRMClient,
         target_lead_ids: Set[str]
     ) -> Dict[str, List[Dict[str, Any]]]:
-        """Fetches actions newest-first for each lead, stopping at already-stored action IDs."""
+        """Fetches actions newest-first for each lead concurrently, stopping at already-stored action IDs."""
         actions_by_lead_id: Dict[str, List[Dict[str, Any]]] = {}
+        if not target_lead_ids:
+            return actions_by_lead_id
 
-        for lid in target_lead_ids:
-            actions_by_lead_id[lid] = []
+        # Pre-fetch existing action IDs once on the main thread so worker threads perform zero DB queries
+        existing_action_ids = set(
+            TeleCRMAction.objects.filter(lead__telecrm_id__in=target_lead_ids)
+            .values_list('telecrm_id', flat=True)
+        )
+
+        def fetch_for_lead(lid: str) -> Tuple[str, List[Dict[str, Any]]]:
+            lead_acts = []
             skip = 0
             limit = 100
-
             while True:
                 page, total = client.get_lead_actions(lid, skip=skip, limit=limit)
                 if not page:
                     break
-
                 stop_paging = False
                 for act in page:
                     act_id = str(act.get("id") or "").strip()
                     if not act_id:
                         continue
-                    if TeleCRMAction.objects.filter(telecrm_id=act_id).exists():
+                    if act_id in existing_action_ids:
                         stop_paging = True
                         break
-                    actions_by_lead_id[lid].append(act)
-
+                    lead_acts.append(act)
                 if stop_paging:
                     break
-
                 skip += len(page)
                 if skip >= total or len(page) < limit:
                     break
+            return lid, lead_acts
+
+        from django.db import connection
+        max_workers = 1 if connection.vendor == 'sqlite' else min(10, max(1, len(target_lead_ids)))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(fetch_for_lead, lid) for lid in target_lead_ids]
+            for fut in as_completed(futures):
+                try:
+                    lid, lead_acts = fut.result()
+                    actions_by_lead_id[lid] = lead_acts
+                except Exception as exc:
+                    logger.warning("Error fetching actions for lead: %s", exc)
 
         return actions_by_lead_id
 

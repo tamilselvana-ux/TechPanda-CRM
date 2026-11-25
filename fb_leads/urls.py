@@ -7,6 +7,7 @@ app_name = "fb_leads"
 urlpatterns = [
     path("webhook/", views.webhook, name="facebook_leads_webhook"),
     path("api/recent/", views.api_recent_leads, name="facebook_leads_recent_api"),
+    path("export/", views.export_facebook_leads, name="export_facebook_leads"),
     path("", views.lead_list, name="facebook_leads"),
     path("sync/", views.sync_leads, name="facebook_leads_sync"),
     path("accounts/", views.fb_accounts, name="fb_accounts"),

@@ -130,19 +130,20 @@ def normalize_telecrm_phone(raw_phone: Any, telecrm_id: str = "") -> str:
     """
     Normalizes domestic phone numbers to 10-digit strings.
     International numbers with leading '+' preserve format.
-    If absent or un-parseable, returns a stable surrogate identifier.
+    If absent or un-parseable, returns a stable surrogate identifier under 20 chars.
     """
     cleaned = str(raw_phone or "").strip()
+    surrogate = f"NoPhone-{telecrm_id}"[:20] if telecrm_id else ""
     if not cleaned or cleaned.lower() in ("none", "null", "na", "0"):
-        return f"NoPhone-{telecrm_id}" if telecrm_id else ""
+        return surrogate
 
     norm = normalize_phone(cleaned)
-    if not norm or str(norm).startswith("NoPhone-"):
-        return f"NoPhone-{telecrm_id}" if telecrm_id else ""
+    if not norm or str(norm).startswith("NoPhone-") or str(norm).startswith("NP-"):
+        return surrogate
 
     if norm.startswith("+"):
-        return norm
-    return norm[-10:] if len(norm) >= 10 else norm
+        return norm[:20]
+    return (norm[-10:] if len(norm) >= 10 else norm)[:20]
 
 
 def resolve_telecrm_user(
@@ -377,7 +378,7 @@ def ingest_or_merge_lead(
 
     # 1. Deduplication lookup
     existing_lead: Optional[Lead] = None
-    if clean_phone and not clean_phone.startswith("NoPhone-"):
+    if clean_phone and not clean_phone.startswith("NoPhone-") and not clean_phone.startswith("NP-"):
         existing_lead = Lead.objects.filter(normalized_phone=clean_phone).first()
 
     was_created = False
@@ -394,15 +395,15 @@ def ingest_or_merge_lead(
             # 2. Name: Replace placeholder if valid name available
             if raw_name and raw_name.lower() not in ("na", "none", "null"):
                 if not lead.name or lead.name.startswith("Lead ") or lead.name.lower() in ("na", "none"):
-                    lead.name = raw_name
+                    lead.name = raw_name[:255]
 
             # 3. Email: Fill if blank
             if raw_email and not lead.email:
-                lead.email = raw_email
+                lead.email = raw_email[:255]
 
             # 4. Alternate Phone: Fill if blank
             if raw_alt_phone and not lead.alternate_phone:
-                lead.alternate_phone = raw_alt_phone
+                lead.alternate_phone = raw_alt_phone[:20]
 
             # 5. Branch: Fill if blank
             if resolved_branch and not lead.branch:
@@ -479,12 +480,16 @@ def ingest_or_merge_lead(
                     assigned_sales_head = assigned_user
                     current_owner_type = "BRANCH_HEAD"
 
+            surrogate_phone = f"NP-{telecrm_id[-16:]}" if telecrm_id else "NP-UNKNOWN"
+            final_phone = (clean_phone or surrogate_phone)[:20]
+            final_norm_phone = final_phone if (final_phone and not final_phone.startswith("NoPhone-") and not final_phone.startswith("NP-")) else None
+
             lead = Lead.objects.create(
-                name=name_val,
-                phone=clean_phone or f"NoPhone-{telecrm_id}",
-                normalized_phone=clean_phone if (clean_phone and not clean_phone.startswith("NoPhone-")) else None,
-                email=raw_email,
-                alternate_phone=raw_alt_phone,
+                name=(name_val or 'Lead')[:255],
+                phone=final_phone,
+                normalized_phone=final_norm_phone,
+                email=(raw_email or '')[:255],
+                alternate_phone=(raw_alt_phone or '')[:20],
                 status=target_status,
                 rating=mapped_rating,
                 branch=resolved_branch,
@@ -625,7 +630,7 @@ def ingest_lead_actions(
                             call_status=c_status,
                             call_outcome=c_outcome,
                             notes=note_str or feedback,
-                            recording_url=rec_path,
+                            recording_url=rec_path[:500],
                         )
                         crm_obj_type = "CallHistory"
                         crm_obj_id = str(ch.id)
@@ -711,7 +716,7 @@ def ingest_lead_actions(
                             ad_id=str(ad_det.get("adId") or ""),
                             platform="facebook",
                             all_answers=action,
-                            crm_result="Imported from TeleCRM history",
+                            crm_result="telecrm_sync",
                         )
                         crm_obj_type = "FacebookLead"
                         crm_obj_id = str(fb_lead.id)
@@ -740,14 +745,19 @@ def ingest_lead_actions(
 
                         sender_type = "customer" if a_type == "INCOMING_WHATSAPP_MSG" else "agent"
                         msg_type = "document" if action.get("url") else "text"
-                        media_url = str(action.get("url") or "")
+                        media_url = str(action.get("url") or "").strip()
+                        if media_url:
+                            if not msg_text:
+                                msg_text = media_url
+                            elif media_url not in msg_text:
+                                msg_text = f"{msg_text} ({media_url})"
 
                         msg = Message.objects.create(
                             conversation=conv,
                             sender=sender_type,
                             message_type=msg_type,
                             message_text=msg_text,
-                            media_file=media_url,
+                            media_file=None,
                             whatsapp_message_id=msg_id_tag,
                             status="read",
                             timestamp=occurred_dt

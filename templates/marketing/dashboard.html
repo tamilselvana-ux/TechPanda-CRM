@@ -8,6 +8,14 @@
     <p style="font-size: 0.9rem; color: var(--tp-text-muted); margin: 0;">Welcome, <strong>{{ user.get_full_name|default:user.username }}</strong>! Monitor inbound acquisition, ad forms, and broadcast campaigns.</p>
   </div>
   <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <a href="{% url 'admin_leads_import' %}" class="btn btn-secondary tp-btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" title="Import leads from Excel or CSV spreadsheet">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      Import Leads (Excel)
+    </a>
+    <a href="{% url 'export_leads_csv' %}?format=xlsx" class="btn btn-secondary tp-btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" title="Export leads to Excel spreadsheet (.xlsx)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      Export Leads (Excel)
+    </a>
     <a href="{% url 'fb_leads:facebook_leads' %}" class="btn btn-primary tp-btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
       Facebook Leads
@@ -107,9 +115,15 @@
 
 <!-- RECENT INBOUND LEADS TABLE -->
 <div class="crm-card" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-  <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+  <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <h3 style="font-size: 1rem; font-weight: 700; margin: 0; color: #0f172a;">Recent Facebook Inbound Leads</h3>
-    <a href="{% url 'fb_leads:facebook_leads' %}" style="font-size: 0.82rem; font-weight: 600; color: #2563eb; text-decoration: none;">View All &rarr;</a>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <a href="{% url 'fb_leads:export_facebook_leads' %}?format=xlsx" class="btn btn-sm btn-secondary tp-btn-secondary" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;" title="Export Facebook leads to Excel spreadsheet (.xlsx)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Export Excel
+      </a>
+      <a href="{% url 'fb_leads:facebook_leads' %}" style="font-size: 0.82rem; font-weight: 600; color: #2563eb; text-decoration: none;">View All &rarr;</a>
+    </div>
   </div>
 
   {% if recent_fb_leads %}

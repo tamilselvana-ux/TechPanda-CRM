@@ -13,6 +13,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 from activities.utils import log_activity
 from services.env_meta_sync import get_candidate_verify_tokens, get_candidate_webhook_secrets
@@ -763,5 +764,154 @@ def api_autosync_status(request):
         "pages": pages_data,
         "server_time": now.strftime("%H:%M:%S"),
     })
+
+
+@login_required
+def export_facebook_leads(request):
+    """
+    Exports filtered Facebook leads to an Excel (XLSX) or CSV spreadsheet.
+    Respects active filters: date_from, date_to, branch, status, form, ad, crm, q.
+    """
+    if not _can_manage(request.user):
+        raise PermissionDenied("You do not have permission to export Facebook leads.")
+
+    import csv
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from django.http import HttpResponse
+
+    def _sanitize(val):
+        if val is None:
+            return ""
+        s = str(val).strip()
+        if s and s[0] in ('=', '+', '-', '@', '\t', '\r'):
+            return f"'{s}"
+        return s
+
+    q = request.GET.get("q", "").strip()
+    selected_form = request.GET.get("form", "").strip()
+    selected_ad = request.GET.get("ad", "").strip()
+    crm_filter = request.GET.get("crm", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    branch_id = request.GET.get("branch", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    export_format = request.GET.get("format", "xlsx").lower()
+
+    leads = FacebookLead.objects.select_related(
+        "lead", "lead__assigned_telecaller", "lead__branch", "fb_page", "fb_page__branch"
+    )
+
+    if selected_form:
+        leads = leads.filter(Q(form_name=selected_form) | Q(form_id=selected_form))
+    if selected_ad:
+        leads = leads.filter(Q(ad_name=selected_ad) | Q(ad_id=selected_ad))
+    if date_from:
+        d_from_q = Q(created_on_facebook__date__gte=date_from) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__gte=date_from))
+        leads = leads.filter(d_from_q)
+    if date_to:
+        d_to_q = Q(created_on_facebook__date__lte=date_to) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__lte=date_to))
+        leads = leads.filter(d_to_q)
+    if branch_id and branch_id.isdigit():
+        b_id = int(branch_id)
+        leads = leads.filter(Q(lead__branch_id=b_id) | Q(fb_page__branch_id=b_id))
+    if status_filter:
+        leads = leads.filter(lead__status=status_filter)
+    if crm_filter == "error":
+        leads = leads.filter(crm_result="error")
+    elif crm_filter == "pending":
+        leads = leads.filter(Q(crm_result="") | Q(lead__isnull=True))
+    elif crm_filter == "success":
+        leads = leads.filter(crm_result__in=["new", "existing"])
+    if q:
+        leads = leads.filter(
+            Q(full_name__icontains=q) |
+            Q(phone__icontains=q) |
+            Q(email__icontains=q) |
+            Q(form_name__icontains=q) |
+            Q(ad_name__icontains=q)
+        )
+
+    leads = leads.order_by("-received_at")
+
+    headers = [
+        'FB Lead ID', 'Full Name', 'Phone', 'Email', 'Form Name', 'Ad Name',
+        'Facebook Page', 'Branch', 'CRM Result', 'CRM Lead ID', 'Received At'
+    ]
+
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        filename = f"facebook_leads_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        for fb in leads.iterator(chunk_size=500):
+            branch_name = ''
+            if fb.lead and fb.lead.branch:
+                branch_name = fb.lead.branch.name
+            elif fb.fb_page and fb.fb_page.branch:
+                branch_name = fb.fb_page.branch.name
+            crm_stat = fb.crm_result or ("In CRM" if fb.lead_id else "Pending")
+            writer.writerow([
+                fb.leadgen_id,
+                _sanitize(fb.full_name or ''),
+                _sanitize(fb.phone or ''),
+                _sanitize(fb.email or ''),
+                _sanitize(fb.form_name or ''),
+                _sanitize(fb.ad_name or ''),
+                _sanitize(fb.fb_page.page_name if fb.fb_page else (fb.page_id or '')),
+                _sanitize(branch_name),
+                crm_stat,
+                fb.lead_id or '',
+                fb.received_at.strftime('%Y-%m-%d %H:%M:%S') if fb.received_at else ''
+            ])
+        return response
+    else:
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Facebook Leads"
+        ws.append(headers)
+
+        header_fill = PatternFill(start_color="1877F2", end_color="1877F2", fill_type="solid")
+        header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+        for col_num in range(1, len(headers) + 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        for fb in leads.iterator(chunk_size=500):
+            branch_name = ''
+            if fb.lead and fb.lead.branch:
+                branch_name = fb.lead.branch.name
+            elif fb.fb_page and fb.fb_page.branch:
+                branch_name = fb.fb_page.branch.name
+            crm_stat = fb.crm_result or ("In CRM" if fb.lead_id else "Pending")
+            ws.append([
+                fb.leadgen_id,
+                _sanitize(fb.full_name or ''),
+                _sanitize(fb.phone or ''),
+                _sanitize(fb.email or ''),
+                _sanitize(fb.form_name or ''),
+                _sanitize(fb.ad_name or ''),
+                _sanitize(fb.fb_page.page_name if fb.fb_page else (fb.page_id or '')),
+                _sanitize(branch_name),
+                crm_stat,
+                fb.lead_id or '',
+                fb.received_at.strftime('%Y-%m-%d %H:%M:%S') if fb.received_at else ''
+            ])
+
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = col[0].column_letter
+            ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 40)
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"facebook_leads_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
 
 

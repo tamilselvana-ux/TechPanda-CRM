@@ -1507,8 +1507,7 @@ def admin_lead_delete(request, pk):
 
 
 
-@admin_required
-
+@role_required(UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.MARKETING)
 def admin_leads_import(request):
 
     import_history = LeadImportHistory.objects.all().order_by('-uploaded_on')[:15]
@@ -8752,149 +8751,191 @@ def api_update_lead_field(request, pk):
 
 
 
+def _sanitize_cell_for_export(val):
+    """Sanitizes text value to prevent formula injection (CWE-1236)."""
+    if val is None:
+        return ""
+    val_str = str(val).strip()
+    if val_str and val_str[0] in ('=', '+', '-', '@', '\t', '\r'):
+        return f"'{val_str}"
+    return val_str
+
+
 @login_required
-
 def export_leads_csv(request):
-
     """
-
-    Exports selected or filtered leads to a CSV file respecting user role visibility.
-
+    Exports selected or filtered leads to an Excel (XLSX) or CSV spreadsheet respecting user role visibility.
+    Supports comprehensive filtering: search keyword, branch, status, channel, source, product, telecaller, and date ranges.
     """
-
     import csv
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
 
     user = request.user
-
     qs = Lead.objects.all().select_related('channel', 'product', 'branch', 'assigned_telecaller')
 
-
-
     # Enforce role visibility
-
-    if not (getattr(user, 'is_admin_user', False) or user.is_superuser or user.role == 'ADMIN'):
-
+    if not (getattr(user, 'is_admin_user', False) or user.is_superuser or user.role in ('ADMIN', 'SUPERADMIN', 'MARKETING', UserRole.MARKETING)):
         if user.role == 'SALES_HEAD':
-
             from branches.models import SalesHeadBranchAccess
-
             branches = SalesHeadBranchAccess.objects.filter(sales_head=user).values_list('branch_id', flat=True)
-
             qs = qs.filter(branch_id__in=list(branches))
-
         elif user.role == 'BRANCH_HEAD':
-
             qs = qs.filter(branch=user.branch)
-
         elif user.role == 'TELECALLER':
-
             qs = qs.filter(assigned_telecaller=user)
-
         elif user.role == 'COUNSELOR':
-
             qs = qs.filter(assigned_counselor=user)
-
-
+        else:
+            raise PermissionDenied("You do not have permission to export leads.")
 
     lead_ids_raw = request.GET.get('lead_ids', '')
-
     if lead_ids_raw:
-
         ids = [int(i.strip()) for i in lead_ids_raw.split(',') if i.strip().isdigit()]
-
         qs = qs.filter(id__in=ids)
-
     else:
-
-        q = request.GET.get('search', '').strip()
-
+        # Search query
+        q = (request.GET.get('search') or request.GET.get('q') or '').strip()
         if q:
-
             qs = qs.filter(Q(name__icontains=q) | Q(phone__icontains=q) | Q(email__icontains=q))
 
         status = request.GET.get('status', '').strip()
-
         if status:
-
             qs = qs.filter(status=status)
 
         branch = request.GET.get('branch', '').strip()
-
         if branch:
-
-            qs = qs.filter(branch_id=branch)
+            if branch.isdigit():
+                qs = qs.filter(branch_id=int(branch))
+            else:
+                qs = qs.filter(branch__name__iexact=branch)
 
         telecaller = request.GET.get('telecaller', '').strip()
-
         if telecaller:
-
             qs = qs.filter(assigned_telecaller_id=telecaller)
 
         channel = request.GET.get('channel', '').strip()
-
         if channel:
+            if channel.isdigit():
+                qs = qs.filter(channel_id=int(channel))
+            else:
+                qs = qs.filter(channel__name__iexact=channel)
 
-            qs = qs.filter(channel_id=channel)
+        source = request.GET.get('source', '').strip()
+        if source:
+            qs = qs.filter(Q(source__icontains=source) | Q(channel__name__icontains=source))
 
         product = request.GET.get('product', '').strip()
-
         if product:
+            if product.isdigit():
+                qs = qs.filter(product_id=int(product))
+            else:
+                qs = qs.filter(product__name__iexact=product)
 
-            qs = qs.filter(product_id=product)
+        # Date range filtering
+        date_from = (request.GET.get('date_from') or request.GET.get('from_date') or request.GET.get('start_date') or '').strip()
+        date_to = (request.GET.get('date_to') or request.GET.get('to_date') or request.GET.get('end_date') or '').strip()
 
+        if date_from:
+            try:
+                d_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+                qs = qs.filter(created_at__date__gte=d_from)
+            except ValueError:
+                pass
 
+        if date_to:
+            try:
+                d_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+                qs = qs.filter(created_at__date__lte=d_to)
+            except ValueError:
+                pass
 
-    response = HttpResponse(content_type='text/csv')
+        created_from = request.GET.get('created_from', '').strip()
+        if created_from:
+            try:
+                d_cr_from = datetime.fromisoformat(created_from)
+                qs = qs.filter(created_at__gte=d_cr_from)
+            except Exception:
+                pass
 
-    filename = f"leads_export_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        created_to = request.GET.get('created_to', '').strip()
+        if created_to:
+            try:
+                d_cr_to = datetime.fromisoformat(created_to)
+                qs = qs.filter(created_at__lte=d_cr_to)
+            except Exception:
+                pass
 
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
-
-
-    writer = csv.writer(response)
-
-    writer.writerow([
-
+    export_format = request.GET.get('format', 'xlsx').lower()
+    headers = [
         'ID', 'Name', 'Phone', 'Email', 'Branch', 'Source/Channel',
-
         'Status', 'Product', 'Assigned Telecaller', 'WhatsApp Opt Out', 'Created At'
+    ]
 
-    ])
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        filename = f"leads_export_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
+        writer = csv.writer(response)
+        writer.writerow(headers)
 
+        for ld in qs.iterator(chunk_size=500):
+            writer.writerow([
+                ld.id,
+                _sanitize_cell_for_export(ld.name),
+                _sanitize_cell_for_export(ld.phone),
+                _sanitize_cell_for_export(ld.email or ''),
+                _sanitize_cell_for_export(ld.branch.name if ld.branch else ''),
+                _sanitize_cell_for_export(ld.channel.name if ld.channel else (ld.source or '')),
+                _sanitize_cell_for_export(ld.status),
+                _sanitize_cell_for_export(ld.product.name if ld.product else ''),
+                _sanitize_cell_for_export(ld.assigned_telecaller.get_full_name() or ld.assigned_telecaller.username if ld.assigned_telecaller else 'Unassigned'),
+                'Yes' if getattr(ld, 'whatsapp_opt_out', False) else 'No',
+                ld.created_at.strftime('%Y-%m-%d %H:%M:%S') if ld.created_at else ''
+            ])
+        return response
+    else:
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Leads Export"
+        ws.append(headers)
 
-    for ld in qs.iterator(chunk_size=500):
+        header_fill = PatternFill(start_color="1E40AF", end_color="1E40AF", fill_type="solid")
+        header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+        for col_num in range(1, len(headers) + 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
 
-        writer.writerow([
+        for ld in qs.iterator(chunk_size=500):
+            ws.append([
+                ld.id,
+                _sanitize_cell_for_export(ld.name),
+                _sanitize_cell_for_export(ld.phone),
+                _sanitize_cell_for_export(ld.email or ''),
+                _sanitize_cell_for_export(ld.branch.name if ld.branch else ''),
+                _sanitize_cell_for_export(ld.channel.name if ld.channel else (ld.source or '')),
+                _sanitize_cell_for_export(ld.status),
+                _sanitize_cell_for_export(ld.product.name if ld.product else ''),
+                _sanitize_cell_for_export(ld.assigned_telecaller.get_full_name() or ld.assigned_telecaller.username if ld.assigned_telecaller else 'Unassigned'),
+                'Yes' if getattr(ld, 'whatsapp_opt_out', False) else 'No',
+                ld.created_at.strftime('%Y-%m-%d %H:%M:%S') if ld.created_at else ''
+            ])
 
-            ld.id,
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = col[0].column_letter
+            ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 40)
 
-            ld.name,
-
-            ld.phone,
-
-            ld.email or '',
-
-            ld.branch.name if ld.branch else '',
-
-            ld.channel.name if ld.channel else (ld.source or ''),
-
-            ld.status,
-
-            ld.product.name if ld.product else '',
-
-            ld.assigned_telecaller.get_full_name() or ld.assigned_telecaller.username if ld.assigned_telecaller else 'Unassigned',
-
-            'Yes' if getattr(ld, 'whatsapp_opt_out', False) else 'No',
-
-            ld.created_at.strftime('%Y-%m-%d %H:%M:%S') if ld.created_at else ''
-
-        ])
-
-
-
-    return response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"leads_export_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
 
 
 
