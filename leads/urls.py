@@ -110,6 +110,8 @@ urlpatterns = [
     path('leads/api/<int:pk>/update-field/', views.api_update_lead_field, name='api_update_lead_field'),
     path('leads/api/<int:lead_id>/360/', views_360.lead_360_data, name='lead_360_data'),
     path('leads/<int:lead_id>/360/', views_360.lead_360_data),
+    path('leads/<int:lead_id>/360-data/', views_360.lead_360_data, name='lead_360_data_drawer'),
+    path('leads/api/<int:lead_id>/360-data/', views_360.lead_360_data),
 
     # Advanced Bulk Edit Operations
     path('leads/api/bulk-edit/options/', views_bulk.api_bulk_edit_options, name='api_bulk_edit_options'),

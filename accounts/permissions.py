@@ -85,14 +85,25 @@ def get_accessible_branch_ids(user):
         from branches.models import Branch
         return list(Branch.objects.values_list('id', flat=True))
     if user.role == UserRole.SALES_HEAD:
+        from branches.models import Branch
+        central_branch = Branch.objects.filter(name__icontains='Centralized').first()
         assigned = list(user.branch_access.values_list('branch_id', flat=True))
+        is_central = (
+            (central_branch and (user.branch_id == central_branch.id or central_branch.id in assigned))
+            or (not user.branch_id and not assigned)
+        )
+        if is_central:
+            return list(Branch.objects.values_list('id', flat=True))
         if assigned:
             return assigned
         if user.branch_id:
             return [user.branch_id]
-        from branches.models import Branch
         return list(Branch.objects.values_list('id', flat=True))
     if user.role in (UserRole.ACCOUNTANT, UserRole.FINANCE_HEAD):
+        from branches.models import Branch
+        central_branch = Branch.objects.filter(name__icontains='Centralized').first()
+        if central_branch and user.branch_id == central_branch.id:
+            return list(Branch.objects.values_list('id', flat=True))
         if user.branch_id:
             return [user.branch_id]
         from branches.models import Branch
@@ -111,6 +122,15 @@ def can_access_lead(user, lead):
         if lead.assigned_sales_head_id == user.id:
             return True
         if not lead.branch_id:
+            return True
+        from branches.models import Branch
+        central_branch = Branch.objects.filter(name__icontains='Centralized').first()
+        assigned = list(user.branch_access.values_list('branch_id', flat=True))
+        is_central = (
+            (central_branch and (user.branch_id == central_branch.id or central_branch.id in assigned))
+            or (not user.branch_id and not assigned)
+        )
+        if is_central:
             return True
         return lead.branch_id in get_accessible_branch_ids(user)
     if user.role == UserRole.COUNSELOR:
@@ -135,6 +155,15 @@ def can_access_telecaller(user, telecaller_user):
     if user.role == UserRole.SALES_HEAD:
         if not telecaller_user.branch_id:
             return True
+        from branches.models import Branch
+        central_branch = Branch.objects.filter(name__icontains='Centralized').first()
+        assigned = list(user.branch_access.values_list('branch_id', flat=True))
+        is_central = (
+            (central_branch and (user.branch_id == central_branch.id or central_branch.id in assigned))
+            or (not user.branch_id and not assigned)
+        )
+        if is_central:
+            return True
         return telecaller_user.branch_id in get_accessible_branch_ids(user)
     if user.role in (UserRole.BRANCH_HEAD, UserRole.COUNSELOR):
         return telecaller_user.branch_id == user.branch_id
@@ -154,6 +183,15 @@ def can_edit_lead(user, lead):
         if lead.assigned_sales_head_id == user.id:
             return True
         if not lead.branch_id:
+            return True
+        from branches.models import Branch
+        central_branch = Branch.objects.filter(name__icontains='Centralized').first()
+        assigned = list(user.branch_access.values_list('branch_id', flat=True))
+        is_central = (
+            (central_branch and (user.branch_id == central_branch.id or central_branch.id in assigned))
+            or (not user.branch_id and not assigned)
+        )
+        if is_central:
             return True
         return lead.branch_id in get_accessible_branch_ids(user)
     if user.role in (UserRole.BRANCH_HEAD, UserRole.COUNSELOR):

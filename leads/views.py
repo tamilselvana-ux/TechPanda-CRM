@@ -1586,13 +1586,20 @@ def manager_leads_list(request):
 
     telecaller_ids = list(telecallers.values_list('id', flat=True))
 
+    from branches.models import Branch
+    central_branch = Branch.objects.filter(name__icontains='Centralized').first()
+    assigned = list(manager.branch_access.values_list('branch_id', flat=True))
+    is_central = (
+        (central_branch and (manager.branch_id == central_branch.id or central_branch.id in assigned))
+        or (not manager.branch_id and not assigned)
+    )
 
+    if is_central:
+        lead_scope = Q(branch_id__in=branch_ids) | Q(assigned_sales_head=manager) | Q(assigned_telecaller_id__in=telecaller_ids) | Q(branch__isnull=True)
+    else:
+        lead_scope = Q(branch_id__in=branch_ids) | Q(assigned_sales_head=manager) | Q(assigned_telecaller_id__in=telecaller_ids)
 
-    leads_qs = Lead.objects.filter(
-
-        Q(branch_id__in=branch_ids) | Q(assigned_sales_head=manager) | Q(assigned_telecaller_id__in=telecaller_ids)
-
-    ).select_related('channel', 'product', 'assigned_telecaller', 'branch').distinct()
+    leads_qs = Lead.objects.filter(lead_scope).select_related('channel', 'product', 'assigned_telecaller', 'branch').distinct()
 
 
 
@@ -8780,9 +8787,8 @@ def export_leads_csv(request):
     # Enforce role visibility
     if not (getattr(user, 'is_admin_user', False) or user.is_superuser or user.role in ('ADMIN', 'SUPERADMIN', 'MARKETING', UserRole.MARKETING)):
         if user.role == 'SALES_HEAD':
-            from branches.models import SalesHeadBranchAccess
-            branches = SalesHeadBranchAccess.objects.filter(sales_head=user).values_list('branch_id', flat=True)
-            qs = qs.filter(branch_id__in=list(branches))
+            branch_ids = get_accessible_branch_ids(user)
+            qs = qs.filter(Q(branch_id__in=branch_ids) | Q(assigned_sales_head=user) | Q(branch__isnull=True))
         elif user.role == 'BRANCH_HEAD':
             qs = qs.filter(branch=user.branch)
         elif user.role == 'TELECALLER':
@@ -8987,12 +8993,8 @@ def api_resolve_lead_selection(request):
         if not (getattr(user, 'is_admin_user', False) or user.is_superuser or user.role == 'ADMIN'):
 
             if user.role == 'SALES_HEAD':
-
-                from branches.models import SalesHeadBranchAccess
-
-                branches = SalesHeadBranchAccess.objects.filter(sales_head=user).values_list('branch_id', flat=True)
-
-                qs = qs.filter(branch_id__in=list(branches))
+                branch_ids = get_accessible_branch_ids(user)
+                qs = qs.filter(Q(branch_id__in=branch_ids) | Q(assigned_sales_head=user) | Q(branch__isnull=True))
 
             elif user.role == 'BRANCH_HEAD':
 
