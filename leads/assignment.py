@@ -364,7 +364,7 @@ def apply_branch_lead_distribution(branch, user=None, source=None) -> tuple[int,
             if norm_source:
                 leads_scope = leads_scope & (Q(source__iexact=norm_source) | Q(source__iexact=source))
         else:
-            leads_scope = Q(branch=branch) | Q(branch__isnull=True)
+            leads_scope = Q(branch=branch)
             if norm_source:
                 leads_scope = leads_scope & (Q(source__iexact=norm_source) | Q(source__iexact=source))
 
