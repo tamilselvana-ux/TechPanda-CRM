@@ -127,7 +127,12 @@
     </div>
     <div>
      <span style="color: var(--tp-text-muted); display: block; font-size: 0.78rem;">Telecallers:</span>
-     <strong style="color: var(--tp-text-primary); font-size: 1.05rem;">{{ b.telecallers_count }}</strong>
+     <strong style="color: var(--tp-text-primary); font-size: 1.05rem;">
+      {{ b.telecallers_count }}
+      {% if b.telecallers_count == 0 and org_telecallers_count > 0 %}
+      <span style="font-size: 0.68rem; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 1px 6px; border-radius: 4px; vertical-align: middle; margin-left: 2px;" title="{{ org_telecallers_count }} organization telecallers available via Centralized Pool">Pool</span>
+      {% endif %}
+     </strong>
     </div>
     <div>
      <span style="color: var(--tp-text-muted); display: block; font-size: 0.78rem;">Available Leads:</span>

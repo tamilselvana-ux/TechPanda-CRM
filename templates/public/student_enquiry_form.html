@@ -520,8 +520,8 @@
 
       <div class="form-row" style="grid-template-columns: 1fr;">
         <div class="form-group">
-          <label class="form-label" for="email"><span>Email Address <span class="required-star">*</span></span></label>
-          <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email address" value="{{ form_data.email|default:'' }}" required>
+          <label class="form-label" for="email"><span>Email Address <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">(Optional)</span></span></label>
+          <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email address (optional)" value="{{ form_data.email|default:'' }}">
         </div>
       </div>
 
@@ -543,8 +543,8 @@
 
       <div class="form-row" style="grid-template-columns: 1fr;">
         <div class="form-group">
-          <label class="form-label" for="emergency_contact"><span>Emergency Contact Number <span class="required-star">*</span></span></label>
-          <input type="tel" name="emergency_contact" id="emergency_contact" inputmode="tel" class="form-control" placeholder="Parent / Guardian / Emergency contact number" value="{{ form_data.emergency_contact|default:'' }}" required maxlength="15">
+          <label class="form-label" for="emergency_contact"><span>Emergency Contact Number <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">(Parent / Guardian - Optional)</span></span></label>
+          <input type="tel" name="emergency_contact" id="emergency_contact" inputmode="tel" class="form-control" placeholder="Parent / Guardian contact number (optional)" value="{{ form_data.emergency_contact|default:'' }}" maxlength="15">
         </div>
       </div>
 

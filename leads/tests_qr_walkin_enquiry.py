@@ -126,3 +126,64 @@ class QRWalkinStudentEnquiryTests(TestCase):
         self.assertContains(response, 'Reception Desk Standee')
         self.assertContains(response, 'Velachery')
         self.assertContains(response, 'data:image/png;base64,')
+
+    def test_walkin_lead_retains_visited_status_and_no_telecaller_assignment(self):
+        """Walk-in submissions must be set to Visited and remain in front desk queue, not given to telecallers."""
+        url = reverse('public_student_enquiry_branch', kwargs={'branch_id': self.branch.id})
+        data = {
+            'name': 'Girish Kumar',
+            'phone': '9840887766',
+            'branch_id': self.branch.id,
+            'experience_type': 'Fresher',
+            'ug_qualification': 'B.Sc CS',
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        lead = Lead.objects.filter(phone='9840887766').first()
+        self.assertIsNotNone(lead)
+        self.assertEqual(lead.status, LeadStatus.VISITED)
+        self.assertEqual(lead.visitor_status, VisitorStatus.WAITING)
+        self.assertIsNone(lead.assigned_telecaller)
+        self.assertEqual(lead.source, 'Walk-in QR Form')
+
+    def test_admin_walkin_create_duplicate_detection_and_existing_checkin(self):
+        """Walk-in desk detects duplicates and supports checking in existing students."""
+        self.client.force_login(self.admin)
+        existing_lead = Lead.objects.create(
+            name='Existing Student Walker',
+            phone='9840554433',
+            email='existingwalker@test.com',
+            branch=self.branch,
+            channel=self.walkin_channel,
+            status=LeadStatus.NEW,
+            source='Website'
+        )
+
+        # 1. Attempting new visitor creation with same phone triggers is_duplicate
+        url = reverse('admin_walkin_create')
+        payload = {
+            'name': 'Existing Student Walker',
+            'phone': '9840554433',
+            'branch_id': self.branch.id,
+            'category': 'Training'
+        }
+        res1 = self.client.post(url, data=payload, content_type='application/json')
+        self.assertEqual(res1.status_code, 200)
+        data1 = res1.json()
+        self.assertFalse(data1['success'])
+        self.assertTrue(data1['is_duplicate'])
+        self.assertEqual(len(data1['matches']), 1)
+        self.assertEqual(data1['matches'][0]['id'], existing_lead.id)
+
+        # 2. Checking in the existing lead directly
+        payload_checkin = {
+            'existing_lead_id': existing_lead.id,
+            'notes': 'Checked in via walk-in desk'
+        }
+        res2 = self.client.post(url, data=payload_checkin, content_type='application/json')
+        self.assertEqual(res2.status_code, 200)
+        data2 = res2.json()
+        self.assertTrue(data2['success'])
+        existing_lead.refresh_from_db()
+        self.assertEqual(existing_lead.visitor_status, VisitorStatus.WAITING)
+        self.assertIsNotNone(existing_lead.center_visit_date)

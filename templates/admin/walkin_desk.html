@@ -732,6 +732,7 @@
  </div>
  <form id="newVisitorForm" onsubmit="submitNewVisitor(event)" style="padding: 24px;">
  {% csrf_token %}
+ <input type="hidden" name="force_create" id="visitorForceCreate" value="false">
  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
  <div>
  <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Visitor Full Name *</label>
@@ -741,6 +742,15 @@
  <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #334155; margin-bottom: 4px;">Mobile Phone *</label>
  <input type="text" name="phone" class="form-control" required placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}">
  </div>
+ </div>
+
+ <!-- Real-time Duplicate Warning Box -->
+ <div id="duplicateWarningBox" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px; margin-bottom: 14px; font-size: 0.85rem; color: #92400e;">
+   <div style="font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+     Matching Student Record(s) Found in CRM:
+   </div>
+   <div id="duplicateMatchesList"></div>
  </div>
 
  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
@@ -831,6 +841,10 @@
 
 <script>
 function openNewVisitorModal() {
+ const forceInput = document.getElementById('visitorForceCreate');
+ if (forceInput) forceInput.value = 'false';
+ const warnBox = document.getElementById('duplicateWarningBox');
+ if (warnBox) warnBox.style.display = 'none';
  document.getElementById('newVisitorModal').style.display = 'flex';
 }
 function closeNewVisitorModal() {
@@ -912,6 +926,7 @@ async function submitNewVisitor(e) {
  category: formData.get('category'),
  counselor_id: formData.get('counselor_id') || null,
  notes: formData.get('notes'),
+ force_create: formData.get('force_create') === 'true',
  };
 
  try {
@@ -927,6 +942,36 @@ async function submitNewVisitor(e) {
  if (data.success) {
  alert(`Visitor Token #${data.token_number} generated! Visitor checked in successfully.`);
  window.location.reload();
+ } else if (data.is_duplicate) {
+ btn.disabled = false;
+ btn.textContent = 'Check In Visitor';
+ const warnBox = document.getElementById('duplicateWarningBox');
+ const list = document.getElementById('duplicateMatchesList');
+ if (warnBox && list) {
+ warnBox.style.display = 'block';
+ list.innerHTML = (data.matches || []).map(m => `
+ <div style="background: #fff; border: 1px solid #fde68a; border-radius: 6px; padding: 10px; margin-top: 6px; font-size: 0.8rem;">
+ <div style="display: flex; justify-content: space-between; font-weight: 700; color: #1e293b;">
+ <span>${m.name} (ID #${m.id})</span>
+ <span style="color: #b45309;">${m.status}</span>
+ </div>
+ <div style="color: #475569; margin-top: 3px;">Branch: ${m.branch} &bull; Counselor: ${m.assigned_counselor || 'Unassigned'}</div>
+ <div style="margin-top: 8px;">
+ <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 4px 10px; background: #059669; border-color: #059669;" onclick="checkInExistingStudent(${m.id})">
+ Check In Existing Student Now
+ </button>
+ </div>
+ </div>
+ `).join('') + `
+ <div style="margin-top: 10px; font-size: 0.78rem; color: #78350f;">
+ <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+ <input type="checkbox" onchange="document.getElementById('visitorForceCreate').value = this.checked ? 'true' : 'false';">
+ Create new separate lead record anyway (do not link to existing)
+ </label>
+ </div>
+ `;
+ }
+ alert("Notice: Matching student record(s) already exist in the CRM. You can check in the existing student directly or choose to create a separate record.");
  } else {
  alert(`Error: ${data.error || 'Failed to check in visitor.'}`);
  btn.disabled = false;
@@ -936,6 +981,35 @@ async function submitNewVisitor(e) {
  alert(`Error: ${err.message}`);
  btn.disabled = false;
  btn.textContent = 'Check In Visitor';
+ }
+}
+
+async function checkInExistingStudent(leadId) {
+ const form = document.getElementById('newVisitorForm');
+ const formData = new FormData(form);
+ const payload = {
+ existing_lead_id: leadId,
+ counselor_id: formData.get('counselor_id') || null,
+ notes: formData.get('notes'),
+ };
+ try {
+ const res = await fetch("{% url 'admin_walkin_create' %}", {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+ },
+ body: JSON.stringify(payload)
+ });
+ const data = await res.json();
+ if (data.success) {
+ alert(data.message || `Existing student checked in successfully! Token #${data.token_number}`);
+ window.location.reload();
+ } else {
+ alert(`Error: ${data.error || 'Failed to check in existing student.'}`);
+ }
+ } catch(err) {
+ alert(`Error: ${err.message}`);
  }
 }
 

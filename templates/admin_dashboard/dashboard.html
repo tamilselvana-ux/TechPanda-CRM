@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
  }
 
  // 2. Fetch and render Management Charts
- fetch('{% url "management_charts_api" %}')
+ fetch('{% url "management_charts_api" %}' + (window.location.search || ''))
  .then(r =>r.json())
  .then(data => {
  // Chart 1: Lead Status Distribution (Modern Doughnut with Center KPI Stat)

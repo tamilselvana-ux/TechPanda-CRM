@@ -747,7 +747,13 @@ def intake_lead(
                         log.warning("Autofill qualification failed for re-enquiry lead %s: %s", existing_lead.id, e)
 
                 if branch_changed or not existing_lead.assigned_telecaller_id:
-                    auto_assign(existing_lead, source, by=activity_user)
+                    is_walkin_reenquiry = (
+                        'walk-in' in str(source or '').lower() or
+                        'walk-in' in str(channel_name or '').lower() or
+                        'walkin' in str(source or '').lower()
+                    )
+                    if not is_walkin_reenquiry:
+                        auto_assign(existing_lead, source, by=activity_user)
                     existing_lead.refresh_from_db()
                     if existing_lead.assigned_telecaller:
                         field_changes['assigned_telecaller'] = {
@@ -924,18 +930,32 @@ def intake_lead(
                         + (f" for branch '{branch.name}'." if branch else "."),
             object_type="Lead", object_id=lead.pk
         )
-        auto_assign(lead, source, by=activity_user)
-        lead.refresh_from_db()
 
-        if lead.assigned_telecaller_id:
-            def _dispatch_notify_new(recip=lead.assigned_telecaller, l_id=lead.id,
-                                     l_name=lead.name, l_ph=lead.phone, src=source):
-                try:
-                    notify(recip, f"New {src} lead",
-                           f"{l_name} ({l_ph}) was assigned to you from {src}.", kind='lead_assigned')
-                except Exception:
-                    log.exception("New lead notification failed for lead %s", l_id)
-            transaction.on_commit(_dispatch_notify_new)
+        is_walkin_intake = (
+            'walk-in' in str(source or '').lower() or
+            'walk-in' in str(channel_name or '').lower() or
+            'walkin' in str(source or '').lower()
+        )
+        if not is_walkin_intake:
+            auto_assign(lead, source, by=activity_user)
+            lead.refresh_from_db()
+
+            if lead.assigned_telecaller_id:
+                def _dispatch_notify_new(recip=lead.assigned_telecaller, l_id=lead.id,
+                                         l_name=lead.name, l_ph=lead.phone, src=source):
+                    try:
+                        notify(recip, f"New {src} lead",
+                               f"{l_name} ({l_ph}) was assigned to you from {src}.", kind='lead_assigned')
+                    except Exception:
+                        log.exception("New lead notification failed for lead %s", l_id)
+                transaction.on_commit(_dispatch_notify_new)
+        else:
+            lead.current_owner_type = LeadOwnerType.UNASSIGNED
+            lead.assignment_status = 'Unassigned'
+            lead.status = LeadStatus.VISITED
+            lead.visitor_status = visitor_status or VisitorStatus.WAITING
+            lead.is_offline = True
+            lead.save(update_fields=['current_owner_type', 'assignment_status', 'status', 'visitor_status', 'is_offline', 'updated_at'])
 
         if clean_event_id:
             cf = dict(lead.custom_fields or {})

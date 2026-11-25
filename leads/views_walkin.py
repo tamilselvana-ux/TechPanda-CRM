@@ -337,19 +337,7 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
 
             }, status=400)
 
-        if not email:
-            return render(request, 'public/student_enquiry_form.html', {
-                'form_config': form_config,
-                'schema': schema,
-                'branch': selected_branch,
-                'branches': active_branches,
-                'products': active_products,
-                'error': 'Please enter your Email address.',
-                'form_data': form_data_dict,
-                'token_preview': token_preview,
-            }, status=400)
-
-        if '@' not in email or '.' not in email.split('@')[-1]:
+        if email and ('@' not in email or '.' not in email.split('@')[-1]):
             return render(request, 'public/student_enquiry_form.html', {
                 'form_config': form_config,
                 'schema': schema,
@@ -361,19 +349,7 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
                 'token_preview': token_preview,
             }, status=400)
 
-        if not emergency_contact_raw:
-            return render(request, 'public/student_enquiry_form.html', {
-                'form_config': form_config,
-                'schema': schema,
-                'branch': selected_branch,
-                'branches': active_branches,
-                'products': active_products,
-                'error': 'Please enter an Emergency Contact Number (Parent / Guardian).',
-                'form_data': form_data_dict,
-                'token_preview': token_preview,
-            }, status=400)
-
-        if len(emergency_contact_clean) < 10:
+        if emergency_contact_raw and len(emergency_contact_clean) < 10:
             return render(request, 'public/student_enquiry_form.html', {
                 'form_config': form_config,
                 'schema': schema,
@@ -482,10 +458,13 @@ def public_student_enquiry_form(request, branch_id=None, slug=None):
 
             lead.is_offline = True
             lead.category = LeadCategory.TRAINING
+            lead.status = LeadStatus.VISITED
+            lead.visitor_status = VisitorStatus.WAITING
+            lead.center_visit_date = now
             merged_cf = dict(lead.custom_fields or {})
             merged_cf.update(custom_payload)
             lead.custom_fields = merged_cf
-            update_fields = ['is_offline', 'category', 'custom_fields', 'updated_at']
+            update_fields = ['is_offline', 'category', 'status', 'visitor_status', 'center_visit_date', 'custom_fields', 'updated_at']
             if is_re_enquiry:
                 lead.notes = f"Re-enquiry visit via Walk-in QR Code on {now.strftime('%d-%b-%Y %I:%M %p')}.\n" + (lead.notes or '')
                 update_fields.append('notes')

@@ -855,7 +855,7 @@ def get_telecaller_rnr_lead_details(detail_type='unique_rnr', branch_ids=None, c
     }
 
 
-def get_management_chart_data(branch_ids=None, start_dt=None, end_dt=None):
+def get_management_chart_data(branch_ids=None, start_dt=None, end_dt=None, include_unassigned=False):
     """
     Returns structured JSON data for management charts (Req 13):
     1. Status distribution (pie/doughnut)
@@ -867,8 +867,12 @@ def get_management_chart_data(branch_ids=None, start_dt=None, end_dt=None):
     calls_qs = CallHistory.objects.all()
 
     if branch_ids is not None:
-        leads_qs = leads_qs.filter(branch_id__in=branch_ids)
-        calls_qs = calls_qs.filter(lead__branch_id__in=branch_ids)
+        if include_unassigned:
+            leads_qs = leads_qs.filter(Q(branch_id__in=branch_ids) | Q(branch_id__isnull=True))
+            calls_qs = calls_qs.filter(Q(lead__branch_id__in=branch_ids) | Q(lead__branch_id__isnull=True))
+        else:
+            leads_qs = leads_qs.filter(branch_id__in=branch_ids)
+            calls_qs = calls_qs.filter(lead__branch_id__in=branch_ids)
 
     if start_dt and end_dt:
         leads_qs = leads_qs.filter(created_at__range=(start_dt, end_dt))
@@ -885,9 +889,12 @@ def get_management_chart_data(branch_ids=None, start_dt=None, end_dt=None):
 
     # 3. Telecaller Performance Bar Chart (Top 8 telecallers)
     rnr_call_q = Q(call_outcome__in=['RNR', 'No Answer', 'Busy']) | Q(call_status__in=['No Answer', 'Busy', 'Missed', 'Failed'])
-    telecallers = User.objects.filter(role=UserRole.TELECALLER)
+    telecallers = User.objects.filter(role=UserRole.TELECALLER, is_active=True)
     if branch_ids is not None:
-        telecallers = telecallers.filter(branch_id__in=branch_ids)
+        if include_unassigned:
+            telecallers = telecallers.filter(Q(branch_id__in=branch_ids) | Q(branch_id__isnull=True))
+        else:
+            telecallers = telecallers.filter(branch_id__in=branch_ids)
 
     tc_labels = []
     tc_connected = []
@@ -903,9 +910,12 @@ def get_management_chart_data(branch_ids=None, start_dt=None, end_dt=None):
             tc_rnr.append(rnr)
 
     # 4. Counselor Lead Volume and Conversions (Top 8 counselors)
-    counselors = User.objects.filter(role=UserRole.COUNSELOR)
+    counselors = User.objects.filter(role=UserRole.COUNSELOR, is_active=True)
     if branch_ids is not None:
-        counselors = counselors.filter(branch_id__in=branch_ids)
+        if include_unassigned:
+            counselors = counselors.filter(Q(branch_id__in=branch_ids) | Q(branch_id__isnull=True))
+        else:
+            counselors = counselors.filter(branch_id__in=branch_ids)
 
     c_labels = []
     c_leads = []

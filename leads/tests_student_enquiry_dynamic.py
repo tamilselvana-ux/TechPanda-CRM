@@ -79,12 +79,15 @@ class StudentEnquiryDynamicFormTests(TestCase):
             "interested_course": ["Python Full Stack"],
         }
 
-    def test_missing_email_rejected(self):
+    def test_missing_email_allowed(self):
         payload = dict(self.valid_fresher_payload)
         payload["email"] = ""
+        payload["phone"] = "9876543299"
         resp = self.client.post(reverse("public_student_enquiry_form"), payload)
-        self.assertEqual(resp.status_code, 400)
-        self.assertIn("Please enter your Email address.", resp.content.decode("utf-8"))
+        self.assertEqual(resp.status_code, 200)
+        lead = Lead.objects.filter(phone="9876543299").first()
+        self.assertIsNotNone(lead)
+        self.assertEqual(lead.email, "")
 
     def test_invalid_email_format_rejected(self):
         payload = dict(self.valid_fresher_payload)
@@ -93,12 +96,14 @@ class StudentEnquiryDynamicFormTests(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn("Please enter a valid Email address.", resp.content.decode("utf-8"))
 
-    def test_missing_emergency_contact_rejected(self):
+    def test_missing_emergency_contact_allowed(self):
         payload = dict(self.valid_fresher_payload)
         payload["emergency_contact"] = ""
+        payload["phone"] = "9876543288"
         resp = self.client.post(reverse("public_student_enquiry_form"), payload)
-        self.assertEqual(resp.status_code, 400)
-        self.assertIn("Please enter an Emergency Contact Number", resp.content.decode("utf-8"))
+        self.assertEqual(resp.status_code, 200)
+        lead = Lead.objects.filter(phone="9876543288").first()
+        self.assertIsNotNone(lead)
 
     def test_invalid_emergency_contact_digits_rejected(self):
         payload = dict(self.valid_fresher_payload)

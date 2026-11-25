@@ -427,7 +427,36 @@ def management_charts_api(request):
     """
     user = request.user
     accessible_branches = get_accessible_branch_ids(user)
-    chart_data = get_management_chart_data(branch_ids=accessible_branches)
+
+    branch_filter = request.GET.get('branch', '').strip()
+    from leads.utils_date_filter import extract_normalized_date_range
+    _date_info = extract_normalized_date_range(request, default_period=None)
+    start_dt = _date_info.get('start_dt')
+    end_dt = _date_info.get('end_dt')
+
+    from branches.utils import get_admin_selected_branch
+    selected_branch = get_admin_selected_branch(request) if getattr(user, 'is_admin_user', False) else None
+
+    effective_branch_id = None
+    if selected_branch:
+        effective_branch_id = selected_branch.id
+    elif branch_filter and branch_filter.isdigit():
+        effective_branch_id = int(branch_filter)
+
+    if effective_branch_id and effective_branch_id in accessible_branches:
+        branch_ids = [effective_branch_id]
+        include_unassigned = False
+    else:
+        branch_ids = accessible_branches
+        # When viewing organization-wide overview as Admin/Superadmin, include unassigned pool leads
+        include_unassigned = bool(getattr(user, 'is_admin_user', False))
+
+    chart_data = get_management_chart_data(
+        branch_ids=branch_ids,
+        start_dt=start_dt,
+        end_dt=end_dt,
+        include_unassigned=include_unassigned
+    )
     return JsonResponse(chart_data)
 
 

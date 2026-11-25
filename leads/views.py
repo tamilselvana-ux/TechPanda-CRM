@@ -6871,7 +6871,7 @@ def admin_lead_setup(request):
 
             total_avail_leads = Lead.objects.filter(
 
-                Q(branch=branch) | Q(branch__isnull=True)
+                branch=branch
 
             ).exclude(
 
@@ -7260,6 +7260,7 @@ def admin_lead_setup(request):
 
 
     central_b_id = Branch.objects.filter(name='Centralized (All Branches)').values_list('id', flat=True).first()
+    org_telecallers_count = User.get_telecallers_queryset().filter(is_active=True).count()
 
     return render(request, 'admin/lead_setup.html', {
 
@@ -7268,6 +7269,8 @@ def admin_lead_setup(request):
         'branches': branches,
 
         'telecallers': telecallers,
+
+        'org_telecallers_count': org_telecallers_count,
 
         'branch_data': branch_data,
 
@@ -10632,92 +10635,57 @@ def admin_walkin_desk(request):
 
 
 
-    # Walk-in leads base query - matches direct walk-in, QR form, and walk-in channels
-
+    # Walk-in leads base query - matches direct walk-in, QR form, and walk-in channels, plus all checked-in center visitors
     walkin_qs = Lead.objects.filter(
-
-        Q(source__icontains='Walk-in') | Q(channel__name__icontains='Walk-in')
-
-    ).select_related('branch', 'assigned_counselor', 'channel').order_by('-created_at')
-
-
+        Q(source__icontains='Walk-in') |
+        Q(channel__name__icontains='Walk-in') |
+        Q(is_offline=True) |
+        Q(token_number__startswith='WI-') |
+        Q(center_visit_date__isnull=False) |
+        Q(visitor_status__in=['Waiting', 'In Consultation', 'Completed'])
+    ).distinct().select_related('branch', 'assigned_counselor', 'channel').order_by('-updated_at')
 
     # Scope permissions
-
     if not user.is_admin_user:
-
         from accounts.permissions import get_accessible_branch_ids
-
         accessible_branch_ids = get_accessible_branch_ids(user)
-
         if accessible_branch_ids:
-
             walkin_qs = walkin_qs.filter(branch_id__in=accessible_branch_ids)
 
-
-
     if branch_filter:
-
         walkin_qs = walkin_qs.filter(branch_id=branch_filter)
 
-
-
-    # Date range calculations
-
+    # Date range calculations (IST local time)
     import datetime
-
-    now = timezone.now()
-
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    yesterday_start = today_start - datetime.timedelta(days=1)
-
-    week_start = today_start - datetime.timedelta(days=7)
-
-
+    today_local = timezone.localdate()
+    today_start = timezone.make_aware(datetime.datetime.combine(today_local, datetime.time.min))
+    today_end = timezone.make_aware(datetime.datetime.combine(today_local, datetime.time.max))
+    yesterday_local = today_local - datetime.timedelta(days=1)
+    yesterday_start = timezone.make_aware(datetime.datetime.combine(yesterday_local, datetime.time.min))
+    yesterday_end = timezone.make_aware(datetime.datetime.combine(yesterday_local, datetime.time.max))
+    week_start = timezone.make_aware(datetime.datetime.combine(today_local - datetime.timedelta(days=7), datetime.time.min))
 
     date_filter = request.GET.get('date_filter', 'today').strip().lower()
 
-
-
     # Base counts for segmented tabs
-
-    count_today = walkin_qs.filter(Q(created_at__gte=today_start) | Q(center_visit_date__gte=today_start)).count()
-
+    count_today = walkin_qs.filter(Q(created_at__range=(today_start, today_end)) | Q(center_visit_date__range=(today_start, today_end))).count()
     count_yesterday = walkin_qs.filter(
-
-        (Q(created_at__gte=yesterday_start) & Q(created_at__lt=today_start)) |
-
-        (Q(center_visit_date__gte=yesterday_start) & Q(center_visit_date__lt=today_start))
-
+        (Q(created_at__range=(yesterday_start, yesterday_end))) |
+        (Q(center_visit_date__range=(yesterday_start, yesterday_end)))
     ).count()
-
     count_week = walkin_qs.filter(Q(created_at__gte=week_start) | Q(center_visit_date__gte=week_start)).count()
-
     count_all = walkin_qs.count()
 
-
-
     # Apply date filter (defaults to 'today' so table view matches today KPI)
-
     if date_filter == 'today':
-
-        walkin_qs = walkin_qs.filter(Q(created_at__gte=today_start) | Q(center_visit_date__gte=today_start))
-
+        walkin_qs = walkin_qs.filter(Q(created_at__range=(today_start, today_end)) | Q(center_visit_date__range=(today_start, today_end)))
     elif date_filter == 'yesterday':
-
         walkin_qs = walkin_qs.filter(
-
-            (Q(created_at__gte=yesterday_start) & Q(created_at__lt=today_start)) |
-
-            (Q(center_visit_date__gte=yesterday_start) & Q(center_visit_date__lt=today_start))
-
+            (Q(created_at__range=(yesterday_start, yesterday_end))) |
+            (Q(center_visit_date__range=(yesterday_start, yesterday_end)))
         )
-
     elif date_filter == 'week':
-
         walkin_qs = walkin_qs.filter(Q(created_at__gte=week_start) | Q(center_visit_date__gte=week_start))
-
     # 'all' applies no date filter
 
 
@@ -10880,7 +10848,9 @@ def admin_walkin_create(request):
 
 
 
-        if not name or not phone:
+        existing_lead_id = data.get('existing_lead_id')
+
+        if not existing_lead_id and (not name or not phone):
 
             return JsonResponse({'success': False, 'error': 'Name and Phone are required.'}, status=400)
 

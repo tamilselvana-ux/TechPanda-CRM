@@ -1,8 +1,8 @@
 # Stub & Incomplete-Code Scan
 
-Run: 2026-11-25 12:48 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
+Run: 2026-11-25 18:08 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 
-**Blockers:** 0 · **Warnings:** 112 · **Verdict:** ✅ no stubs found
+**Blockers:** 0 · **Warnings:** 116 · **Verdict:** ✅ no stubs found
 
 ## 🚫 Blockers (must fix before 'done')
 | Rule | File | Line | Code |
@@ -81,13 +81,17 @@ Run: 2026-11-25 12:48 · Root: `D:\CRM_Integrated_v2\CRM_Integrated_v2\CRM`
 | alert() used for UX | templates\admin\telecallers_list.html | 506 | `alert('Please select a branch.');` |
 | alert() used for UX | templates\admin\telecallers_list.html | 615 | `alert('Error updating telecallers: ' + (data.error // 'Server error'));` |
 | alert() used for UX | templates\admin\telecallers_list.html | 626 | `alert('Network error while processing bulk update: ' + err.message);` |
-| alert() used for UX | templates\admin\walkin_desk.html | 892 | `alert(`Error updating visitor status: ${data.error // 'Failed'}`);` |
-| alert() used for UX | templates\admin\walkin_desk.html | 895 | `alert(`Error: ${err.message}`);` |
-| alert() used for UX | templates\admin\walkin_desk.html | 928 | `alert(`Visitor Token #${data.token_number} generated! Visitor checked in successfully.`);` |
-| alert() used for UX | templates\admin\walkin_desk.html | 931 | `alert(`Error: ${data.error // 'Failed to check in visitor.'}`);` |
-| alert() used for UX | templates\admin\walkin_desk.html | 936 | `alert(`Error: ${err.message}`);` |
-| alert() used for UX | templates\admin\walkin_desk.html | 969 | `alert(`Error: ${data.error // 'Failed to assign counselor.'}`);` |
-| alert() used for UX | templates\admin\walkin_desk.html | 974 | `alert(`Error: ${err.message}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 906 | `alert(`Error updating visitor status: ${data.error // 'Failed'}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 909 | `alert(`Error: ${err.message}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 943 | `alert(`Visitor Token #${data.token_number} generated! Visitor checked in successfully.`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 974 | `alert("Notice: Matching student record(s) already exist in the CRM. You can check in the existing student dire` |
+| alert() used for UX | templates\admin\walkin_desk.html | 976 | `alert(`Error: ${data.error // 'Failed to check in visitor.'}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 981 | `alert(`Error: ${err.message}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 1006 | `alert(data.message // `Existing student checked in successfully! Token #${data.token_number}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 1009 | `alert(`Error: ${data.error // 'Failed to check in existing student.'}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 1012 | `alert(`Error: ${err.message}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 1043 | `alert(`Error: ${data.error // 'Failed to assign counselor.'}`);` |
+| alert() used for UX | templates\admin\walkin_desk.html | 1048 | `alert(`Error: ${err.message}`);` |
 | alert() used for UX | templates\admin\walkin_forms_list.html | 406 | `alert('Public link copied to clipboard: ' + url);` |
 | alert() used for UX | templates\admin\walkin_form_editor.html | 2941 | `alert('Error saving form: ' + (data.error // 'Server error'));` |
 | alert() used for UX | templates\admin\walkin_form_editor.html | 2949 | `alert('Network error saving form. Please try again.');` |
