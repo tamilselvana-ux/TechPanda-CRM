@@ -10,6 +10,31 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initPasswordToggles() {
+ // 1. Attach listeners to any pre-rendered .tp-password-toggle-btn or .pwd-toggle-btn buttons
+ const existingBtns = document.querySelectorAll('.tp-password-toggle-btn, .pwd-toggle-btn');
+ existingBtns.forEach(btn => {
+ if (btn.dataset.toggleBound) return;
+ btn.dataset.toggleBound = 'true';
+
+ const wrapper = btn.closest('.tp-password-field-wrapper') || btn.closest('.pwd-toggle-wrapper') || btn.parentElement;
+ const input = wrapper ? wrapper.querySelector('input') : null;
+ if (!input) return;
+
+ input.dataset.toggleInitialized = 'true';
+ btn.innerHTML = eyeIconSvg(false);
+
+ btn.addEventListener('click', function (e) {
+ e.preventDefault();
+ e.stopPropagation();
+ const isPassword = input.type === 'password';
+ input.type = isPassword ? 'text' : 'password';
+ btn.innerHTML = eyeIconSvg(isPassword);
+ btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+ btn.style.color = isPassword ? 'var(--tp-primary-600, #2563eb)' : '#64748b';
+ input.focus();
+ });
+ });
+
  const passwordInputs = document.querySelectorAll('input[type="password"]');
 
  passwordInputs.forEach(input => {

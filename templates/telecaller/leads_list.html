@@ -122,10 +122,10 @@
  <tr>
  <th style="width: 80px;">Sl No</th>
  <th>Lead Name</th>
- <th>Phone</th>
+ <th style="white-space: nowrap;">Phone</th>
  <th>Branch</th>
  <th>Status</th>
- <th style="text-align: right;">Action</th>
+ <th style="text-align: right; white-space: nowrap;">Action</th>
  </tr>
  </thead>
  <tbody>
@@ -137,7 +137,7 @@
  <td>
  <strong><a href="{% url 'telecaller_lead_detail' ld.pk %}" style="color: var(--tp-text-primary); text-decoration: none;">{{ ld.name }}</a></strong>
  </td>
- <td>
+ <td style="white-space: nowrap;">
  <a href="tel:{{ ld.phone }}" style="color: var(--tp-text-secondary); text-decoration: none; font-weight: 600; font-family: monospace;" title="Click to call {{ ld.phone }}">
  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px; color: var(--tp-primary-600);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
  {{ ld.phone }}
@@ -147,7 +147,7 @@
  <span class="badge tp-badge" style="background: var(--tp-surface-bg); color: var(--tp-text-secondary); border: 1px solid var(--tp-surface-border); font-weight: 600;">{{ ld.branch.name|default:"-" }}</span>
  </td>
  <td><span class="badge badge-{{ ld.status|lower|slugify }}">{{ ld.status }}</span></td>
- <td style="text-align: right;">
+ <td style="text-align: right; white-space: nowrap;">
  <div style="display: inline-flex; gap: 8px;">
  <button type="button" class="btn btn-success btn-sm tp-btn-success" onclick="openCallDialer('{{ ld.pk }}', '{{ ld.name|escapejs }}', '{{ ld.phone|escapejs }}')">
  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>

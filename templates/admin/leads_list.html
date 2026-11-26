@@ -48,13 +48,13 @@
  transition: all 0.2s ease;
  }
  .telecrm-create-view-panel {
- width: 360px;
- min-width: 340px;
+ width: 350px;
+ min-width: 320px;
  max-width: 380px;
  background: var(--bg-card, #ffffff);
  border: 1px solid var(--border-color, #e2e8f0);
  border-radius: 12px;
- box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+ box-shadow: 0 4px 20px rgba(0,0,0,0.06);
  flex-shrink: 0;
  overflow: hidden;
  display: flex;
@@ -64,6 +64,33 @@
  top: 20px;
  z-index: 40;
  }
+ .cv-fields-section {
+ max-height: 220px;
+ overflow-y: auto;
+ padding: 6px 10px;
+ border-bottom: 1px solid #e2e8f0;
+ background: #f8fafc;
+ scrollbar-width: thin;
+ scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+ }
+ .cv-fields-section::-webkit-scrollbar,
+ #telecrmCreateViewForm::-webkit-scrollbar {
+ width: 5px;
+ height: 5px;
+ }
+ .cv-fields-section::-webkit-scrollbar-track,
+ #telecrmCreateViewForm::-webkit-scrollbar-track {
+ background: transparent;
+ }
+ .cv-fields-section::-webkit-scrollbar-thumb,
+ #telecrmCreateViewForm::-webkit-scrollbar-thumb {
+ background: rgba(148, 163, 184, 0.4);
+ border-radius: 9999px;
+ }
+ .cv-fields-section::-webkit-scrollbar-thumb:hover,
+ #telecrmCreateViewForm::-webkit-scrollbar-thumb:hover {
+ background: rgba(100, 116, 139, 0.7);
+ }
  .telecrm-main-workspace {
  flex: 1;
  min-width: 0;
@@ -71,38 +98,60 @@
  flex-direction: column;
  gap: 10px;
  }
+ .cv-field-group-header {
+ font-size: 0.68rem;
+ font-weight: 800;
+ text-transform: uppercase;
+ color: #94a3b8;
+ letter-spacing: 0.05em;
+ padding: 6px 6px 2px 6px;
+ margin-top: 4px;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ }
  .cv-field-item {
  display: flex;
  align-items: center;
- gap: 10px;
- padding: 7px 12px;
+ gap: 8px;
+ padding: 5px 8px;
  border-radius: 6px;
  cursor: pointer;
- font-size: 0.84rem;
- font-weight: 600;
+ font-size: 0.82rem;
+ font-weight: 500;
  color: #334155;
- transition: background 0.12s ease, color 0.12s ease;
+ transition: all 0.12s ease;
+ border: 1px solid transparent;
  }
  .cv-field-item:hover {
- background: #e2e8f0;
+ background: #f1f5f9;
  color: #0f172a;
+ border-color: #e2e8f0;
  }
  .cv-field-item.active-field {
- background: #dbeafe;
+ background: #eff6ff;
  color: #1d4ed8;
+ border-color: #bfdbfe;
+ font-weight: 600;
  }
  .cv-field-icon {
- width: 20px;
- text-align: center;
- font-size: 0.95rem;
+ width: 18px;
+ height: 18px;
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
  color: #64748b;
+ flex-shrink: 0;
+ }
+ .cv-field-item.active-field .cv-field-icon {
+ color: #2563eb;
  }
  .active-condition-card {
  background: #f8fafc;
  border: 1px solid #cbd5e1;
  border-radius: 10px;
- padding: 10px 12px;
- margin-bottom: 10px;
+ padding: 9px 11px;
+ margin-bottom: 8px;
  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
  transition: border-color 0.15s ease;
  }
@@ -161,12 +210,14 @@
  .btn-card-close {
  background: none;
  border: none;
- font-size: 0.95rem;
+ font-size: 1.15rem;
+ font-weight: 700;
  color: #94a3b8;
  cursor: pointer;
- padding: 0 4px;
+ padding: 0 5px;
  line-height: 1;
- border-radius: 3px;
+ border-radius: 4px;
+ transition: all 0.12s ease;
  }
  .btn-card-close:hover {
  color: #dc2626;
@@ -424,69 +475,98 @@
  <aside class="telecrm-create-view-panel" id="telecrmCreateViewPanel" style="display: {% if status_updated_from or status_updated_to or created_from or created_to or preferred_branch or created_by or request.GET.degree or request.GET.passed_out or request.GET.working_status or request.GET.purpose or request.GET.create_view == '1' %}flex{% else %}none{% endif %};">
  
  <!-- Panel Header -->
- <div style="padding: 14px 18px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+ <div style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
  <div style="display: flex; align-items: center; gap: 8px;">
- <span style="font-size: 1.1rem; color: #2563eb;"></span>
- <span style="font-weight: 800; font-size: 1.05rem; color: #0f172a; letter-spacing: -0.01em;">Create View</span>
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+ <span style="font-weight: 800; font-size: 0.95rem; color: #0f172a; letter-spacing: -0.01em;">Filter Builder</span>
+ <span id="cvActiveCountBadge" class="badge" style="display: none; background: #dbeafe; color: #1e40af; font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 9999px;">0 active</span>
  </div>
- <button type="button" onclick="toggleCreateViewPanel(false)" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; padding: 2px 6px; border-radius: 4px;" title="Close Panel"></button>
+ <button type="button" onclick="toggleCreateViewPanel(false)" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; padding: 0 4px; border-radius: 4px; line-height: 1;" title="Close Filter Panel">&times;</button>
  </div>
 
  <!-- Search Condition Input -->
- <div style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+ <div style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
  <div style="position: relative; display: flex; align-items: center;">
- <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="position: absolute; left: 12px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
- <input type="text" id="cvFieldSearchInput" onkeyup="filterFieldCatalog(this.value)" placeholder="Add a new condition" class="form-control" style="padding-left: 36px; font-size: 0.88rem; border-radius: 8px; border: 1px solid #cbd5e1; height: 38px;">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="position: absolute; left: 10px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+ <input type="text" id="cvFieldSearchInput" onkeyup="filterFieldCatalog(this.value)" placeholder="Search conditions..." class="form-control" style="padding-left: 32px; font-size: 0.82rem; border-radius: 8px; border: 1px solid #cbd5e1; height: 34px;">
  </div>
  </div>
 
  <!-- Searchable Field Catalog -->
- <div class="cv-fields-section" style="max-height: 200px; overflow-y: auto; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
- <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; padding: 4px 8px;">Fields Catalog (Click to add)</div>
- <div id="cvFieldsCatalogList" style="display: flex; flex-direction: column; gap: 2px;">
+ <div class="cv-fields-section" style="max-height: 220px; overflow-y: auto; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+ <div id="cvFieldsCatalogList" style="display: flex; flex-direction: column; gap: 1px;">
+ 
+ <!-- Group 1: Timestamps & Dates -->
+ <div class="cv-field-group">
+ <div class="cv-field-group-header">Timestamps & Dates</div>
  <div class="cv-field-item {% if status_updated_from or status_updated_to %}active-field{% endif %}" data-field="status_updated_on" onclick="activateConditionCard('status_updated_on')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Status Last Updated On</span>
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+ <span class="cv-field-name">Status Last Updated On</span>
  </div>
  <div class="cv-field-item {% if created_from or created_to %}active-field{% endif %}" data-field="created_on" onclick="activateConditionCard('created_on')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Created On</span>
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+ <span class="cv-field-name">Created On</span>
  </div>
- <div class="cv-field-item {% if created_by %}active-field{% endif %}" data-field="created_by" onclick="activateConditionCard('created_by')">
- <span class="cv-field-icon">+</span> <span class="cv-field-name">Created By</span>
- </div>
- <div class="cv-field-item {% if search_query %}active-field{% endif %}" data-field="name" onclick="activateConditionCard('name')">
- <span class="cv-field-icon" style="font-weight: 800;">T</span> <span class="cv-field-name">Name</span>
- </div>
- <div class="cv-field-item" data-field="phone" onclick="activateConditionCard('phone')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Phone</span>
- </div>
- <div class="cv-field-item {% if request.GET.degree %}active-field{% endif %}" data-field="degree" onclick="activateConditionCard('degree')">
- <span class="cv-field-icon" style="font-weight: 800;">T</span> <span class="cv-field-name">Degree</span>
- </div>
- <div class="cv-field-item {% if request.GET.passed_out %}active-field{% endif %}" data-field="passed_out" onclick="activateConditionCard('passed_out')">
- <span class="cv-field-icon" style="font-weight: 800;">T</span> <span class="cv-field-name">PassedOut</span>
- </div>
- <div class="cv-field-item {% if request.GET.purpose %}active-field{% endif %}" data-field="purpose" onclick="activateConditionCard('purpose')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Purpose</span>
- </div>
- <div class="cv-field-item {% if branch_filter %}active-field{% endif %}" data-field="branch" onclick="activateConditionCard('branch')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Base Branch</span>
- </div>
- <div class="cv-field-item {% if preferred_branch %}active-field{% endif %}" data-field="preferred_branch" onclick="activateConditionCard('preferred_branch')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Preferred Branch</span>
- </div>
- <div class="cv-field-item {% if request.GET.working_status %}active-field{% endif %}" data-field="working_status" onclick="activateConditionCard('working_status')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Working status</span>
- </div>
- <div class="cv-field-item {% if status_filter %}active-field{% endif %}" data-field="status" onclick="activateConditionCard('status')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Status</span>
  </div>
 
+ <!-- Group 2: Lead Identity & Attributes -->
+ <div class="cv-field-group">
+ <div class="cv-field-group-header">Lead Identity</div>
+ <div class="cv-field-item {% if search_query %}active-field{% endif %}" data-field="name" onclick="activateConditionCard('name')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+ <span class="cv-field-name">Name</span>
+ </div>
+ <div class="cv-field-item" data-field="phone" onclick="activateConditionCard('phone')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></span>
+ <span class="cv-field-name">Phone</span>
+ </div>
+ <div class="cv-field-item {% if request.GET.degree %}active-field{% endif %}" data-field="degree" onclick="activateConditionCard('degree')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></span>
+ <span class="cv-field-name">Degree</span>
+ </div>
+ <div class="cv-field-item {% if request.GET.passed_out %}active-field{% endif %}" data-field="passed_out" onclick="activateConditionCard('passed_out')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg></span>
+ <span class="cv-field-name">PassedOut Year</span>
+ </div>
+ <div class="cv-field-item {% if request.GET.working_status %}active-field{% endif %}" data-field="working_status" onclick="activateConditionCard('working_status')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></span>
+ <span class="cv-field-name">Working Status</span>
+ </div>
+ <div class="cv-field-item {% if request.GET.purpose %}active-field{% endif %}" data-field="purpose" onclick="activateConditionCard('purpose')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></span>
+ <span class="cv-field-name">Purpose</span>
+ </div>
+ </div>
+
+ <!-- Group 3: Allocation, Branch & Status -->
+ <div class="cv-field-group">
+ <div class="cv-field-group-header">Allocation & Status</div>
+ <div class="cv-field-item {% if status_filter %}active-field{% endif %}" data-field="status" onclick="activateConditionCard('status')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg></span>
+ <span class="cv-field-name">Status</span>
+ </div>
+ <div class="cv-field-item {% if branch_filter %}active-field{% endif %}" data-field="branch" onclick="activateConditionCard('branch')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></span>
+ <span class="cv-field-name">Base Branch</span>
+ </div>
+ <div class="cv-field-item {% if preferred_branch %}active-field{% endif %}" data-field="preferred_branch" onclick="activateConditionCard('preferred_branch')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg></span>
+ <span class="cv-field-name">Preferred Branch</span>
+ </div>
  <div class="cv-field-item {% if telecaller_filter %}active-field{% endif %}" data-field="telecaller" onclick="activateConditionCard('telecaller')">
- <span class="cv-field-icon"></span> <span class="cv-field-name">Assignee</span>
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg></span>
+ <span class="cv-field-name">Assignee</span>
+ </div>
+ <div class="cv-field-item {% if created_by %}active-field{% endif %}" data-field="created_by" onclick="activateConditionCard('created_by')">
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></span>
+ <span class="cv-field-name">Created By</span>
  </div>
  <div class="cv-field-item {% if source_filter %}active-field{% endif %}" data-field="source" onclick="activateConditionCard('source')">
- <span class="cv-field-icon">#</span> <span class="cv-field-name">Lead Source</span>
+ <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></span>
+ <span class="cv-field-name">Lead Source</span>
  </div>
+ </div>
+
  </div>
  </div>
 
@@ -503,7 +583,8 @@
  <div class="active-condition-card" id="card_status_updated_on" style="display: {% if status_updated_from or status_updated_to %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
- Status Last Updated On
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+ Status Updated On
  <select name="op_status_updated" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="is" {% if op_status_updated == 'is' or not op_status_updated %}selected{% endif %}>Is</option>
  <option value="is_not" {% if op_status_updated == 'is_not' %}selected{% endif %}>Is not</option>
@@ -511,7 +592,7 @@
  <option value="after" {% if op_status_updated == 'after' %}selected{% endif %}>After</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('status_updated_on')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('status_updated_on')" title="Remove condition">&times;</button>
  </div>
  <select class="form-select form-select-sm" onchange="handlePresetDateRange(this, 'status_updated_from', 'status_updated_to')" style="margin-bottom: 6px; font-size: 0.8rem; background: #ffffff;">
  <option value="custom">Select Range ▾</option>
@@ -531,6 +612,7 @@
  <div class="active-condition-card" id="card_created_on" style="display: {% if created_from or created_to %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
  Created On
  <select name="op_created_on" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="is" {% if op_created_on == 'is' or not op_created_on %}selected{% endif %}>Is</option>
@@ -539,7 +621,7 @@
  <option value="after" {% if op_created_on == 'after' %}selected{% endif %}>After</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('created_on')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('created_on')" title="Remove condition">&times;</button>
  </div>
  <select class="form-select form-select-sm" onchange="handlePresetDateRange(this, 'created_from', 'created_to')" style="margin-bottom: 6px; font-size: 0.8rem; background: #ffffff;">
  <option value="custom">Select Range ▾</option>
@@ -559,13 +641,14 @@
  <div class="active-condition-card" id="card_status" style="display: {% if status_filter %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
  Status
  <select name="op_status" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="is" {% if op_status == 'is' or not op_status %}selected{% endif %}>Is</option>
  <option value="is_not" {% if op_status == 'is_not' %}selected{% endif %}>Is not</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('status')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('status')" title="Remove condition">&times;</button>
  </div>
  <select name="status" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
  <option value="">All Statuses</option>
@@ -579,13 +662,14 @@
  <div class="active-condition-card" id="card_branch" style="display: {% if branch_filter %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
  Base Branch
  <select name="op_branch" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="is" {% if op_branch == 'is' or not op_branch %}selected{% endif %}>Is</option>
  <option value="is_not" {% if op_branch == 'is_not' %}selected{% endif %}>Is not</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('branch')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('branch')" title="Remove condition">&times;</button>
  </div>
  <select name="branch" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
  <option value="">All Branches</option>
@@ -599,6 +683,7 @@
  <div class="active-condition-card" id="card_preferred_branch" style="display: {% if preferred_branch %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
  Preferred Branch
  <select name="op_preferred_branch" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_preferred_branch == 'contains' or not op_preferred_branch %}selected{% endif %}>Contains</option>
@@ -608,7 +693,7 @@
  <option value="starts_with" {% if op_preferred_branch == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('preferred_branch')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('preferred_branch')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="preferred_branch" value="{{ preferred_branch }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Branch name (e.g. Porur, T Nagar)..." style="font-size: 0.82rem;">
  </div>
@@ -617,13 +702,14 @@
  <div class="active-condition-card" id="card_telecaller" style="display: {% if telecaller_filter %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
  Assignee
  <select name="op_telecaller" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="is" {% if op_telecaller == 'is' or not op_telecaller %}selected{% endif %}>Is</option>
  <option value="is_not" {% if op_telecaller == 'is_not' %}selected{% endif %}>Is not</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('telecaller')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('telecaller')" title="Remove condition">&times;</button>
  </div>
  <select name="telecaller" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
  <option value="">All Assignees</option>
@@ -633,12 +719,11 @@
  </select>
  </div>
 
-
-
  <!-- CARD: Created By -->
  <div class="active-condition-card" id="card_created_by" style="display: {% if created_by %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
  Created By
  <select name="op_created_by" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_created_by == 'contains' or not op_created_by %}selected{% endif %}>Contains</option>
@@ -648,7 +733,7 @@
  <option value="starts_with" {% if op_created_by == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('created_by')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('created_by')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="created_by" value="{{ created_by }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Username or Name..." style="font-size: 0.82rem;">
  </div>
@@ -657,7 +742,8 @@
  <div class="active-condition-card" id="card_name" style="display: {% if search_query %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
- T Name
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+ Name
  <select name="op_name" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_name == 'contains' or not op_name %}selected{% endif %}>Contains</option>
  <option value="not_contains" {% if op_name == 'not_contains' %}selected{% endif %}>Does not contain</option>
@@ -666,7 +752,7 @@
  <option value="starts_with" {% if op_name == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('name')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('name')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="search" value="{{ search_query }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Search contact name..." style="font-size: 0.82rem;">
  </div>
@@ -675,6 +761,7 @@
  <div class="active-condition-card" id="card_phone" style="display: none;">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
  Phone
  <select name="op_phone" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_phone == 'contains' or not op_phone %}selected{% endif %}>Contains</option>
@@ -684,7 +771,7 @@
  <option value="starts_with" {% if op_phone == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('phone')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('phone')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="phone" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Mobile phone number..." style="font-size: 0.82rem;">
  </div>
@@ -693,6 +780,7 @@
  <div class="active-condition-card" id="card_degree" style="display: {% if request.GET.degree %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
  Degree
  <select name="op_degree" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_degree == 'contains' or not op_degree %}selected{% endif %}>Contains</option>
@@ -702,7 +790,7 @@
  <option value="starts_with" {% if op_degree == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('degree')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('degree')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="degree" value="{{ request.GET.degree }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. B.E, B.Tech, MCA..." style="font-size: 0.82rem;">
  </div>
@@ -711,7 +799,8 @@
  <div class="active-condition-card" id="card_passed_out" style="display: {% if request.GET.passed_out %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
- PassedOut
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+ PassedOut Year
  <select name="op_passed_out" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_passed_out == 'contains' or not op_passed_out %}selected{% endif %}>Contains</option>
  <option value="not_contains" {% if op_passed_out == 'not_contains' %}selected{% endif %}>Does not contain</option>
@@ -720,7 +809,7 @@
  <option value="starts_with" {% if op_passed_out == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('passed_out')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('passed_out')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="passed_out" value="{{ request.GET.passed_out }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. 2024, 2025..." style="font-size: 0.82rem;">
  </div>
@@ -729,6 +818,7 @@
  <div class="active-condition-card" id="card_purpose" style="display: {% if request.GET.purpose %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
  Purpose
  <select name="op_purpose" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_purpose == 'contains' or not op_purpose %}selected{% endif %}>Contains</option>
@@ -738,7 +828,7 @@
  <option value="starts_with" {% if op_purpose == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('purpose')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('purpose')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="purpose" value="{{ request.GET.purpose }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. Training, Internship, Placement..." style="font-size: 0.82rem;">
  </div>
@@ -747,6 +837,7 @@
  <div class="active-condition-card" id="card_working_status" style="display: {% if request.GET.working_status %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
  Working status
  <select name="op_working_status" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="contains" {% if op_working_status == 'contains' or not op_working_status %}selected{% endif %}>Contains</option>
@@ -756,7 +847,7 @@
  <option value="starts_with" {% if op_working_status == 'starts_with' %}selected{% endif %}>Starts with</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('working_status')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('working_status')" title="Remove condition">&times;</button>
  </div>
  <input type="text" name="working_status" value="{{ request.GET.working_status }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. Student, Working Professional, Job Seeker..." style="font-size: 0.82rem;">
  </div>
@@ -765,13 +856,14 @@
  <div class="active-condition-card" id="card_source" style="display: {% if source_filter %}block{% else %}none{% endif %};">
  <div class="card-head">
  <span class="card-icon-title">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
  Lead Source
  <select name="op_source" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
  <option value="is" {% if op_source == 'is' or not op_source %}selected{% endif %}>Is</option>
  <option value="contains" {% if op_source == 'contains' %}selected{% endif %}>Contains</option>
  </select>
  </span>
- <button type="button" class="btn-card-close" onclick="removeConditionCard('source')" title="Remove condition"></button>
+ <button type="button" class="btn-card-close" onclick="removeConditionCard('source')" title="Remove condition">&times;</button>
  </div>
  <select name="source" class="form-select form-select-sm condition-input" onchange="fetchLiveFilteredCount()" style="font-size: 0.82rem; background: #ffffff;">
  <option value="">All Sources</option>
@@ -790,8 +882,8 @@
 
  <!-- Panel Footer Actions -->
  <div style="padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; margin-top: auto;">
- <button type="button" class="btn btn-secondary" onclick="resetAllConditions()" style="flex: 1; font-weight: 600; font-size: 0.85rem; padding: 7px 10px;">Reset All</button>
- <button type="submit" class="btn btn-primary" style="flex: 1.5; font-weight: 700; font-size: 0.85rem; padding: 7px 10px; background: #2563eb; color: #ffffff;">Apply Filters</button>
+ <button type="button" class="btn btn-secondary" onclick="resetAllConditions()" style="flex: 1; font-weight: 600; font-size: 0.85rem; padding: 7px 10px; border-radius: 6px;" title="Reset all applied filters">Reset All</button>
+ <button type="submit" class="btn btn-primary" id="cvApplyBtn" style="flex: 1.5; font-weight: 700; font-size: 0.85rem; padding: 7px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(37,99,235,0.25);">Apply Filters (<span id="cvBtnCount">{{ page_obj.paginator.count|default:"0" }}</span>)</button>
  </div>
  </form>
  </aside>
@@ -2626,47 +2718,74 @@ function closeFilterDrawer() {
  toggleCreateViewPanel(false);
 }
 
+function updateActiveCountBadge() {
+ var activeCards = document.querySelectorAll('#cvActiveConditionsList .active-condition-card');
+ var activeCount = 0;
+ activeCards.forEach(function(card) {
+  if (card.style.display !== 'none') activeCount++;
+ });
+ var badge = document.getElementById('cvActiveCountBadge');
+ if (badge) {
+  if (activeCount > 0) {
+   badge.textContent = activeCount + ' active';
+   badge.style.display = 'inline-block';
+  } else {
+   badge.style.display = 'none';
+  }
+ }
+}
+
 function filterFieldCatalog(query) {
  var q = (query || '').toLowerCase().trim();
  var items = document.querySelectorAll('#cvFieldsCatalogList .cv-field-item');
  items.forEach(function(item) {
- var text = item.textContent.toLowerCase();
- if (!q || text.indexOf(q) !== -1) {
- item.style.display = 'flex';
- } else {
- item.style.display = 'none';
- }
+  var text = item.textContent.toLowerCase();
+  if (!q || text.indexOf(q) !== -1) {
+   item.style.display = 'flex';
+  } else {
+   item.style.display = 'none';
+  }
+ });
+ var groups = document.querySelectorAll('#cvFieldsCatalogList .cv-field-group');
+ groups.forEach(function(group) {
+  var visibleItems = 0;
+  group.querySelectorAll('.cv-field-item').forEach(function(it) {
+   if (it.style.display !== 'none') visibleItems++;
+  });
+  group.style.display = (q && visibleItems === 0) ? 'none' : 'block';
  });
 }
 
 function activateConditionCard(fieldKey) {
  var card = document.getElementById('card_' + fieldKey);
  if (card) {
- card.style.display = 'block';
- card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
- var inp = card.querySelector('input, select');
- if (inp) inp.focus();
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  var inp = card.querySelector('input, select');
+  if (inp) inp.focus();
  }
  var catItem = document.querySelector('#cvFieldsCatalogList .cv-field-item[data-field="' + fieldKey + '"]');
  if (catItem) {
- catItem.classList.add('active-field');
+  catItem.classList.add('active-field');
  }
+ updateActiveCountBadge();
  fetchLiveFilteredCount();
 }
 
 function removeConditionCard(fieldKey) {
  var card = document.getElementById('card_' + fieldKey);
  if (card) {
- var inputs = card.querySelectorAll('input, select');
- inputs.forEach(function(el) {
- el.value = '';
- });
- card.style.display = 'none';
+  var inputs = card.querySelectorAll('input, select');
+  inputs.forEach(function(el) {
+   el.value = '';
+  });
+  card.style.display = 'none';
  }
  var catItem = document.querySelector('#cvFieldsCatalogList .cv-field-item[data-field="' + fieldKey + '"]');
  if (catItem) {
- catItem.classList.remove('active-field');
+  catItem.classList.remove('active-field');
  }
+ updateActiveCountBadge();
  fetchLiveFilteredCount();
 }
 
@@ -2742,6 +2861,8 @@ function fetchLiveFilteredCount() {
  if (data && data.status === 'success') {
  var count = data.count;
  countEl.textContent = count + ' lead' + (count === 1 ? '' : 's');
+ var btnCount = document.getElementById('cvBtnCount');
+ if (btnCount) btnCount.textContent = count;
  }
  })
  .catch(function(err) {
@@ -2760,6 +2881,7 @@ function resetAllConditions() {
  cards.forEach(function(card) { card.style.display = 'none'; });
  var catItems = document.querySelectorAll('#cvFieldsCatalogList .cv-field-item');
  catItems.forEach(function(item) { item.classList.remove('active-field'); });
+ updateActiveCountBadge();
  fetchLiveFilteredCount();
  window.location.href = '{% url "admin_leads_list" %}?view=all';
 }
@@ -2883,6 +3005,10 @@ function deleteSavedView(e, viewId, viewName) {
  alert('Failed to delete view.');
  });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+ updateActiveCountBadge();
+});
 </script>
 {% endblock %}
 

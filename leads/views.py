@@ -852,7 +852,37 @@ def api_filter_lead_count(request):
     if not request.user.is_authenticated:
         return JsonResponse({'count': 0, 'status': 'error'}, status=401)
 
-    leads_qs = Lead.objects.all()
+    user = request.user
+    if user.role == UserRole.SALES_HEAD:
+        branch_ids = get_accessible_branch_ids(user)
+        telecallers = User.objects.filter(role=UserRole.TELECALLER, branch_id__in=branch_ids)
+        telecaller_ids = list(telecallers.values_list('id', flat=True))
+
+        from branches.models import Branch
+        central_branch = Branch.objects.filter(name__icontains='Centralized').first()
+        assigned = list(user.branch_access.values_list('branch_id', flat=True))
+        is_central = (
+            (central_branch and (user.branch_id == central_branch.id or central_branch.id in assigned))
+            or (not user.branch_id and not assigned)
+        )
+
+        if is_central:
+            lead_scope = Q(branch_id__in=branch_ids) | Q(assigned_sales_head=user) | Q(assigned_telecaller_id__in=telecaller_ids) | Q(branch__isnull=True)
+        else:
+            lead_scope = Q(branch_id__in=branch_ids) | Q(assigned_sales_head=user) | Q(assigned_telecaller_id__in=telecaller_ids)
+        leads_qs = Lead.objects.filter(lead_scope).distinct()
+    elif user.role in [UserRole.ADMIN, UserRole.SUPERADMIN, UserRole.MARKETING]:
+        leads_qs = Lead.objects.all()
+    elif user.role == UserRole.BRANCH_HEAD:
+        branch_ids = get_accessible_branch_ids(user)
+        leads_qs = Lead.objects.filter(branch_id__in=branch_ids).distinct()
+    elif user.role == UserRole.TELECALLER:
+        leads_qs = Lead.objects.filter(assigned_telecaller=user).distinct()
+    elif user.role == UserRole.COUNSELOR:
+        leads_qs = Lead.objects.filter(assigned_counselor=user).distinct()
+    else:
+        leads_qs = Lead.objects.all()
+
     leads_qs, _ = _apply_telecrm_dynamic_filters(leads_qs, request)
     return JsonResponse({'status': 'success', 'count': leads_qs.count()})
 
@@ -1604,71 +1634,53 @@ def manager_leads_list(request):
 
 
     search_query = request.GET.get('search', '').strip()
-
     status_filter = request.GET.get('status', '').strip()
-
     status_group = request.GET.get('status_group', '').strip()
-
     telecaller_filter = request.GET.get('telecaller', '').strip()
-
     channel_filter = request.GET.get('channel', '').strip()
-
     product_filter = request.GET.get('product', '').strip()
-
     branch_filter = request.GET.get('branch', '').strip()
-
     date_from = request.GET.get('date_from', '').strip()
-
     date_to = request.GET.get('date_to', '').strip()
+    active_view = request.GET.get('view', 'all').strip()
 
+    # Pre-filter base counts for tab ribbons
+    base_accessible_qs = leads_qs
+    view_counts = {
+        'all': base_accessible_qs.count(),
+        'all_active': base_accessible_qs.exclude(status__in=[LeadStatus.LOST, LeadStatus.CONVERTED]).count(),
+    }
 
+    if active_view == 'all_active' and not status_filter:
+        leads_qs = leads_qs.exclude(status__in=[LeadStatus.LOST, LeadStatus.CONVERTED])
 
     if search_query:
-
         leads_qs = leads_qs.filter(
-
             Q(name__icontains=search_query) |
-
             Q(phone__icontains=search_query) |
-
             Q(email__icontains=search_query)
-
         )
 
     if status_filter:
-
         if status_filter.lower() == 'active':
-
             leads_qs = leads_qs.exclude(status__in=[LeadStatus.LOST, LeadStatus.CONVERTED])
-
         else:
-
             leads_qs = leads_qs.filter(status=status_filter)
 
     if status_group == 'connected':
-
         leads_qs = leads_qs.filter(status__in=[LeadStatus.CONTACTED, LeadStatus.INTERESTED, LeadStatus.DISCUSSION])
-
     elif status_group == 'prospected':
-
         leads_qs = leads_qs.filter(status__in=[LeadStatus.CONVERTED, LeadStatus.FOLLOW_UP, LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.VISITED, LeadStatus.JOINED])
-
     elif status_group == 'not_connected':
-
         leads_qs = leads_qs.filter(status__in=[LeadStatus.NO_ANSWER, LeadStatus.BUSY, LeadStatus.LOST, LeadStatus.NOT_INTERESTED])
 
     if telecaller_filter:
-
         leads_qs = leads_qs.filter(assigned_telecaller_id=telecaller_filter)
 
     if channel_filter:
-
         if channel_filter.isdigit():
-
             leads_qs = leads_qs.filter(channel_id=int(channel_filter))
-
         else:
-
             leads_qs = leads_qs.filter(Q(channel__name__icontains=channel_filter) | Q(source__icontains=channel_filter))
 
     if branch_filter:
@@ -1678,50 +1690,38 @@ def manager_leads_list(request):
             leads_qs = leads_qs.filter(branch__name__iexact=branch_filter)
 
     if date_from:
-
         try:
-
             d_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-
             dt_from = timezone.make_aware(datetime.combine(d_from, time.min))
-
             leads_qs = leads_qs.filter(created_at__gte=dt_from)
-
         except (ValueError, TypeError):
-
             pass
 
     if date_to:
-
         try:
-
             d_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-
             dt_to = timezone.make_aware(datetime.combine(d_to, time.max))
-
             leads_qs = leads_qs.filter(created_at__lte=dt_to)
-
         except (ValueError, TypeError):
-
             pass
 
     if product_filter:
-
         leads_qs = leads_qs.filter(product_id=product_filter)
 
+    # Dynamic TeleCRM filter builder parameters & condition operators
+    leads_qs, telecrm_filter_ctx = _apply_telecrm_dynamic_filters(leads_qs, request)
 
-
-    leads_qs = leads_qs.order_by('-created_at', '-id')
+    sort_by = request.GET.get('sort', '-created_at')
+    allowed_sorts = ['name', '-name', 'created_at', '-created_at', 'updated_at', '-updated_at', 'status', '-status', 'rating', '-rating']
+    if sort_by in allowed_sorts:
+        leads_qs = leads_qs.order_by(sort_by, '-id')
+    else:
+        leads_qs = leads_qs.order_by('-created_at', '-id')
 
     from .utils import get_validated_page_size, ALLOWED_PAGE_SIZES
-
     page_size = get_validated_page_size(request, default=20)
-
     paginator = Paginator(leads_qs, page_size)
-
     page_obj = paginator.get_page(request.GET.get('page'))
-
-
 
     channels = Channel.objects.filter(status='Active')
     products = Product.objects.filter(status='Active')
@@ -1740,6 +1740,14 @@ def manager_leads_list(request):
         'channel_filter': channel_filter,
         'product_filter': product_filter,
         'branch_filter': branch_filter,
+        'active_view': active_view,
+        'view_counts': view_counts,
+        'sort_by': sort_by,
+        'page_size': page_size,
+        'allowed_page_sizes': ALLOWED_PAGE_SIZES,
+        'saved_views': _get_safe_saved_views(request),
+        'saved_view_id': request.GET.get('saved_view_id', '').strip(),
+        **telecrm_filter_ctx,
     })
 
 

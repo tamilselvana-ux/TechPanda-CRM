@@ -1,281 +1,1197 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Team Leads - TechPanda CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
- <div class="page-title-group">
- <h1>Team Leads</h1>
- <p>Manage leads assigned to you and your telecaller team</p>
- </div>
- <div class="page-actions">
- <div style="display: inline-flex; background: var(--tp-surface-card); border: 1px solid var(--tp-surface-border); border-radius: var(--tp-radius-md); padding: 3px; box-shadow: var(--tp-shadow-sm);">
- <span class="btn btn-sm" style="padding: 5px 12px; font-weight: 700; color: #ffffff; background: var(--tp-primary-600); border: none; border-radius: var(--tp-radius-sm);">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -2px;"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
- Table View
- </span>
- <a href="{% url 'leads_kanban' %}" class="btn btn-sm" style="padding: 5px 12px; font-weight: 600; color: var(--tp-text-muted); background: transparent; border: none; border-radius: var(--tp-radius-sm);">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -2px;"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="10"></rect></svg>
- Kanban Board
- </a>
- </div>
- <a href="{% url 'manager_lead_import' %}" class="btn btn-secondary">
- <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
- Upload Leads
- </a>
- <a href="{% url 'manager_lead_create' %}" class="btn btn-primary">
- <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
- Add Lead
- </a>
- </div>
+<style>
+  @keyframes modalScaleIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .telecrm-layout-wrapper {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: 14px;
+    transition: all 0.2s ease;
+  }
+  .telecrm-create-view-panel {
+    width: 350px;
+    min-width: 320px;
+    max-width: 380px;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 120px);
+    position: sticky;
+    top: 20px;
+    z-index: 40;
+  }
+  .cv-fields-section {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  }
+  .cv-fields-section::-webkit-scrollbar,
+  #telecrmCreateViewForm::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .cv-fields-section::-webkit-scrollbar-track,
+  #telecrmCreateViewForm::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .cv-fields-section::-webkit-scrollbar-thumb,
+  #telecrmCreateViewForm::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 9999px;
+  }
+  .cv-fields-section::-webkit-scrollbar-thumb:hover,
+  #telecrmCreateViewForm::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+  }
+  .telecrm-main-workspace {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cv-field-group-header {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.05em;
+    padding: 6px 6px 2px 6px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .cv-field-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #334155;
+    transition: all 0.12s ease;
+    border: 1px solid transparent;
+  }
+  .cv-field-item:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #e2e8f0;
+  }
+  .cv-field-item.active-field {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+    font-weight: 600;
+  }
+  .cv-field-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    flex-shrink: 0;
+  }
+  .cv-field-item.active-field .cv-field-icon {
+    color: #2563eb;
+  }
+  .active-condition-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 9px 11px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    transition: border-color 0.15s ease;
+  }
+  .active-condition-card:hover {
+    border-color: #94a3b8;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .card-icon-title {
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .operator-select {
+    border: 1px solid #cbd5e1;
+    background-color: #f1f5f9;
+    color: #334155;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.15s ease;
+  }
+  .operator-select:hover, .operator-select:focus {
+    border-color: #94a3b8;
+    background-color: #e2e8f0;
+  }
+  .btn-card-close {
+    background: none;
+    border: none;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: all 0.12s ease;
+  }
+  .btn-card-close:hover {
+    color: #dc2626;
+    background: #fee2e2;
+  }
+  .card-datetime-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .range-arrow {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 700;
+  }
+  .saved-view-tab-wrapper {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 20px;
+    transition: all 0.15s ease;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-card, #ffffff);
+    padding: 1px 4px 1px 12px;
+  }
+  .saved-view-tab-wrapper.is-active {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+  .saved-view-tab-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    text-decoration: none;
+    padding: 4px 0;
+  }
+  .saved-view-tab-wrapper.is-active .saved-view-tab-link {
+    color: #1d4ed8;
+    font-weight: 700;
+  }
+  .btn-tab-delete {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 0 6px;
+    margin-left: 2px;
+    border-radius: 50%;
+  }
+  .btn-tab-delete:hover {
+    color: #ef4444;
+  }
+  @media (max-width: 992px) {
+    .telecrm-layout-wrapper {
+      flex-direction: column;
+    }
+    .telecrm-create-view-panel {
+      width: 100%;
+      max-width: 100%;
+      max-height: none;
+      position: static;
+    }
+  }
+</style>
+
+<!-- TOP VIEWS RIBBON (TeleCRM Quick View Tabs + Create View) -->
+<div style="background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 8px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; overflow-x: auto; padding-bottom: 2px;">
+      <span style="font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">All Views:</span>
+      
+      <!-- Tab 1: All Leads -->
+      <a href="?view=all{% if branch_filter %}&branch={{ branch_filter }}{% endif %}" class="badge tp-badge {% if active_view == 'all' or not active_view %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; text-decoration: none; {% if active_view == 'all' or not active_view %}background: #2563eb; color: #ffffff;{% else %}background: #f1f5f9; color: #475569;{% endif %}">
+        <span>All Leads</span>
+        <span style="background: rgba(255,255,255,0.25); color: inherit; padding: 1px 6px; border-radius: 10px; font-size: 0.7rem;">{{ view_counts.all|default:page_obj.paginator.count }}</span>
+      </a>
+
+      <!-- Tab 2: All Active Leads -->
+      <a href="?view=all_active{% if branch_filter %}&branch={{ branch_filter }}{% endif %}" class="badge tp-badge {% if active_view == 'all_active' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; text-decoration: none; {% if active_view == 'all_active' %}background: #2563eb; color: #ffffff;{% else %}background: #f1f5f9; color: #475569;{% endif %}">
+        <span>All Active Leads</span>
+        <span style="background: rgba(255,255,255,0.25); color: inherit; padding: 1px 6px; border-radius: 10px; font-size: 0.7rem;">{{ view_counts.all_active|default:page_obj.paginator.count }}</span>
+      </a>
+
+      <!-- Custom Saved Views -->
+      {% for sv in saved_views %}
+      <div class="saved-view-tab-wrapper {% if saved_view_id == sv.id|stringformat:'s' %}is-active{% endif %}">
+        <a href="?{{ sv.query_string }}&saved_view_id={{ sv.id }}" class="saved-view-tab-link">{{ sv.name }}</a>
+        <button type="button" class="btn-tab-delete" onclick="deleteSavedView(event, {{ sv.id }}, '{{ sv.name|escapejs }}')" title="Delete custom view">&times;</button>
+      </div>
+      {% endfor %}
+
+      <button type="button" class="saved-view-tab-add" onclick="toggleCreateViewPanel(true)" title="Open Filter Builder" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; background: #eff6ff; color: #2563eb; border: 1px dashed #93c5fd; cursor: pointer; white-space: nowrap;">
+        <span>+ Create View</span>
+      </button>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <a href="{% url 'manager_lead_import' %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 0.8rem; padding: 5px 12px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        Upload Leads
+      </a>
+      <a href="{% url 'manager_lead_create' %}" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 0.8rem; padding: 5px 12px; background: #2563eb; color: #ffffff;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add Lead
+      </a>
+    </div>
+  </div>
 </div>
 
-<div class="filter-card">
- {% if branches %}
- <!-- Quick Branch Filter Pill Strip -->
- <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color, #e2e8f0);">
- <span style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted, #64748b); text-transform: uppercase; margin-right: 4px;">Branch:</span>
- <a href="?{% for k, v in request.GET.items %}{% if k != 'branch' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="badge tp-badge tp-branch-pill {% if not branch_filter %}active{% endif %}">
- <span class="tp-branch-dot"></span>All Branches
- </a>
- {% for b in branches %}
- <a href="?branch={{ b.id }}{% for k, v in request.GET.items %}{% if k != 'branch' and k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="badge tp-badge tp-branch-pill {% if branch_filter == b.id|stringformat:'i' or branch_filter == b.name %}active{% endif %}">
- <span class="tp-branch-dot"></span> {{ b.name }}
- </a>
- {% endfor %}
- </div>
- {% endif %}
+<div class="telecrm-layout-wrapper" id="telecrmLayoutWrapper">
 
- 
- <!-- Quick SLA Escalation Filter Pill Strip -->
- <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color, #e2e8f0);">
- <span style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted, #64748b); text-transform: uppercase; margin-right: 4px;">SLA Status:</span>
- <a href="?{% for k, v in request.GET.items %}{% if k != 'sla' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="badge tp-badge {% if not sla_filter %}active{% endif %}" style="padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 0.78rem; font-weight: 600; border: 1px solid #cbd5e1; {% if not sla_filter %}background: #2563eb; color: #fff; border-color: #2563eb;{% else %}background: #f8fafc; color: #475569;{% endif %}">
- All SLA
- </a>
- <a href="?sla=breached{% for k, v in request.GET.items %}{% if k != 'sla' and k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="badge tp-badge {% if sla_filter == 'breached' %}active{% endif %}" style="padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 0.78rem; font-weight: 700; border: 1px solid #fecaca; {% if sla_filter == 'breached' %}background: #dc2626; color: #fff; border-color: #dc2626;{% else %}background: #fef2f2; color: #b91c1c;{% endif %}">
- SLA Breached (&gt;2h Uncalled)
- </a>
- <a href="?sla=warning{% for k, v in request.GET.items %}{% if k != 'sla' and k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="badge tp-badge {% if sla_filter == 'warning' %}active{% endif %}" style="padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 0.78rem; font-weight: 700; border: 1px solid #fde68a; {% if sla_filter == 'warning' %}background: #d97706; color: #fff; border-color: #d97706;{% else %}background: #fffbeb; color: #b45309;{% endif %}">
- Approaching Breach (30m - 2h)
- </a>
- <a href="?sla=fresh{% for k, v in request.GET.items %}{% if k != 'sla' and k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="badge tp-badge {% if sla_filter == 'fresh' %}active{% endif %}" style="padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 0.78rem; font-weight: 600; border: 1px solid #bae6fd; {% if sla_filter == 'fresh' %}background: #0284c7; color: #fff; border-color: #0284c7;{% else %}background: #f0f9ff; color: #0369a1;{% endif %}">
- ⏱ Fresh (&lt;30m)
- </a>
- </div>
+  <!-- LEFT SPLIT PANEL: CREATE VIEW (TeleCRM Dynamic Filter Builder) -->
+  <aside class="telecrm-create-view-panel" id="telecrmCreateViewPanel" style="display: {% if status_updated_from or status_updated_to or created_from or created_to or preferred_branch or created_by or request.GET.degree or request.GET.passed_out or request.GET.working_status or request.GET.purpose or request.GET.create_view == '1' %}flex{% else %}none{% endif %};">
+    
+    <!-- Panel Header -->
+    <div style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        <span style="font-weight: 800; font-size: 0.95rem; color: #0f172a; letter-spacing: -0.01em;">Filter Builder</span>
+        <span id="cvActiveCountBadge" class="badge" style="display: none; background: #dbeafe; color: #1e40af; font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 9999px;">0 active</span>
+      </div>
+      <button type="button" onclick="toggleCreateViewPanel(false)" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; padding: 0 4px; border-radius: 4px; line-height: 1;" title="Close Filter Panel">&times;</button>
+    </div>
 
- <form method="GET" class="filter-form">
- <div class="filter-col" style="flex: 2;">
- <label>Search</label>
- <input type="text" name="search" class="form-control" placeholder="Search name, phone, email..." value="{{ search_query }}">
- </div>
- {% if branches %}
- <div class="filter-col">
- <label>Branch</label>
- <select name="branch" class="form-select tp-select">
- <option value="">All Branches</option>
- {% for b in branches %}
- <option value="{{ b.id }}" {% if branch_filter == b.id|stringformat:"i" or branch_filter == b.name %}selected{% endif %}>{{ b.name }}</option>
- {% endfor %}
- </select>
- </div>
- {% endif %}
- <div class="filter-col">
- <label>Telecaller</label>
- <select name="telecaller" class="form-select">
- <option value="">All My Telecallers</option>
- {% for t in telecallers %}
- <option value="{{ t.id }}" {% if telecaller_filter == t.id|stringformat:"i" %}selected{% endif %}>{{ t.get_full_name|default:t.username }}</option>
- {% endfor %}
- </select>
- </div>
- <div class="filter-col">
- <label>Status</label>
- <select name="status" class="form-select">
- <option value="">All Statuses</option>
- {% for code, label in statuses %}
- <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
- {% endfor %}
- </select>
- </div>
- <div class="filter-col">
- <label>Channel</label>
- <select name="channel" class="form-select">
- <option value="">All Channels</option>
- {% for c in channels %}
- <option value="{{ c.id }}" {% if channel_filter == c.id|stringformat:"i" %}selected{% endif %}>{{ c.name }}</option>
- {% endfor %}
- </select>
- </div>
- <div class="filter-col">
- <label>Product</label>
- <select name="product" class="form-select">
- <option value="">All Products</option>
- {% for p in products %}
- <option value="{{ p.id }}" {% if product_filter == p.id|stringformat:"i" %}selected{% endif %}>{{ p.name }}</option>
- {% endfor %}
- </select>
- </div>
- <div style="display: flex; gap: 8px;">
- <a href="{% url 'manager_leads_list' %}" class="btn btn-secondary">Reset</a>
- </div>
- </form>
-</div>
+    <!-- Search Condition Input -->
+    <div style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+      <div style="position: relative; display: flex; align-items: center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="position: absolute; left: 10px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="cvFieldSearchInput" onkeyup="filterFieldCatalog(this.value)" placeholder="Search conditions..." class="form-control" style="padding-left: 32px; font-size: 0.82rem; border-radius: 8px; border: 1px solid #cbd5e1; height: 34px;">
+      </div>
+    </div>
 
+    <!-- Searchable Field Catalog -->
+    <div class="cv-fields-section" style="max-height: 220px; overflow-y: auto; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+      <div id="cvFieldsCatalogList" style="display: flex; flex-direction: column; gap: 1px;">
+        
+        <!-- Group 1: Timestamps & Dates -->
+        <div class="cv-field-group">
+          <div class="cv-field-group-header">Timestamps & Dates</div>
+          <div class="cv-field-item {% if status_updated_from or status_updated_to %}active-field{% endif %}" data-field="status_updated_on" onclick="activateConditionCard('status_updated_on')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+            <span class="cv-field-name">Status Updated On</span>
+          </div>
+          <div class="cv-field-item {% if created_from or created_to %}active-field{% endif %}" data-field="created_on" onclick="activateConditionCard('created_on')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+            <span class="cv-field-name">Created On</span>
+          </div>
+        </div>
 
-{% if kpi_label or status_group or status_filter %}
-<!-- Active KPI Filter Chip Banner -->
-<div class="active-kpi-banner" style="background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border: 1px solid #c7d2fe; border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--tp-shadow-sm);">
- <div style="display: flex; align-items: center; gap: 10px;">
- <span style="font-size: 1.25rem;"></span>
- <div>
- <div style="font-size: 0.88rem; font-weight: 700; color: #1e1b4b;">
- Filtered by Metric: <span style="color: #059669;">{% if kpi_label %}{{ kpi_label|title }}{% elif status_group %}{{ status_group|title }}{% elif status_filter %}{{ status_filter|title }}{% endif %}</span>
- </div>
- <div style="font-size: 0.78rem; color: #4338ca;">
- Showing {{ page_obj.paginator.count }} matching record{{ page_obj.paginator.count|pluralize }} from Dashboard drilldown
- </div>
- </div>
- </div>
- <a href="?" class="btn btn-sm btn-outline-danger" style="font-size: 0.78rem; font-weight: 700; background: #ffffff; padding: 4px 12px; border-radius: 6px; text-decoration: none; border: 1px solid #ef4444; color: #ef4444;">
- &times; Clear Filter
- </a>
-</div>
-{% endif %}
+        <!-- Group 2: Lead Identity & Attributes -->
+        <div class="cv-field-group">
+          <div class="cv-field-group-header">Lead Identity</div>
+          <div class="cv-field-item {% if search_query %}active-field{% endif %}" data-field="name" onclick="activateConditionCard('name')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+            <span class="cv-field-name">Name</span>
+          </div>
+          <div class="cv-field-item" data-field="phone" onclick="activateConditionCard('phone')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></span>
+            <span class="cv-field-name">Phone</span>
+          </div>
+          <div class="cv-field-item {% if request.GET.degree %}active-field{% endif %}" data-field="degree" onclick="activateConditionCard('degree')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></span>
+            <span class="cv-field-name">Degree</span>
+          </div>
+          <div class="cv-field-item {% if request.GET.passed_out %}active-field{% endif %}" data-field="passed_out" onclick="activateConditionCard('passed_out')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg></span>
+            <span class="cv-field-name">PassedOut Year</span>
+          </div>
+          <div class="cv-field-item {% if request.GET.working_status %}active-field{% endif %}" data-field="working_status" onclick="activateConditionCard('working_status')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></span>
+            <span class="cv-field-name">Working Status</span>
+          </div>
+          <div class="cv-field-item {% if request.GET.purpose %}active-field{% endif %}" data-field="purpose" onclick="activateConditionCard('purpose')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></span>
+            <span class="cv-field-name">Purpose</span>
+          </div>
+        </div>
 
-<div class="crm-card">
- <div class="table-responsive">
- <table class="crm-table">
- <thead>
- <tr>
- <th style="width: 36px; text-align: center;"><input type="checkbox" id="select-all-leads" title="Select all visible leads"></th>
- <th>Lead</th>
- <th>Phone</th>
- <th>Status</th>
- <th>Response SLA</th>
- <th>Assigned Telecaller</th>
- <th>Channel</th>
- <th>Product</th>
- <th>Updated</th>
- <th style="text-align: right;">Actions</th>
- </tr>
- </thead>
- <tbody>
- {% for ld in page_obj %}
- <tr>
- <td style="text-align: center;">
- <input type="checkbox" class="lead-row-select" value="{{ ld.id }}">
- </td>
- <td>
- <strong><a href="{% url 'manager_lead_detail' ld.pk %}">{{ ld.name }}</a></strong>
- </td>
- <td>
- <a href="tel:{{ ld.phone }}" style="color: inherit; text-decoration: none; font-weight: 500;" title="Click to call {{ ld.phone }}">
- <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 2px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
- {{ ld.phone }}
- </a>
- </td>
- <td><span class="badge badge-{{ ld.status|lower|slugify }}">{{ ld.status }}</span></td>
- <td>
- <span class="badge" style="background: {{ ld.sla_info.bg_color }}; color: {{ ld.sla_info.badge_color }}; border: 1px solid {{ ld.sla_info.border_color }}; font-weight: 700; font-size: 0.74rem; white-space: nowrap; padding: 3px 8px; border-radius: 6px;">
- {{ ld.sla_info.text }}
- </span>
- </td>
- <td>
- {% if ld.assigned_telecaller %}
- <strong>{{ ld.assigned_telecaller.get_full_name|default:ld.assigned_telecaller.username }}</strong>
- {% else %}
- <span style="color: var(--text-muted); font-style: italic;">Unassigned</span>
- {% endif %}
- </td>
- <td>{{ ld.channel.name|default:"-" }}</td>
- <td>{{ ld.product.name|default:"-" }}</td>
- <td>{{ ld.updated_at|date:"M d, H:i" }}</td>
- <td style="text-align: right;">
- <div style="display: inline-flex; gap: 6px;">
- <button type="button" class="btn btn-success btn-sm" onclick="openCallDialer('{{ ld.pk }}', '{{ ld.name|escapejs }}', '{{ ld.phone|escapejs }}')" title="Call Lead">
- <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
- </button>
- <button type="button" class="btn btn-primary btn-sm" data-open-360="{{ ld.pk }}" title="Quick 360° Timeline Drawer" style="font-weight: 700; padding: 2px 7px;">360°</button>
- <a href="{% url 'manager_lead_detail' ld.pk %}" class="btn btn-secondary btn-sm">View</a>
- <a href="{% url 'manager_lead_edit' ld.pk %}" class="btn btn-secondary btn-sm">Edit</a>
- </div>
- </td>
- </tr>
- {% empty %}
- <tr>
- <td colspan="9">
- <div class="empty-state">
- <p>No leads currently assigned to your team.</p>
- </div>
- </td>
- </tr>
- {% endfor %}
- </tbody>
- </table>
- </div>
- {% include 'partials/pagination.html' %}
+        <!-- Group 3: Allocation, Branch & Status -->
+        <div class="cv-field-group">
+          <div class="cv-field-group-header">Allocation & Status</div>
+          <div class="cv-field-item {% if status_filter %}active-field{% endif %}" data-field="status" onclick="activateConditionCard('status')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg></span>
+            <span class="cv-field-name">Status</span>
+          </div>
+          <div class="cv-field-item {% if branch_filter %}active-field{% endif %}" data-field="branch" onclick="activateConditionCard('branch')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></span>
+            <span class="cv-field-name">Base Branch</span>
+          </div>
+          <div class="cv-field-item {% if preferred_branch %}active-field{% endif %}" data-field="preferred_branch" onclick="activateConditionCard('preferred_branch')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg></span>
+            <span class="cv-field-name">Preferred Branch</span>
+          </div>
+          <div class="cv-field-item {% if telecaller_filter %}active-field{% endif %}" data-field="telecaller" onclick="activateConditionCard('telecaller')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg></span>
+            <span class="cv-field-name">Assignee</span>
+          </div>
+          <div class="cv-field-item {% if created_by %}active-field{% endif %}" data-field="created_by" onclick="activateConditionCard('created_by')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></span>
+            <span class="cv-field-name">Created By</span>
+          </div>
+          <div class="cv-field-item {% if source_filter %}active-field{% endif %}" data-field="source" onclick="activateConditionCard('source')">
+            <span class="cv-field-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></span>
+            <span class="cv-field-name">Lead Source</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Active Conditions Form -->
+    <form id="telecrmCreateViewForm" method="GET" action="{% url 'manager_leads_list' %}" style="display: flex; flex-direction: column; flex: 1; overflow-y: auto; padding: 10px 12px; gap: 4px;">
+      <input type="hidden" name="view" value="{{ active_view|default:'all' }}">
+      {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+      {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size }}">{% endif %}
+      <input type="hidden" name="create_view" value="1">
+
+      <div id="cvActiveConditionsList" style="flex: 1;">
+        
+        <!-- CARD: Status Last Updated On -->
+        <div class="active-condition-card" id="card_status_updated_on" style="display: {% if status_updated_from or status_updated_to %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              Status Updated On
+              <select name="op_status_updated" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_status_updated == 'is' or not op_status_updated %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_status_updated == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="before" {% if op_status_updated == 'before' %}selected{% endif %}>Before</option>
+                <option value="after" {% if op_status_updated == 'after' %}selected{% endif %}>After</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('status_updated_on')" title="Remove condition">&times;</button>
+          </div>
+          <select class="form-select form-select-sm" onchange="handlePresetDateRange(this, 'status_updated_from', 'status_updated_to')" style="margin-bottom: 6px; font-size: 0.8rem; background: #ffffff;">
+            <option value="custom">Select Range ▾</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last_7_days">Last 7 Days</option>
+            <option value="this_month">This Month</option>
+          </select>
+          <div class="card-datetime-inputs">
+            <input type="datetime-local" name="status_updated_from" value="{{ status_updated_from }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+            <span class="range-arrow">→</span>
+            <input type="datetime-local" name="status_updated_to" value="{{ status_updated_to }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+          </div>
+        </div>
+
+        <!-- CARD: Created On -->
+        <div class="active-condition-card" id="card_created_on" style="display: {% if created_from or created_to %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              Created On
+              <select name="op_created_on" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_created_on == 'is' or not op_created_on %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_created_on == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="before" {% if op_created_on == 'before' %}selected{% endif %}>Before</option>
+                <option value="after" {% if op_created_on == 'after' %}selected{% endif %}>After</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('created_on')" title="Remove condition">&times;</button>
+          </div>
+          <select class="form-select form-select-sm" onchange="handlePresetDateRange(this, 'created_from', 'created_to')" style="margin-bottom: 6px; font-size: 0.8rem; background: #ffffff;">
+            <option value="custom">Select Range ▾</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last_7_days">Last 7 Days</option>
+            <option value="this_month">This Month</option>
+          </select>
+          <div class="card-datetime-inputs">
+            <input type="datetime-local" name="created_from" value="{{ created_from }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+            <span class="range-arrow">→</span>
+            <input type="datetime-local" name="created_to" value="{{ created_to }}" onchange="fetchLiveFilteredCount()" class="form-control form-control-sm condition-input" style="font-size: 0.76rem; padding: 4px 6px;">
+          </div>
+        </div>
+
+        <!-- CARD: Status -->
+        <div class="active-condition-card" id="card_status" style="display: {% if status_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              Status
+              <select name="op_status" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_status == 'is' or not op_status %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_status == 'is_not' %}selected{% endif %}>Is not</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('status')" title="Remove condition">&times;</button>
+          </div>
+          <select name="status" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Statuses</option>
+            {% for code, label in statuses %}
+            <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- CARD: Base Branch -->
+        <div class="active-condition-card" id="card_branch" style="display: {% if branch_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              Base Branch
+              <select name="op_branch" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_branch == 'is' or not op_branch %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_branch == 'is_not' %}selected{% endif %}>Is not</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('branch')" title="Remove condition">&times;</button>
+          </div>
+          <select name="branch" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Branches</option>
+            {% for b in branches %}
+            <option value="{{ b.id }}" {% if branch_filter == b.id|stringformat:"i" or branch_filter == b.name %}selected{% endif %}>{{ b.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- CARD: Preferred Branch -->
+        <div class="active-condition-card" id="card_preferred_branch" style="display: {% if preferred_branch %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+              Preferred Branch
+              <select name="op_preferred_branch" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_preferred_branch == 'contains' or not op_preferred_branch %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_preferred_branch == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_preferred_branch == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_preferred_branch == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_preferred_branch == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('preferred_branch')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="preferred_branch" value="{{ preferred_branch }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Branch name (e.g. Porur, T Nagar)..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Assignee (Telecaller) -->
+        <div class="active-condition-card" id="card_telecaller" style="display: {% if telecaller_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+              Assignee
+              <select name="op_telecaller" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_telecaller == 'is' or not op_telecaller %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_telecaller == 'is_not' %}selected{% endif %}>Is not</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('telecaller')" title="Remove condition">&times;</button>
+          </div>
+          <select name="telecaller" onchange="fetchLiveFilteredCount()" class="form-select form-select-sm condition-input" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Assignees</option>
+            {% for t in telecallers %}
+            <option value="{{ t.id }}" {% if telecaller_filter == t.id|stringformat:"i" %}selected{% endif %}>{{ t.get_full_name|default:t.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- CARD: Created By -->
+        <div class="active-condition-card" id="card_created_by" style="display: {% if created_by %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+              Created By
+              <select name="op_created_by" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_created_by == 'contains' or not op_created_by %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_created_by == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_created_by == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_created_by == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_created_by == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('created_by')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="created_by" value="{{ created_by }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Username or Name..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Name -->
+        <div class="active-condition-card" id="card_name" style="display: {% if search_query %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              Name
+              <select name="op_name" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_name == 'contains' or not op_name %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_name == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_name == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_name == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_name == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('name')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="search" value="{{ search_query }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Search contact name..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Phone -->
+        <div class="active-condition-card" id="card_phone" style="display: none;">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              Phone
+              <select name="op_phone" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_phone == 'contains' or not op_phone %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_phone == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_phone == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_phone == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_phone == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('phone')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="phone" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="Mobile phone number..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Degree -->
+        <div class="active-condition-card" id="card_degree" style="display: {% if request.GET.degree %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+              Degree
+              <select name="op_degree" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_degree == 'contains' or not op_degree %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_degree == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_degree == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_degree == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_degree == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('degree')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="degree" value="{{ request.GET.degree }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. B.E, B.Tech, MCA..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: PassedOut -->
+        <div class="active-condition-card" id="card_passed_out" style="display: {% if request.GET.passed_out %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+              PassedOut Year
+              <select name="op_passed_out" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_passed_out == 'contains' or not op_passed_out %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_passed_out == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_passed_out == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_passed_out == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_passed_out == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('passed_out')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="passed_out" value="{{ request.GET.passed_out }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. 2024, 2025..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Purpose -->
+        <div class="active-condition-card" id="card_purpose" style="display: {% if request.GET.purpose %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              Purpose
+              <select name="op_purpose" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_purpose == 'contains' or not op_purpose %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_purpose == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_purpose == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_purpose == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_purpose == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('purpose')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="purpose" value="{{ request.GET.purpose }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. Training, Internship, Placement..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Working status -->
+        <div class="active-condition-card" id="card_working_status" style="display: {% if request.GET.working_status %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+              Working status
+              <select name="op_working_status" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="contains" {% if op_working_status == 'contains' or not op_working_status %}selected{% endif %}>Contains</option>
+                <option value="not_contains" {% if op_working_status == 'not_contains' %}selected{% endif %}>Does not contain</option>
+                <option value="is" {% if op_working_status == 'is' %}selected{% endif %}>Is</option>
+                <option value="is_not" {% if op_working_status == 'is_not' %}selected{% endif %}>Is not</option>
+                <option value="starts_with" {% if op_working_status == 'starts_with' %}selected{% endif %}>Starts with</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('working_status')" title="Remove condition">&times;</button>
+          </div>
+          <input type="text" name="working_status" value="{{ request.GET.working_status }}" oninput="debounceFilterCount()" class="form-control form-control-sm condition-input" placeholder="e.g. Student, Working Professional, Job Seeker..." style="font-size: 0.82rem;">
+        </div>
+
+        <!-- CARD: Lead Source -->
+        <div class="active-condition-card" id="card_source" style="display: {% if source_filter %}block{% else %}none{% endif %};">
+          <div class="card-head">
+            <span class="card-icon-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              Lead Source
+              <select name="op_source" onchange="fetchLiveFilteredCount()" class="operator-select" title="Operator">
+                <option value="is" {% if op_source == 'is' or not op_source %}selected{% endif %}>Is</option>
+                <option value="contains" {% if op_source == 'contains' %}selected{% endif %}>Contains</option>
+              </select>
+            </span>
+            <button type="button" class="btn-card-close" onclick="removeConditionCard('source')" title="Remove condition">&times;</button>
+          </div>
+          <select name="source" class="form-select form-select-sm condition-input" onchange="fetchLiveFilteredCount()" style="font-size: 0.82rem; background: #ffffff;">
+            <option value="">All Sources</option>
+            <option value="TeleCRM" {% if source_filter == 'TeleCRM' %}selected{% endif %}>TeleCRM</option>
+            <option value="Facebook" {% if source_filter == 'Facebook' %}selected{% endif %}>Facebook</option>
+            <option value="WhatsApp" {% if source_filter == 'WhatsApp' %}selected{% endif %}>WhatsApp</option>
+            <option value="Meta Ads" {% if source_filter == 'Meta Ads' %}selected{% endif %}>Meta Ads</option>
+            <option value="Phone" {% if source_filter == 'Phone' %}selected{% endif %}>Phone</option>
+            <option value="Manual" {% if source_filter == 'Manual' %}selected{% endif %}>Manual</option>
+            <option value="Walk-in" {% if source_filter == 'Walk-in' %}selected{% endif %}>Walk-in</option>
+            <option value="Website" {% if source_filter == 'Website' %}selected{% endif %}>Website</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Panel Footer Actions -->
+      <div style="padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; margin-top: auto;">
+        <button type="button" class="btn btn-secondary" onclick="resetAllConditions()" style="flex: 1; font-weight: 600; font-size: 0.85rem; padding: 7px 10px; border-radius: 6px;" title="Reset all applied filters">Reset All</button>
+        <button type="submit" class="btn btn-primary" id="cvApplyBtn" style="flex: 1.5; font-weight: 700; font-size: 0.85rem; padding: 7px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(37,99,235,0.25);">Apply Filters (<span id="cvBtnCount">{{ page_obj.paginator.count|default:"0" }}</span>)</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- RIGHT MAIN WORKSPACE: TABLE & TOOLBAR -->
+  <main class="telecrm-main-workspace" id="telecrmMainWorkspace">
+    
+    <!-- TeleCRM Secondary Toolbar (Search, Live Count, Actions) -->
+    <div class="telecrm-table-toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; flex-wrap: wrap; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+      
+      <!-- Left: Column Type Tag + Search Lead Input + Live Lead Count -->
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="display: inline-flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; overflow: hidden; height: 34px;">
+          <span style="font-size: 0.72rem; font-weight: 800; color: #64748b; background: #e2e8f0; padding: 0 10px; height: 100%; display: flex; align-items: center; border-right: 1px solid #cbd5e1; letter-spacing: 0.04em;">T Name</span>
+          <input type="text" id="telecrmTableSearch" value="{{ search_query }}" placeholder="Filter leads by contact name..." onkeydown="if(event.key==='Enter'){triggerTableSearch(this.value);}" style="border: none; background: transparent; font-size: 0.82rem; padding: 0 10px; outline: none; width: 220px; color: #1e293b;">
+        </div>
+
+        <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; display: inline-flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
+          <span id="telecrmLiveLeadCount">{{ page_obj.paginator.count|default:"0" }} lead{{ page_obj.paginator.count|pluralize }}</span>
+        </div>
+      </div>
+
+      <!-- Right: View Modes & Action Buttons -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: inline-flex; background: var(--tp-surface-card); border: 1px solid var(--tp-surface-border); border-radius: var(--tp-radius-md); padding: 3px; box-shadow: var(--tp-shadow-sm);">
+          <span class="btn btn-sm" style="padding: 5px 12px; font-weight: 700; color: #ffffff; background: var(--tp-primary-600); border: none; border-radius: var(--tp-radius-sm);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -2px;"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Table View
+          </span>
+          <a href="{% url 'leads_kanban' %}" class="btn btn-sm" style="padding: 5px 12px; font-weight: 600; color: var(--tp-text-muted); background: transparent; border: none; border-radius: var(--tp-radius-sm);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: -2px;"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="10"></rect></svg>
+            Kanban Board
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Branch Filter Strip -->
+    {% if branches %}
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <span style="font-size: 0.76rem; font-weight: 700; color: var(--tp-text-muted, #64748b); text-transform: uppercase;">Branch:</span>
+      <a href="?{% for k, v in request.GET.items %}{% if k != 'branch' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="badge tp-badge tp-branch-pill {% if not branch_filter %}active{% endif %}">
+        <span class="tp-branch-dot"></span>All Branches
+      </a>
+      {% for b in branches %}
+      <a href="?branch={{ b.id }}{% for k, v in request.GET.items %}{% if k != 'branch' and k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="badge tp-badge tp-branch-pill {% if branch_filter == b.id|stringformat:'i' or branch_filter == b.name %}active{% endif %}">
+        <span class="tp-branch-dot"></span> {{ b.name }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- LEADS TABLE CONTAINER -->
+    <div class="crm-card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px;">
+      <div class="table-responsive">
+        <table class="crm-table">
+          <thead>
+            <tr>
+              <th style="width: 36px; text-align: center;"><input type="checkbox" id="select-all-leads" title="Select all visible leads"></th>
+              <th>Lead</th>
+              <th style="white-space: nowrap;">Phone</th>
+              <th>Status</th>
+              <th style="white-space: nowrap;">Response SLA</th>
+              <th>Assigned Telecaller</th>
+              <th>Channel</th>
+              <th>Product</th>
+              <th style="white-space: nowrap;">Updated</th>
+              <th style="text-align: right; white-space: nowrap;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ld in page_obj %}
+            <tr>
+              <td style="text-align: center;">
+                <input type="checkbox" class="lead-row-select" value="{{ ld.id }}">
+              </td>
+              <td>
+                <strong><a href="{% url 'manager_lead_detail' ld.pk %}">{{ ld.name }}</a></strong>
+              </td>
+              <td style="white-space: nowrap;">
+                <a href="tel:{{ ld.phone }}" style="color: inherit; text-decoration: none; font-weight: 500;" title="Click to call {{ ld.phone }}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 2px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  {{ ld.phone }}
+                </a>
+              </td>
+              <td><span class="badge badge-{{ ld.status|lower|slugify }}">{{ ld.status }}</span></td>
+              <td>
+                <span class="badge" style="background: {{ ld.sla_info.bg_color }}; color: {{ ld.sla_info.badge_color }}; border: 1px solid {{ ld.sla_info.border_color }}; font-weight: 700; font-size: 0.74rem; white-space: nowrap; padding: 3px 8px; border-radius: 6px;">
+                  {{ ld.sla_info.text }}
+                </span>
+              </td>
+              <td>
+                {% if ld.assigned_telecaller %}
+                <strong>{{ ld.assigned_telecaller.get_full_name|default:ld.assigned_telecaller.username }}</strong>
+                {% else %}
+                <span style="color: var(--text-muted); font-style: italic;">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>{{ ld.channel.name|default:"-" }}</td>
+              <td>{{ ld.product.name|default:"-" }}</td>
+              <td style="white-space: nowrap;">{{ ld.updated_at|date:"M d, H:i" }}</td>
+              <td style="text-align: right; white-space: nowrap;">
+                <div style="display: inline-flex; gap: 6px;">
+                  <button type="button" class="btn btn-success btn-sm" onclick="openCallDialer('{{ ld.pk }}', '{{ ld.name|escapejs }}', '{{ ld.phone|escapejs }}')" title="Call Lead">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  </button>
+                  <button type="button" class="btn btn-primary btn-sm" data-open-360="{{ ld.pk }}" title="Quick 360° Timeline Drawer" style="font-weight: 700; padding: 2px 7px;">360°</button>
+                  <a href="{% url 'manager_lead_detail' ld.pk %}" class="btn btn-secondary btn-sm">View</a>
+                  <a href="{% url 'manager_lead_edit' ld.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10">
+                <div class="empty-state" style="padding: 30px; text-align: center; color: #64748b;">
+                  <p>No leads currently matching your filters.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include 'partials/pagination.html' %}
+    </div>
+
+  </main>
 </div>
 
 <!-- Floating Bulk Actions Dock -->
 <div id="tp-bulk-actions-dock" style="display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; background: #0f172a; border: 1px solid #334155; border-radius: 9999px; padding: 10px 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); color: #fff;">
- <div style="display: flex; align-items: center; gap: 16px;">
- <span style="font-weight: 600; font-size: 0.85rem; color: #94a3b8;"><span id="selected-leads-count" style="color: #38bdf8; font-weight: 700;">0</span>leads selected</span>
- <button type="button" class="btn btn-sm btn-primary" onclick="openBulkEditModal()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; border-radius: 9999px; padding: 6px 16px; background: #0284c7; border: none; color: #fff; cursor: pointer;">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
- Bulk Edit
- </button>
- </div>
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <span style="font-weight: 600; font-size: 0.85rem; color: #94a3b8;"><span id="selected-leads-count" style="color: #38bdf8; font-weight: 700;">0</span> leads selected</span>
+    <button type="button" class="btn btn-sm btn-primary" onclick="openBulkEditModal()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; border-radius: 9999px; padding: 6px 16px; background: #0284c7; border: none; color: #fff; cursor: pointer;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+      Bulk Edit
+    </button>
+  </div>
 </div>
 
 {% include 'leads/partials/bulk_edit_modal.html' %}
 
+<!-- Save Custom View Modal -->
+<div id="createSavedViewModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center;">
+  <div style="background: #ffffff; border-radius: 12px; width: 420px; max-width: 90vw; padding: 22px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.15rem;">📌</span>
+        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Save View Tab</h3>
+      </div>
+      <button type="button" onclick="closeSaveViewModal()" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer;">&times;</button>
+    </div>
+    <p style="font-size: 0.82rem; color: #64748b; margin-top: 0; margin-bottom: 14px;">Give this custom filter view a short name to pin it as a quick view tab on top.</p>
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 5px;">View Tab Name</label>
+      <input type="text" id="customViewNameInput" placeholder="e.g. Porur Fresh Leads, WhatsApp Active..." class="form-control" style="font-size: 0.85rem; padding: 8px 12px; border-radius: 8px;">
+    </div>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button type="button" class="btn btn-secondary" onclick="closeSaveViewModal()" style="font-weight: 600; font-size: 0.82rem; padding: 6px 14px;">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="confirmSaveCustomView()" style="font-weight: 700; font-size: 0.82rem; padding: 6px 16px; background: #2563eb; color: #ffffff;">Save View Tab</button>
+    </div>
+  </div>
+</div>
+
 <script>
 window.selectAllMatchingFilters = false;
 
-function getActiveFilterParams() {
- var urlParams = new URLSearchParams(window.location.search);
- var params = {};
- ['search', 'branch', 'status', 'telecaller', 'channel', 'product'].forEach(function(k) {
- if (urlParams.get(k)) params[k] = urlParams.get(k);
- });
- return params;
+function toggleCreateViewPanel(open) {
+  var panel = document.getElementById('telecrmCreateViewPanel');
+  if (!panel) return;
+  if (open === undefined) {
+    open = panel.style.display === 'none';
+  }
+  if (open) {
+    panel.style.display = 'flex';
+    sessionStorage.setItem('cv_panel_state_manager', 'open');
+    var inp = document.getElementById('cvFieldSearchInput');
+    if (inp) inp.focus();
+  } else {
+    panel.style.display = 'none';
+    sessionStorage.setItem('cv_panel_state_manager', 'closed');
+  }
 }
 
-function getSelectedLeadIds() {
- var ids = [];
- document.querySelectorAll('.lead-row-select:checked').forEach(function(cb) {
- ids.push(parseInt(cb.value, 10));
- });
- return ids;
+function updateActiveCountBadge() {
+  var activeCards = document.querySelectorAll('#cvActiveConditionsList .active-condition-card');
+  var activeCount = 0;
+  activeCards.forEach(function(card) {
+    if (card.style.display !== 'none') activeCount++;
+  });
+  var badge = document.getElementById('cvActiveCountBadge');
+  if (badge) {
+    if (activeCount > 0) {
+      badge.textContent = activeCount + ' active';
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+function filterFieldCatalog(query) {
+  var q = (query || '').toLowerCase().trim();
+  var items = document.querySelectorAll('#cvFieldsCatalogList .cv-field-item');
+  items.forEach(function(item) {
+    var text = item.textContent.toLowerCase();
+    if (!q || text.indexOf(q) !== -1) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+  var groups = document.querySelectorAll('#cvFieldsCatalogList .cv-field-group');
+  groups.forEach(function(group) {
+    var visibleItems = 0;
+    group.querySelectorAll('.cv-field-item').forEach(function(it) {
+      if (it.style.display !== 'none') visibleItems++;
+    });
+    group.style.display = (q && visibleItems === 0) ? 'none' : 'block';
+  });
+}
+
+function activateConditionCard(fieldKey) {
+  var card = document.getElementById('card_' + fieldKey);
+  if (card) {
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    var inp = card.querySelector('input, select');
+    if (inp) inp.focus();
+  }
+  var catItem = document.querySelector('#cvFieldsCatalogList .cv-field-item[data-field="' + fieldKey + '"]');
+  if (catItem) {
+    catItem.classList.add('active-field');
+  }
+  updateActiveCountBadge();
+  fetchLiveFilteredCount();
+}
+
+function removeConditionCard(fieldKey) {
+  var card = document.getElementById('card_' + fieldKey);
+  if (card) {
+    var inputs = card.querySelectorAll('input, select');
+    inputs.forEach(function(el) {
+      el.value = '';
+    });
+    card.style.display = 'none';
+  }
+  var catItem = document.querySelector('#cvFieldsCatalogList .cv-field-item[data-field="' + fieldKey + '"]');
+  if (catItem) {
+    catItem.classList.remove('active-field');
+  }
+  updateActiveCountBadge();
+  fetchLiveFilteredCount();
+}
+
+function handlePresetDateRange(sel, fromInputName, toInputName) {
+  var val = sel.value;
+  var card = sel.closest('.active-condition-card');
+  if (!card) return;
+  var fromInput = card.querySelector('input[name="' + fromInputName + '"]');
+  var toInput = card.querySelector('input[name="' + toInputName + '"]');
+  if (!fromInput || !toInput) return;
+
+  var now = new Date();
+  function pad(n) { return n < 10 ? '0' + n : n; }
+  function formatDT(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  if (val === 'today') {
+    var start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0);
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+    fromInput.value = formatDT(start);
+    toInput.value = formatDT(end);
+  } else if (val === 'yesterday') {
+    var yest = new Date(now);
+    yest.setDate(yest.getDate() - 1);
+    var start = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 0, 0);
+    var end = new Date(yest.getFullYear(), yest.getMonth(), yest.getDate(), 23, 59);
+    fromInput.value = formatDT(start);
+    toInput.value = formatDT(end);
+  } else if (val === 'last_7_days') {
+    var past = new Date(now);
+    past.setDate(past.getDate() - 7);
+    fromInput.value = formatDT(past);
+    toInput.value = formatDT(now);
+  } else if (val === 'this_month') {
+    var start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0);
+    var end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59);
+    fromInput.value = formatDT(start);
+    toInput.value = formatDT(end);
+  }
+  fetchLiveFilteredCount();
+}
+
+var _countDebounceTimer = null;
+function debounceFilterCount() {
+  if (_countDebounceTimer) clearTimeout(_countDebounceTimer);
+  _countDebounceTimer = setTimeout(fetchLiveFilteredCount, 400);
+}
+
+function fetchLiveFilteredCount() {
+  var form = document.getElementById('telecrmCreateViewForm');
+  var countEl = document.getElementById('telecrmLiveLeadCount');
+  if (!form || !countEl) return;
+
+  var params = new URLSearchParams();
+  var elements = form.querySelectorAll('input, select');
+  elements.forEach(function(el) {
+    if (el.name && el.value.trim() && el.name !== 'create_view') {
+      params.append(el.name, el.value.trim());
+    }
+  });
+
+  var tableSearch = document.getElementById('telecrmTableSearch');
+  if (tableSearch && tableSearch.value.trim() && !params.has('search')) {
+    params.append('search', tableSearch.value.trim());
+  }
+
+  countEl.style.opacity = '0.5';
+  fetch('{% url "api_filter_lead_count" %}?' + params.toString())
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      countEl.style.opacity = '1';
+      if (data && data.status === 'success') {
+        var count = data.count;
+        countEl.textContent = count + ' lead' + (count === 1 ? '' : 's');
+        var btnCount = document.getElementById('cvBtnCount');
+        if (btnCount) btnCount.textContent = count;
+      }
+    })
+    .catch(function(err) {
+      countEl.style.opacity = '1';
+      console.warn('Error fetching filter count:', err);
+    });
+}
+
+function resetAllConditions() {
+  var form = document.getElementById('telecrmCreateViewForm');
+  if (form) {
+    var inputs = form.querySelectorAll('input:not([type="hidden"]), select');
+    inputs.forEach(function(el) { el.value = ''; });
+  }
+  var cards = document.querySelectorAll('#cvActiveConditionsList .active-condition-card');
+  cards.forEach(function(card) { card.style.display = 'none'; });
+  var catItems = document.querySelectorAll('#cvFieldsCatalogList .cv-field-item');
+  catItems.forEach(function(item) { item.classList.remove('active-field'); });
+  updateActiveCountBadge();
+  fetchLiveFilteredCount();
+  window.location.href = '{% url "manager_leads_list" %}?view=all';
+}
+
+function triggerTableSearch(val) {
+  var url = new URL(window.location.href);
+  if (val.trim()) {
+    url.searchParams.set('search', val.trim());
+  } else {
+    url.searchParams.delete('search');
+  }
+  url.searchParams.set('page', '1');
+  window.location.href = url.toString();
+}
+
+function openSaveViewModal() {
+  var modal = document.getElementById('createSavedViewModal');
+  if (modal) modal.style.display = 'flex';
+  var inp = document.getElementById('customViewNameInput');
+  if (inp) {
+    inp.value = '';
+    setTimeout(function() { inp.focus(); }, 150);
+  }
+}
+
+function closeSaveViewModal() {
+  var modal = document.getElementById('createSavedViewModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmSaveCustomView() {
+  var inp = document.getElementById('customViewNameInput');
+  var name = inp ? inp.value.trim() : '';
+  if (!name) {
+    alert('Please enter a name for your custom view tab.');
+    if (inp) inp.focus();
+    return;
+  }
+
+  var form = document.getElementById('telecrmCreateViewForm');
+  var params = new URLSearchParams();
+  if (form) {
+    var elements = form.querySelectorAll('input, select');
+    elements.forEach(function(el) {
+      if (el.name && el.value.trim() && el.name !== 'create_view') {
+        params.append(el.name, el.value.trim());
+      }
+    });
+  }
+  var queryString = params.toString();
+
+  var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+  if (!csrfToken) {
+    var match = document.cookie.match(/csrftoken=([^;]+)/);
+    if (match) csrfToken = match[1];
+  }
+
+  fetch('{% url "api_save_lead_view" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({
+      name: name,
+      query_string: queryString,
+      filters: {}
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      closeSaveViewModal();
+      window.location.href = '{% url "manager_leads_list" %}?' + queryString + '&saved_view_id=' + data.view_id;
+    } else {
+      alert(data.message || 'Error saving custom view.');
+    }
+  })
+  .catch(function(err) {
+    console.error('Error saving view:', err);
+    alert('Failed to save custom view. Please check connection.');
+  });
+}
+
+function deleteSavedView(e, viewId, viewName) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if (!confirm('Are you sure you want to delete the saved view tab "' + viewName + '"?')) {
+    return;
+  }
+
+  var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+  if (!csrfToken) {
+    var match = document.cookie.match(/csrftoken=([^;]+)/);
+    if (match) csrfToken = match[1];
+  }
+
+  fetch('/admin/leads/api/delete-view/' + viewId + '/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken
+    }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      window.location.href = '{% url "manager_leads_list" %}?view=all';
+    } else {
+      alert(data.message || 'Error deleting view.');
+    }
+  })
+  .catch(function(err) {
+    console.error('Error deleting view:', err);
+    alert('Failed to delete view.');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
- var selectAll = document.getElementById('select-all-leads');
- var rowCheckboxes = document.querySelectorAll('.lead-row-select');
- var dock = document.getElementById('tp-bulk-actions-dock');
- var countEl = document.getElementById('selected-leads-count');
+  updateActiveCountBadge();
 
- function updateDock() {
- var checked = document.querySelectorAll('.lead-row-select:checked');
- if (countEl) countEl.textContent = checked.length;
- if (dock) {
- dock.style.display = checked.length >0 ? 'block' : 'none';
- }
- if (selectAll) {
- selectAll.checked = rowCheckboxes.length >0 && checked.length === rowCheckboxes.length;
- }
- }
+  var selectAll = document.getElementById('select-all-leads');
+  var rowCheckboxes = document.querySelectorAll('.lead-row-select');
+  var dock = document.getElementById('tp-bulk-actions-dock');
+  var countEl = document.getElementById('selected-leads-count');
 
- if (selectAll) {
- selectAll.addEventListener('change', function() {
- rowCheckboxes.forEach(function(cb) { cb.checked = selectAll.checked; });
- updateDock();
- });
- }
+  function updateDock() {
+    var checked = document.querySelectorAll('.lead-row-select:checked');
+    if (countEl) countEl.textContent = checked.length;
+    if (dock) {
+      dock.style.display = checked.length > 0 ? 'block' : 'none';
+    }
+    if (selectAll) {
+      selectAll.checked = rowCheckboxes.length > 0 && checked.length === rowCheckboxes.length;
+    }
+  }
 
- rowCheckboxes.forEach(function(cb) {
- cb.addEventListener('change', updateDock);
- });
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      rowCheckboxes.forEach(function(cb) { cb.checked = selectAll.checked; });
+      updateDock();
+    });
+  }
+
+  rowCheckboxes.forEach(function(cb) {
+    cb.addEventListener('change', updateDock);
+  });
 });
 </script>
 {% endblock %}

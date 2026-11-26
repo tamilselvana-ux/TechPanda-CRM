@@ -67,12 +67,12 @@
  <tr>
  <th style="width: 36px; text-align: center;"><input type="checkbox" id="select-all-leads" title="Select all visible leads"></th>
  <th>Lead</th>
- <th>Phone</th>
+ <th style="white-space: nowrap;">Phone</th>
  <th>Status</th>
  <th>Telecaller</th>
  <th>Counselor</th>
- <th>Updated</th>
- <th style="text-align: right;">Actions</th>
+ <th style="white-space: nowrap;">Updated</th>
+ <th style="text-align: right; white-space: nowrap;">Actions</th>
  </tr>
  </thead>
  <tbody>
@@ -82,7 +82,7 @@
  <input type="checkbox" class="lead-row-select" value="{{ ld.id }}">
  </td>
  <td><strong><a href="{% url 'branch_head_lead_detail' ld.pk %}">{{ ld.name }}</a></strong></td>
- <td>{{ ld.phone }}</td>
+ <td style="white-space: nowrap;">{{ ld.phone }}</td>
  <td><span class="badge badge-{{ ld.status|lower|slugify }}">{{ ld.status }}</span></td>
  <td>
  {% if ld.assigned_telecaller %}{{ ld.assigned_telecaller.get_full_name|default:ld.assigned_telecaller.username }}
@@ -92,8 +92,8 @@
  {% if ld.assigned_counselor %}{{ ld.assigned_counselor.get_full_name|default:ld.assigned_counselor.username }}
  {% else %}<span style="color: var(--text-muted);">-</span>{% endif %}
  </td>
- <td>{{ ld.updated_at|date:"M d, H:i" }}</td>
- <td style="text-align: right;">
+ <td style="white-space: nowrap;">{{ ld.updated_at|date:"M d, H:i" }}</td>
+ <td style="text-align: right; white-space: nowrap;">
  <a href="{% url 'branch_head_lead_detail' ld.pk %}" class="btn btn-secondary btn-sm">View</a>
  </td>
  </tr>
