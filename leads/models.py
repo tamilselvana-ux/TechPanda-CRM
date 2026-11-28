@@ -174,6 +174,7 @@ class Lead(models.Model):
         ('whatsapp', 'WhatsApp'),
         ('google', 'Google'),
         ('direct', 'Direct / Walk-in'),
+        ('unknown', 'Unknown'),
         ('other', 'Other'),
     )
     platform = models.CharField(
@@ -797,10 +798,12 @@ def normalize_lead_source(src: str, platform: str = '') -> str:
 
 
 class TelecallerLeadSetup(models.Model):
+    
     """
     Branch- and Lead-Source-based Telecaller assignment rules:
     - Hierarchy: Branch -> Lead Source -> Eligible Telecallers -> Allocation Percentages (100% total per source)
     """
+    is_locked = models.BooleanField(default=False, help_text="Manual override lock: prevents auto equal split from redistributing this row's percentage")
     telecaller = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

@@ -119,10 +119,11 @@ class FacebookLead(models.Model):
     campaign_name = models.CharField(max_length=255, blank=True)
     platform = models.CharField(
         max_length=20,
+        choices=[('facebook', 'Facebook'), ('instagram', 'Instagram'), ('unknown', 'Unknown')],
+        default='unknown',
         blank=True,
-        default='',
         db_index=True,
-        help_text="Origin platform from Meta API (fb, ig)"
+        help_text='Origin platform from Meta API (facebook, instagram, unknown)',
     )
 
     all_answers = models.JSONField(default=dict, blank=True)  # every question/answer from the form
