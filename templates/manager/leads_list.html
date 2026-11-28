@@ -748,7 +748,17 @@
     {% endif %}
 
     <!-- LEADS TABLE CONTAINER -->
-    <div class="crm-card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px;">
+    <div class="crm-card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; overflow: hidden;">
+      <div id="select-all-matching-banner" style="display: none; background: #eff6ff; border-bottom: 1px solid #bfdbfe; padding: 10px 18px; text-align: center; font-size: 0.86rem; color: #1e40af;">
+        <span>All {{ page_obj|length }} leads on this page are selected. </span>
+        <button type="button" id="btn-select-all-matching" onclick="toggleSelectAllMatching(true)" style="background: none; border: none; font-weight: 700; color: #1d4ed8; text-decoration: underline; cursor: pointer; padding: 0 4px;">
+          Select all {{ page_obj.paginator.count }} leads matching current filters
+        </button>
+        <span id="all-matching-selected-indicator" style="display: none; font-weight: 800; color: #059669; margin-left: 6px;">
+          All {{ page_obj.paginator.count }} leads selected
+          <button type="button" onclick="toggleSelectAllMatching(false)" style="background: none; border: none; color: #dc2626; text-decoration: underline; font-weight: 600; cursor: pointer; margin-left: 8px;">Clear filter selection</button>
+        </span>
+      </div>
       <div class="table-responsive">
         <table class="crm-table">
           <thead>
@@ -833,6 +843,9 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
       Bulk Edit
     </button>
+    <button type="button" class="btn btn-sm" id="btn-clear-selection" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; font-weight: 600; border-radius: 9999px; padding: 5px 14px; font-size: 0.8rem; cursor: pointer;">
+      Deselect
+    </button>
   </div>
 </div>
 
@@ -843,7 +856,7 @@
   <div style="background: #ffffff; border-radius: 12px; width: 420px; max-width: 90vw; padding: 22px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
       <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.15rem;">📌</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #2563eb;"><path d="M12 17v5M9 2h6l1 7h-8l1-7zM7 9l-2 5h14l-2-5"/></svg>
         <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a;">Save View Tab</h3>
       </div>
       <button type="button" onclick="closeSaveViewModal()" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer;">&times;</button>
@@ -1163,35 +1176,38 @@ function deleteSavedView(e, viewId, viewName) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  updateActiveCountBadge();
+window.selectAllMatchingFilters = false;
 
-  var selectAll = document.getElementById('select-all-leads');
-  var rowCheckboxes = document.querySelectorAll('.lead-row-select');
-  var dock = document.getElementById('tp-bulk-actions-dock');
+function toggleSelectAllMatching(enabled) {
+  window.selectAllMatchingFilters = enabled;
+  var bannerBtn = document.getElementById('btn-select-all-matching');
+  var indicator = document.getElementById('all-matching-selected-indicator');
   var countEl = document.getElementById('selected-leads-count');
-
-  function updateDock() {
+  if (enabled) {
+    if (bannerBtn) bannerBtn.style.display = 'none';
+    if (indicator) indicator.style.display = 'inline-block';
+    if (countEl) countEl.textContent = '{{ page_obj.paginator.count }}';
+  } else {
+    if (bannerBtn) bannerBtn.style.display = 'inline-block';
+    if (indicator) indicator.style.display = 'none';
     var checked = document.querySelectorAll('.lead-row-select:checked');
     if (countEl) countEl.textContent = checked.length;
-    if (dock) {
-      dock.style.display = checked.length > 0 ? 'block' : 'none';
-    }
-    if (selectAll) {
-      selectAll.checked = rowCheckboxes.length > 0 && checked.length === rowCheckboxes.length;
-    }
   }
+}
 
-  if (selectAll) {
-    selectAll.addEventListener('change', function() {
-      rowCheckboxes.forEach(function(cb) { cb.checked = selectAll.checked; });
-      updateDock();
-    });
+function getSelectedLeadIds() {
+  if (window.CRMSelectionManager) {
+    return window.CRMSelectionManager.getStoredIds();
   }
-
-  rowCheckboxes.forEach(function(cb) {
-    cb.addEventListener('change', updateDock);
+  var ids = [];
+  document.querySelectorAll('.lead-row-select:checked').forEach(function(cb) {
+    ids.push(parseInt(cb.value, 10));
   });
+  return ids;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  updateActiveCountBadge();
 });
 </script>
 {% endblock %}

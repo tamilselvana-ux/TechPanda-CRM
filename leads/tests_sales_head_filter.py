@@ -102,3 +102,31 @@ class SalesHeadFilterOption3Tests(TestCase):
         lead_names = [l.name for l in leads]
         self.assertIn('Anand M', lead_names)
         self.assertNotIn('Kavitha R', lead_names)
+
+    def test_sales_head_select_all_parity_with_superadmin(self):
+        response = self.client.get(reverse('manager_leads_list'))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+
+        # Select all header checkbox and row checkboxes
+        self.assertIn('id="select-all-leads"', content)
+        self.assertIn('class="lead-row-select"', content)
+
+        # Select all matching banner
+        self.assertIn('id="select-all-matching-banner"', content)
+        self.assertIn('id="btn-select-all-matching"', content)
+        self.assertIn('toggleSelectAllMatching(true)', content)
+        self.assertIn('id="all-matching-selected-indicator"', content)
+        self.assertIn('toggleSelectAllMatching(false)', content)
+        self.assertIn('Clear filter selection', content)
+
+        # Bulk actions dock and deselect button
+        self.assertIn('id="tp-bulk-actions-dock"', content)
+        self.assertIn('id="selected-leads-count"', content)
+        self.assertIn('id="btn-clear-selection"', content)
+
+        # Global select-all matching script functions
+        self.assertIn('window.selectAllMatchingFilters', content)
+        self.assertIn('function toggleSelectAllMatching(enabled)', content)
+        self.assertIn('function getSelectedLeadIds()', content)
+

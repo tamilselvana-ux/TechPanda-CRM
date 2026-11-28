@@ -84,8 +84,11 @@
  <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' and request.resolver_match.url_name == 'facebook_leads' %}active{% endif %}">
  <span class="nav-text">Facebook Leads</span>
  </a>
- <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if 'telecrm' in request.resolver_match.url_name %}active{% endif %}">
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_telecrm_sync_dashboard' %}active{% endif %}">
  <span class="nav-text">TeleCRM Sync</span>
+ </a>
+ <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <span class="nav-text">Sync Conflicts</span>
  </a>
  <a href="{% url 'telecaller_rnr_report' %}" class="nav-item {% if request.resolver_match.url_name == 'telecaller_rnr_report' %}active{% endif %}">
  <span class="nav-text">Telecaller RNR Report</span>
@@ -262,6 +265,10 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
  <span class="nav-text">Follow-ups</span>
  </a>
+ <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+ <span class="nav-text">Sync Conflicts</span>
+ </a>
  <a href="{% url 'missed_calls_list' %}" class="nav-item {% if request.resolver_match.url_name == 'missed_calls_list' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path><line x1="23" y1="1" x2="17" y2="7"></line><line x1="17" y1="1" x2="23" y2="7"></line></svg>
  <span class="nav-text">Missed Calls{% missed_callbacks_count as missed_cb %}{% if missed_cb %} <span class="badge" style="background:#dc2626;color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px;">{{ missed_cb }}</span>{% endif %}</span>
@@ -299,6 +306,10 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
  <span class="nav-text">Student Enrollments</span>
  </a>
+ <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+ <span class="nav-text">Sync Conflicts</span>
+ </a>
 
  {% elif is_branch_admin %}
  <!-- BRANCH ADMIN NAVIGATION -->
@@ -306,6 +317,10 @@
  <a href="{% url 'admin_enrolled_students' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_enrolled_students' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
  <span class="nav-text">Student Enrollments</span>
+ </a>
+ <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+ <span class="nav-text">Sync Conflicts</span>
  </a>
  <a href="{% url 'branch_head_leads_list' %}" class="nav-item {% if request.resolver_match.url_name in 'branch_head_leads_list branch_head_lead_detail' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
@@ -344,6 +359,10 @@
  <a href="{% url 'admin_enrolled_students' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_enrolled_students' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
  <span class="nav-text">Student Enrollments</span>
+ </a>
+ <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+ <span class="nav-text">Sync Conflicts</span>
  </a>
  <a href="{% url 'branch_head_counselors_list' %}" class="nav-item {% if request.resolver_match.url_name in 'branch_head_counselors_list branch_head_counselor_detail' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path></svg>

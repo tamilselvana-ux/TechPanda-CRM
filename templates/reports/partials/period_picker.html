@@ -1,0 +1,102 @@
+<!-- SHARED PERIOD PICKER COMPONENT (TechPanda CRM) -->
+<div class="tp-period-picker-container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; background: var(--bg-card, #ffffff); padding: 8px 14px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+  
+  <!-- Left: Day | Week | Month | Year Tabs -->
+  <div style="display: flex; align-items: center; gap: 4px; background: #f1f5f9; padding: 3px; border-radius: 8px;">
+    <a href="?period=day{% if current_date %}&date={{ current_date }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+       class="tp-period-tab {% if bounds.period_type == 'day' %}active{% endif %}"
+       style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 6px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.15s ease; {% if bounds.period_type == 'day' %}background: #2563eb; color: #ffffff; box-shadow: 0 1px 2px rgba(37,99,235,0.2);{% else %}color: #475569;{% endif %}">
+      Day
+    </a>
+    <a href="?period=week{% if current_date %}&date={{ current_date }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+       class="tp-period-tab {% if bounds.period_type == 'week' %}active{% endif %}"
+       style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 6px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.15s ease; {% if bounds.period_type == 'week' %}background: #2563eb; color: #ffffff; box-shadow: 0 1px 2px rgba(37,99,235,0.2);{% else %}color: #475569;{% endif %}">
+      Week
+    </a>
+    <a href="?period=month{% if current_date %}&date={{ current_date }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+       class="tp-period-tab {% if bounds.period_type == 'month' %}active{% endif %}"
+       style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 6px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.15s ease; {% if bounds.period_type == 'month' %}background: #2563eb; color: #ffffff; box-shadow: 0 1px 2px rgba(37,99,235,0.2);{% else %}color: #475569;{% endif %}">
+      Month
+    </a>
+    <a href="?period=year{% if current_date %}&date={{ current_date }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+       class="tp-period-tab {% if bounds.period_type == 'year' %}active{% endif %}"
+       style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 6px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.15s ease; {% if bounds.period_type == 'year' %}background: #2563eb; color: #ffffff; box-shadow: 0 1px 2px rgba(37,99,235,0.2);{% else %}color: #475569;{% endif %}">
+      Year
+    </a>
+  </div>
+
+  <!-- Center: Period Stepper & Dropdown Chip -->
+  <div style="display: flex; align-items: center; gap: 8px;">
+    
+    <!-- Prev Arrow -->
+    <a href="?period={{ bounds.period_type }}&date={{ bounds.prev_date }}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+       title="Previous {{ bounds.period_type }}"
+       style="display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-color, #cbd5e1); color: #475569; text-decoration: none; background: #ffffff;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </a>
+
+    <!-- Dropdown Chip -->
+    <div style="position: relative; display: inline-block;">
+      <button type="button" id="btnPeriodChip" onclick="togglePeriodChipMenu(event)"
+              style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 0.82rem; font-weight: 700; border-radius: 20px; cursor: pointer;">
+        <span>{{ bounds.display_title }}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div id="periodChipDropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 180px; z-index: 1050; padding: 6px 0;">
+        <a href="?chip=today" class="chip-item">Today</a>
+        <a href="?chip=yesterday" class="chip-item">Yesterday</a>
+        <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
+        <a href="?chip=this_week" class="chip-item">This Week</a>
+        <a href="?chip=last_week" class="chip-item">Last Week</a>
+        <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
+        <a href="?chip=this_month" class="chip-item">This Month</a>
+        <a href="?chip=last_month" class="chip-item">Last Month</a>
+        <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
+        <a href="?chip=this_year" class="chip-item">This Year</a>
+      </div>
+    </div>
+
+    <!-- Next Arrow -->
+    <a href="?period={{ bounds.period_type }}&date={{ bounds.next_date }}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+       title="Next {{ bounds.period_type }}"
+       style="display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-color, #cbd5e1); color: #475569; text-decoration: none; background: #ffffff;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </a>
+  </div>
+
+</div>
+
+<style>
+.chip-item {
+  display: block;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  color: #334155;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.12s ease;
+}
+.chip-item:hover {
+  background: #f1f5f9;
+  color: #1d4ed8;
+}
+</style>
+
+<script>
+function togglePeriodChipMenu(e) {
+  e.stopPropagation();
+  var menu = document.getElementById('periodChipDropdown');
+  if (menu) {
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('periodChipDropdown');
+  if (menu && !e.target.closest('#btnPeriodChip')) {
+    menu.style.display = 'none';
+  }
+});
+</script>

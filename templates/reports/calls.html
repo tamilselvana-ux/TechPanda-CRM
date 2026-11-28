@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Call Report - TechPanda CRM{% endblock %}
+
+{% block content %}
+<div class="tp-reports-container" style="max-width: 1440px; margin: 0 auto; padding: 16px 20px;">
+
+  <!-- PERIOD PICKER COMPONENT -->
+  <div style="margin-bottom: 14px;">
+    {% include 'reports/partials/period_picker.html' %}
+  </div>
+
+  <!-- SPLIT WORKSPACE: SUMMARY + CHART (LEFT) & FILTER BUILDER + LEADS (RIGHT) -->
+  <div style="display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap;">
+
+    <!-- LEFT COLUMN: STAT TILES + DYNAMIC CHART -->
+    <div style="flex: 1; min-width: 320px; max-width: 650px; display: flex; flex-direction: column; gap: 14px;">
+
+      <!-- STAT TILES ROW -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
+        
+        <!-- Tile 1: CALLS (Active Primary Blue) -->
+        <div style="background: #1e3a8a; border-radius: 12px; padding: 14px 16px; color: #ffffff; box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);">
+          <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #93c5fd;">Calls</div>
+          <div style="font-size: 1.85rem; font-weight: 900; margin-top: 4px; line-height: 1.1;">{{ total_stats.calls }}</div>
+        </div>
+
+        <!-- Tile 2: TIME (Total talk duration) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px 16px; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Time</div>
+          <div style="font-size: 1.85rem; font-weight: 900; margin-top: 4px; line-height: 1.1;">{{ total_stats.duration_formatted }}</div>
+        </div>
+
+        <!-- Tile 3: SALES -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px 16px; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">Sales</div>
+          <div style="font-size: 1.85rem; font-weight: 900; margin-top: 4px; line-height: 1.1; color: #16a34a;">₹{{ total_stats.sales }}</div>
+        </div>
+
+      </div>
+
+      <!-- SECONDARY STATS (CONNECTED & AVG DURATION) -->
+      <div style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 16px; font-size: 0.8rem; font-weight: 700; color: #475569;">
+        <div>Connected Calls: <strong style="color: #2563eb;">{{ total_stats.connected_calls }}</strong></div>
+        <div>Avg Call Duration: <strong style="color: #0f172a;">{{ total_stats.avg_duration_formatted }}</strong></div>
+      </div>
+
+      <!-- DYNAMIC CALLS CHART CARD -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="position: relative; height: 320px;">
+          <canvas id="callReportBarChart"></canvas>
+        </div>
+        
+        <!-- Caption under chart -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9; font-size: 0.82rem; color: #64748b; font-weight: 600;">
+          <span>{{ bounds.display_title }} Calls Report ({{ chart_data.total }} Calls)</span>
+          <a href="{% url 'reports_download' %}?report_type=calls&period={{ bounds.period_type }}&date={{ bounds.target_date|date:'Y-m-d' }}" title="Download Calls Data" style="color: #2563eb; text-decoration: none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: FILTER BUILDER & RESULT LEADS LIST -->
+    <div style="flex: 1.2; min-width: 340px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 14px;">
+      
+      <!-- Top Bar: Report Title, Save Button & Back to Saved Reports -->
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" onclick="toggleSavedReportsPanel()" title="Saved Reports" style="background: none; border: none; cursor: pointer; color: #64748b; padding: 0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          </button>
+          <span style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">{{ bounds.display_title }} CALLS Reports</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" onclick="openSaveReportModal()" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 6px; background: #1e40af; color: #ffffff; font-size: 0.78rem; font-weight: 700; border: none; cursor: pointer;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Save Report
+          </button>
+        </div>
+      </div>
+
+      <!-- SAVED REPORTS DRAWER (COLLAPSIBLE) -->
+      <div id="savedReportsListDrawer" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+        <div style="font-size: 0.78rem; font-weight: 800; color: #475569; margin-bottom: 8px; text-transform: uppercase;">Saved Reports</div>
+        <div style="display: flex; flex-direction: column; gap: 4px; max-height: 140px; overflow-y: auto;">
+          {% for sr in saved_reports %}
+          <a href="?period={{ sr.period_type }}&date={{ sr.period_date|date:'Y-m-d' }}&saved_id={{ sr.id }}" style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: #2563eb; text-decoration: none; padding: 4px 8px; border-radius: 4px; background: #ffffff; border: 1px solid #f1f5f9;">
+            <span>{{ sr.name }}</span>
+            <span style="font-size: 0.7rem; color: #94a3b8;">{{ sr.updated_at|date:'d M' }}</span>
+          </a>
+          {% empty %}
+          <div style="font-size: 0.75rem; color: #94a3b8;">No saved reports yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- FILTER CONTROLS FORM (11 ANDed CONDITIONS) -->
+      <form id="callReportFilterForm" method="get">
+        <input type="hidden" name="period" value="{{ bounds.period_type }}">
+        <input type="hidden" name="date" value="{{ bounds.target_date|date:'Y-m-d' }}">
+        
+        <!-- Accordion or Grid for Conditions -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          
+          <!-- 1. Call Type -->
+          <div>
+            <label style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Call Type</label>
+            <select name="call_type" class="form-select form-select-sm" style="font-size: 0.76rem; border-radius: 6px;" onchange="this.form.submit()">
+              <option value="">All Call Types</option>
+              <option value="Incoming" {% if 'Incoming' in filters.call_type %}selected{% endif %}>Incoming</option>
+              <option value="Outgoing" {% if 'Outgoing' in filters.call_type %}selected{% endif %}>Outgoing</option>
+              <option value="Missed" {% if 'Missed' in filters.call_type %}selected{% endif %}>Missed</option>
+              <option value="Rejected" {% if 'Rejected' in filters.call_type %}selected{% endif %}>Rejected</option>
+              <option value="Not connected" {% if 'Not connected' in filters.call_type %}selected{% endif %}>Not connected</option>
+            </select>
+          </div>
+
+          <!-- 2. By User -->
+          <div>
+            <label style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">By User</label>
+            <select name="by_user" class="form-select form-select-sm" style="font-size: 0.76rem; border-radius: 6px;" onchange="this.form.submit()">
+              <option value="">All Staff</option>
+              {% for u in all_users %}
+              <option value="{{ u.id }}" {% if u.id|stringformat:'s' in filters.by_user %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- 3. User State -->
+          <div>
+            <label style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">User State</label>
+            <select name="user_state" class="form-select form-select-sm" style="font-size: 0.76rem; border-radius: 6px;" onchange="this.form.submit()">
+              <option value="">All States</option>
+              <option value="Working" {% if filters.user_state == 'Working' %}selected{% endif %}>Working</option>
+              <option value="On Leave" {% if filters.user_state == 'On Leave' %}selected{% endif %}>On Leave</option>
+              <option value="Invited" {% if filters.user_state == 'Invited' %}selected{% endif %}>Invited</option>
+            </select>
+          </div>
+
+          <!-- 4. Recording Availability -->
+          <div>
+            <label style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Recording</label>
+            <select name="recording_is" class="form-select form-select-sm" style="font-size: 0.76rem; border-radius: 6px;" onchange="this.form.submit()">
+              <option value="">All Calls</option>
+              <option value="Available" {% if filters.recording_is == 'Available' %}selected{% endif %}>Available</option>
+              <option value="Not available" {% if filters.recording_is == 'Not available' %}selected{% endif %}>Not available</option>
+            </select>
+          </div>
+
+          <!-- 5. Lead Status -->
+          <div>
+            <label style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Lead Status</label>
+            <select name="lead_status" class="form-select form-select-sm" style="font-size: 0.76rem; border-radius: 6px;" onchange="this.form.submit()">
+              <option value="">All Statuses</option>
+              {% for st in all_statuses %}
+              <option value="{{ st }}" {% if st in filters.lead_status %}selected{% endif %}>{{ st }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- 6. Source -->
+          <div>
+            <label style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Lead Source</label>
+            <input type="text" name="lead_source" value="{{ filters.lead_source|default:'' }}" placeholder="e.g. Facebook, Website" class="form-control form-control-sm" style="font-size: 0.76rem; border-radius: 6px;" onchange="this.form.submit()">
+          </div>
+
+        </div>
+      </form>
+
+      <!-- RESULTS HEADER: MATCHING LEADS COUNT & SORT -->
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 2px;">
+        <div style="font-size: 0.85rem; font-weight: 800; color: #0f172a;">
+          <span>{{ matching_count }} matching leads</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 0.74rem; font-weight: 700; color: #64748b;">Sort:</span>
+          <select onchange="location = this.value;" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; color: #1e293b;">
+            <option value="?period={{ bounds.period_type }}&date={{ bounds.target_date|date:'Y-m-d' }}&sort_by=-updated_at" {% if sort_by == '-updated_at' %}selected{% endif %}>Modified (Newest)</option>
+            <option value="?period={{ bounds.period_type }}&date={{ bounds.target_date|date:'Y-m-d' }}&sort_by=updated_at" {% if sort_by == 'updated_at' %}selected{% endif %}>Modified (Oldest)</option>
+            <option value="?period={{ bounds.period_type }}&date={{ bounds.target_date|date:'Y-m-d' }}&sort_by=-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Created (Newest)</option>
+            <option value="?period={{ bounds.period_type }}&date={{ bounds.target_date|date:'Y-m-d' }}&sort_by=newest_call" {% if sort_by == 'newest_call' %}selected{% endif %}>Last Call</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- MATCHING LEAD RESULT CARDS -->
+      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto;">
+        {% for ld in leads %}
+        <div class="tp-lead-report-card" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: transform 0.1s ease;">
+          
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <!-- Favorite Star Button -->
+            <button type="button" onclick="toggleLeadStar('{{ ld.id }}', this)" title="Star Lead" style="background: none; border: none; cursor: pointer; padding: 0; color: {% if ld.is_starred %}#eab308{% else %}#cbd5e1{% endif %}; font-size: 1.1rem; line-height: 1;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="{% if ld.is_starred %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </button>
+
+            <!-- Lead Details -->
+            <div>
+              <a href="{% url 'admin_lead_detail' ld.id %}" style="font-size: 0.86rem; font-weight: 800; color: #1e40af; text-decoration: none;">
+                {{ ld.name }}
+              </a>
+              <div style="font-size: 0.74rem; font-weight: 500; color: #64748b; font-family: monospace;">
+                {{ ld.masked_phone }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Badge & Action -->
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge" style="background: #eff6ff; color: #1d4ed8; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; border: 1px solid #bfdbfe;">
+              {{ ld.status }}
+            </span>
+            <a href="{% url 'admin_lead_detail' ld.id %}" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none;">
+              Open
+            </a>
+          </div>
+
+        </div>
+        {% empty %}
+        <div style="padding: 30px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+          No matching leads found for current filters.
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- SAVE REPORT MODAL -->
+<div id="saveReportModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+  <div style="background: #ffffff; border-radius: 12px; width: 400px; max-width: 90vw; padding: 22px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
+    <h3 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 12px;">Save Custom Report</h3>
+    <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 14px;">Store the current filter combination and period for 1-click restore.</p>
+    <div style="margin-bottom: 14px;">
+      <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Report Name</label>
+      <input type="text" id="saveReportNameInput" placeholder="e.g. 24 Nov CALLS Reports" class="form-control" style="font-size: 0.85rem; padding: 8px 10px; border-radius: 8px;">
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 18px;">
+      <input type="checkbox" id="saveReportSharedCheckbox">
+      <label for="saveReportSharedCheckbox" style="font-size: 0.8rem; font-weight: 600; color: #475569; cursor: pointer; margin: 0;">Share this report with my team</label>
+    </div>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeSaveReportModal()">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="confirmSaveReport()" style="background: #2563eb; font-weight: 700;">Save Report</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var ctx = document.getElementById('callReportBarChart').getContext('2d');
+  var labels = {{ chart_labels|safe }};
+  var dataValues = {{ chart_values|safe }};
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Calls',
+        data: dataValues,
+        backgroundColor: '#3b82f6',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f1f5f9' },
+          ticks: { precision: 0 }
+        },
+        x: {
+          grid: { display: false },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 12
+          }
+        }
+      }
+    }
+  });
+});
+
+function toggleSavedReportsPanel() {
+  var drawer = document.getElementById('savedReportsListDrawer');
+  if (drawer) {
+    drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function openSaveReportModal() {
+  var modal = document.getElementById('saveReportModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeSaveReportModal() {
+  var modal = document.getElementById('saveReportModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmSaveReport() {
+  var name = document.getElementById('saveReportNameInput').value.trim();
+  var isShared = document.getElementById('saveReportSharedCheckbox').checked;
+  if (!name) {
+    alert('Please enter a name for the report.');
+    return;
+  }
+
+  var csrfToken = '{{ csrf_token }}';
+  fetch('{% url "reports_save_report" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({
+      name: name,
+      report_type: 'calls',
+      period_type: '{{ bounds.period_type }}',
+      period_date: '{{ bounds.target_date|date:"Y-m-d" }}',
+      filters: {{ filters|safe|default:"{}" }},
+      is_shared: isShared
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      alert('Report saved successfully!');
+      closeSaveReportModal();
+      location.reload();
+    } else {
+      alert(data.message || 'Error saving report.');
+    }
+  })
+  .catch(function(err) {
+    console.error(err);
+    alert('Failed to save report.');
+  });
+}
+
+function toggleLeadStar(leadId, btn) {
+  var csrfToken = '{{ csrf_token }}';
+  fetch('/reports/lead/' + leadId + '/star/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      if (data.is_starred) {
+        btn.style.color = '#eab308';
+        btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      } else {
+        btn.style.color = '#cbd5e1';
+        btn.querySelector('svg').setAttribute('fill', 'none');
+      }
+    }
+  });
+}
+</script>
+{% endblock %}
