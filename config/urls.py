@@ -1,25 +1,11 @@
 from django.contrib import admin
-from django.urls import path, include, re_path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
-from django.http import HttpResponsePermanentRedirect
 
-import fb_leads.views
 from accounts import views_public
 from config.sitemaps import sitemaps
-
-
-def redirect_facebook_to_meta(request, subpath=""):
-    sub = (subpath or "").lstrip("/")
-    target = f"/meta-leads/{sub}" if sub else "/meta-leads/"
-    if not target.endswith("/"):
-        target += "/"
-    qs = request.META.get("QUERY_STRING", "")
-    if qs:
-        target += f"?{qs}"
-    return HttpResponsePermanentRedirect(target)
-
 
 urlpatterns = [
     # Public SEO-Optimized Root Landing Page
@@ -51,10 +37,8 @@ urlpatterns = [
     # WhatsApp inbox (/whatsapp/), automations (/automations/), WhatsApp webhook (/webhook/whatsapp/)
     path('', include('chat.urls')),
     path('chat/', include('chat.urls')),
-    # Meta Lead Ads: list + sync (/meta-leads/), webhook (/meta-leads/webhook/)
-    path('meta-leads/', include('fb_leads.urls')),
-    path('facebook-leads/webhook/', fb_leads.views.webhook),
-    re_path(r'^facebook-leads/(?P<subpath>.*)$', redirect_facebook_to_meta),
+    # Facebook Lead Ads: list + sync (/facebook-leads/), webhook (/facebook-leads/webhook/)
+    path('facebook-leads/', include('fb_leads.urls')),
     # TeleCRM Import & Live Sync Administration Portal
     path('admin/telecrm-sync/', include('telecrm_sync.urls')),
     # Dedicated Finance Portal Suite

@@ -102,354 +102,135 @@ def webhook(request):
     return HttpResponse("OK")
 
 
-def _get_user_branch_restriction(user):
-    """
-    Returns (forced_branch_id, allowed_boolean).
-    Unrestricted roles (Admin, Superadmin, Sales Head, Marketing) return (None, True).
-    Branch-restricted roles (Branch Head, Counselor, Branch Admin) return (user.branch_id or -1, True).
-    All other unauthenticated or unauthorized roles return (None, False).
-    """
-    if not user or not user.is_authenticated:
-        return None, False
-    if (
-        user.is_superuser or
-        getattr(user, 'is_admin_user', False) or
-        getattr(user, 'is_sales_head_user', False) or
-        getattr(user, 'is_marketing_user', False) or
-        getattr(user, 'role', '') in ('SUPERADMIN', 'ADMIN', 'SALES_HEAD', 'MARKETING')
-    ):
-        return None, True
-    role = getattr(user, 'role', '')
-    if (
-        role in ('BRANCH_HEAD', 'COUNSELOR', 'BRANCH_ADMIN') or
-        getattr(user, 'is_branch_head_user', False) is True or
-        getattr(user, 'is_counselor_user', False) is True or
-        getattr(user, 'is_branch_admin_user', False) is True
-    ):
-        b_id = getattr(user, 'branch_id', None)
-        return (b_id if b_id is not None else -1), True
-    return None, False
-
-
-def get_meta_leads_qs(params, exclude_field=None, forced_branch_id=None):
-    """
-    Builds the filtered queryset for Meta leads respecting active filters.
-    If exclude_field is provided, that specific filter is excluded (for faceted counts).
-    If forced_branch_id is provided, the user is strictly locked to that branch.
-    """
-    from django.db.models import Q
+@login_required
+def lead_list(request):
+    """All Facebook leads with search, form/ad filters, branch/status filters, date range, and clickable KPIs."""
+    if not _can_manage(request.user):
+        raise PermissionDenied("Only Admin and Sales Head can view Facebook leads.")
     from branches.models import Branch
+    from leads.models import LeadStatus
 
-    q = (params.get("q") or "").strip()
-    platform = (params.get("platform") or "").strip().lower()
-    selected_form = (params.get("form") or "").strip()
-    selected_ad = (params.get("ad") or "").strip()
-    crm_filter = (params.get("crm") or "").strip()
-    date_from = (params.get("date_from") or "").strip()
-    date_to = (params.get("date_to") or "").strip()
-    status_filter = (params.get("status") or "").strip()
+    q = request.GET.get("q", "").strip()
+    selected_form = request.GET.get("form", "").strip()
+    selected_ad = request.GET.get("ad", "").strip()
+    crm_filter = request.GET.get("crm", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    branch_id = request.GET.get("branch", "").strip()
+    status_filter = request.GET.get("status", "").strip()
 
-    # Effective branch evaluation: resolve ID or name
-    raw_branch = str(forced_branch_id) if forced_branch_id is not None else (params.get("branch") or "").strip()
-    target_branch_id = None
-    if raw_branch:
-        if raw_branch.isdigit() or raw_branch == "-1":
-            target_branch_id = int(raw_branch)
-        else:
-            b_obj = Branch.objects.filter(name__iexact=raw_branch).first()
-            if b_obj:
-                target_branch_id = b_obj.id
-
-    leads = FacebookLead.objects.select_related(
-        "lead", "lead__assigned_telecaller", "lead__branch", "fb_page", "fb_page__branch"
+    available_forms = list(
+        FacebookLead.objects.exclude(form_name__isnull=True).exclude(form_name="")
+        .values_list("form_name", flat=True).distinct().order_by("form_name")
+    )
+    available_ads = list(
+        FacebookLead.objects.exclude(ad_name__isnull=True).exclude(ad_name="")
+        .values_list("ad_name", flat=True).distinct().order_by("ad_name")
     )
 
-    # 1. Branch filter: CRM lead's branch, falling back to FB page's branch only if lead has none
-    if target_branch_id is not None and exclude_field != "branch":
-        branch_filter_q = (
-            Q(lead__branch_id=target_branch_id) |
-            (Q(lead__branch__isnull=True) & Q(fb_page__branch_id=target_branch_id))
-        )
-        leads = leads.filter(branch_filter_q)
-    elif forced_branch_id is not None and exclude_field == "branch":
-        fb_id = int(forced_branch_id)
-        branch_filter_q = (
-            Q(lead__branch_id=fb_id) |
-            (Q(lead__branch__isnull=True) & Q(fb_page__branch_id=fb_id))
-        )
-        leads = leads.filter(branch_filter_q)
+    leads = FacebookLead.objects.select_related("lead", "lead__assigned_telecaller", "lead__branch", "fb_page", "fb_page__branch")
+    base_qs = FacebookLead.objects.all()
 
-    if platform and exclude_field != "platform":
-        leads = leads.filter(platform=platform)
+    if selected_form:
+        form_q = Q(form_name=selected_form) | Q(form_id=selected_form)
+        leads = leads.filter(form_q)
+        base_qs = base_qs.filter(form_q)
 
-    if selected_form and exclude_field != "form":
-        leads = leads.filter(Q(form_name=selected_form) | Q(form_id=selected_form))
-
-    if selected_ad and exclude_field != "ad":
-        leads = leads.filter(Q(ad_name=selected_ad) | Q(ad_id=selected_ad))
-
-    if status_filter and exclude_field != "status":
-        leads = leads.filter(lead__status=status_filter)
+    if selected_ad:
+        ad_q = Q(ad_name=selected_ad) | Q(ad_id=selected_ad)
+        leads = leads.filter(ad_q)
+        base_qs = base_qs.filter(ad_q)
 
     if date_from:
-        d_from_q = Q(created_on_facebook__date__gte=date_from) | (
-            Q(created_on_facebook__isnull=True) & Q(received_at__date__gte=date_from)
-        )
+        d_from_q = Q(created_on_facebook__date__gte=date_from) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__gte=date_from))
         leads = leads.filter(d_from_q)
+        base_qs = base_qs.filter(d_from_q)
 
     if date_to:
-        d_to_q = Q(created_on_facebook__date__lte=date_to) | (
-            Q(created_on_facebook__isnull=True) & Q(received_at__date__lte=date_to)
-        )
+        d_to_q = Q(created_on_facebook__date__lte=date_to) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__lte=date_to))
         leads = leads.filter(d_to_q)
+        base_qs = base_qs.filter(d_to_q)
+
+    if branch_id and branch_id.isdigit():
+        b_id = int(branch_id)
+        b_q = Q(lead__branch_id=b_id) | Q(fb_page__branch_id=b_id)
+        leads = leads.filter(b_q)
+        base_qs = base_qs.filter(b_q)
+
+    if status_filter:
+        s_q = Q(lead__status=status_filter)
+        leads = leads.filter(s_q)
+        base_qs = base_qs.filter(s_q)
 
     if q:
         search_q = (
-            Q(full_name__icontains=q)
-            | Q(phone__icontains=q)
-            | Q(email__icontains=q)
-            | Q(form_name__icontains=q)
-            | Q(ad_name__icontains=q)
-            | Q(campaign_name__icontains=q)
+            Q(full_name__icontains=q) | Q(phone__icontains=q) | Q(email__icontains=q)
+            | Q(form_name__icontains=q) | Q(ad_name__icontains=q) | Q(campaign_name__icontains=q)
         )
         leads = leads.filter(search_q)
+        base_qs = base_qs.filter(search_q)
+
+    total_kpi = base_qs.count()
+    error_kpi = base_qs.filter(crm_result="error").count()
 
     if crm_filter == "error":
         leads = leads.filter(crm_result="error")
-    elif crm_filter == "pending":
-        leads = leads.filter(Q(crm_result="") | Q(lead__isnull=True))
-    elif crm_filter == "success":
-        leads = leads.filter(crm_result__in=["new", "existing"])
-
-    return leads
-
-
-def build_faceted_filter_options(params, forced_branch_id=None):
-    """
-    Returns options + counts in ONE aggregated query per dropdown (values().annotate(Count)).
-    Each dropdown's options reflect distinct values from leads matching ALL OTHER active filters.
-    """
-    from django.db.models import Count
-    from django.db.models.functions import Coalesce
-    from leads.models import LeadStatus
-
-    # 1. Platform options (evaluated against all other active filters)
-    plat_qs = get_meta_leads_qs(params, exclude_field="platform", forced_branch_id=forced_branch_id)
-    plat_rows = plat_qs.values("platform").annotate(count=Count("id")).order_by("-count")
-    plat_map = {r["platform"]: r["count"] for r in plat_rows}
-    platforms_options = [
-        {"value": p_val, "label": p_lbl, "count": plat_map[p_val]}
-        for p_val, p_lbl in [("facebook", "Facebook"), ("instagram", "Instagram")]
-        if plat_map.get(p_val, 0) > 0
-    ]
-    all_platforms_count = len(platforms_options)
-
-    # 2. Branch options (evaluated against all other active filters)
-    # Using CRM lead's branch, falling back to fb_page's branch
-    branch_qs = get_meta_leads_qs(params, exclude_field="branch", forced_branch_id=forced_branch_id)
-    branch_rows = (
-        branch_qs.annotate(
-            eff_b_id=Coalesce("lead__branch_id", "fb_page__branch_id"),
-            eff_b_name=Coalesce("lead__branch__name", "fb_page__branch__name")
-        )
-        .exclude(eff_b_id__isnull=True)
-        .values("eff_b_id", "eff_b_name")
-        .annotate(count=Count("id"))
-        .order_by("eff_b_name")
-    )
-    branch_options = [
-        {"id": str(r["eff_b_id"]), "name": r["eff_b_name"], "count": r["count"]}
-        for r in branch_rows
-        if r["eff_b_name"]
-    ]
-    all_branches_count = len(branch_options)
-
-    # 3. Form options (evaluated against all other active filters)
-    form_qs = get_meta_leads_qs(params, exclude_field="form", forced_branch_id=forced_branch_id)
-    form_rows = (
-        form_qs.exclude(form_name__isnull=True)
-        .exclude(form_name="")
-        .values("form_name")
-        .annotate(count=Count("id"))
-        .order_by("form_name")
-    )
-    form_options = [
-        {"name": r["form_name"], "count": r["count"]}
-        for r in form_rows
-    ]
-    all_forms_count = len(form_options)
-
-    # 4. Ad options (evaluated against all other active filters)
-    ad_qs = get_meta_leads_qs(params, exclude_field="ad", forced_branch_id=forced_branch_id)
-    ad_rows = (
-        ad_qs.exclude(ad_name__isnull=True)
-        .exclude(ad_name="")
-        .values("ad_name")
-        .annotate(count=Count("id"))
-        .order_by("ad_name")
-    )
-    ad_options = [
-        {"name": r["ad_name"], "count": r["count"]}
-        for r in ad_rows
-    ]
-    all_ads_count = len(ad_options)
-
-    # 5. Status options (evaluated against all other active filters)
-    status_qs = get_meta_leads_qs(params, exclude_field="status", forced_branch_id=forced_branch_id)
-    status_rows = (
-        status_qs.exclude(lead__status__isnull=True)
-        .exclude(lead__status="")
-        .values("lead__status")
-        .annotate(count=Count("id"))
-        .order_by("lead__status")
-    )
-    status_label_map = dict(LeadStatus.choices)
-    status_options = [
-        {
-            "value": r["lead__status"],
-            "label": status_label_map.get(r["lead__status"], r["lead__status"]),
-            "count": r["count"],
-        }
-        for r in status_rows
-    ]
-    all_statuses_count = len(status_options)
-
-    # Top KPI cards: matching all active filters
-    kpi_params = params.copy()
-    if "crm" in kpi_params:
-        del kpi_params["crm"]
-    kpi_base_qs = get_meta_leads_qs(kpi_params, forced_branch_id=forced_branch_id)
-    total_matching = kpi_base_qs.count()
-    errors_matching = kpi_base_qs.filter(crm_result="error").count()
-
-    return {
-        "success": True,
-        "total": total_matching,
-        "errors": errors_matching,
-        "all_platforms_count": all_platforms_count,
-        "all_branches_count": all_branches_count,
-        "all_forms_count": all_forms_count,
-        "all_ads_count": all_ads_count,
-        "all_statuses_count": all_statuses_count,
-        "platforms": platforms_options,
-        "branches": branch_options,
-        "forms": form_options,
-        "ads": ad_options,
-        "statuses": status_options,
-    }
-
-
-@login_required
-def lead_list(request):
-    """All Meta leads with cascading faceted filters, date range, and clickable KPIs."""
-    forced_branch_id, allowed = _get_user_branch_restriction(request.user)
-    if not allowed:
-        raise PermissionDenied("Only Admin, Sales Head, and authorized Branch Staff can view Meta leads.")
-
-    from branches.models import Branch
-
-    params = request.GET.copy()
-    if forced_branch_id is not None:
-        params["branch"] = str(forced_branch_id)
-
-    q = (params.get("q") or "").strip()
-    platform = (params.get("platform") or "").strip().lower()
-    selected_form = (params.get("form") or "").strip()
-    selected_ad = (params.get("ad") or "").strip()
-    crm_filter = (params.get("crm") or "").strip()
-    date_from = (params.get("date_from") or "").strip()
-    date_to = (params.get("date_to") or "").strip()
-    raw_branch = params.get("branch", "").strip()
-    status_filter = (params.get("status") or "").strip()
-
-    # Normalize branch parameter: if branch is a name, find ID and name
-    selected_branch_id = ""
-    selected_branch_name = ""
-    if raw_branch:
-        if raw_branch.isdigit() or raw_branch == "-1":
-            selected_branch_id = raw_branch
-            b_obj = Branch.objects.filter(id=int(raw_branch)).first()
-            if b_obj:
-                selected_branch_name = b_obj.name
-        else:
-            b_obj = Branch.objects.filter(name__iexact=raw_branch).first()
-            if b_obj:
-                selected_branch_id = str(b_obj.id)
-                selected_branch_name = b_obj.name
-                params["branch"] = selected_branch_id
-
-    faceted_data = build_faceted_filter_options(params, forced_branch_id=forced_branch_id)
-
-    leads = get_meta_leads_qs(params, forced_branch_id=forced_branch_id).order_by("-created_on_facebook", "-received_at")
 
     branches = Branch.objects.filter(status='Active').order_by('name')
-    if forced_branch_id is not None:
-        branches = branches.filter(id=forced_branch_id)
 
     page = Paginator(leads, 25).get_page(request.GET.get("page"))
-
     return render(request, "fb_leads/leads.html", {
         "page": page,
         "q": q,
-        "platform": platform,
         "selected_form": selected_form,
         "selected_ad": selected_ad,
+        "available_forms": available_forms,
+        "available_ads": available_ads,
         "crm_filter": crm_filter,
         "date_from": date_from,
         "date_to": date_to,
-        "branch_id": selected_branch_id or raw_branch,
-        "branch_name": selected_branch_name,
+        "branch_id": branch_id,
         "status_filter": status_filter,
         "branches": branches,
-        "faceted_data": faceted_data,
-        "total": faceted_data["total"],
-        "errors": faceted_data["errors"],
+        "lead_statuses": LeadStatus.choices,
+        "total": total_kpi,
+        "errors": error_kpi,
         "configured": bool(getattr(settings, "FB_PAGE_TOKEN", "") and getattr(settings, "FB_PAGE_ID", "")),
-        "lead_url_name": "admin_lead_detail" if getattr(request.user, 'is_admin_user', False) else "manager_lead_detail",
-        "is_branch_restricted": forced_branch_id is not None,
+        "lead_url_name": "admin_lead_detail" if request.user.is_admin_user else "manager_lead_detail",
     })
-
-
-@login_required
-def meta_leads_filter_options(request):
-    """
-    JSON endpoint /meta-leads/filter-options/ returning faceted options + counts
-    in ONE aggregated query per dropdown.
-    """
-    forced_branch_id, allowed = _get_user_branch_restriction(request.user)
-    if not allowed:
-        return JsonResponse({"success": False, "error": "Permission denied"}, status=403)
-
-    params = request.GET.copy()
-    if forced_branch_id is not None:
-        params["branch"] = str(forced_branch_id)
-
-    data = build_faceted_filter_options(params, forced_branch_id=forced_branch_id)
-    return JsonResponse(data)
 
 
 @login_required
 def api_recent_leads(request):
     """
-    Lightweight JSON endpoint for the Meta Leads page live poll.
+    Lightweight JSON endpoint for the Facebook Leads page live poll (Issue 2).
     Polls ONLY the local CRM database (never hits external Meta Graph API).
-    Returns latest count, error count, and latest 25 leads matching active filters.
+    Returns latest count, error count, and latest 25 leads.
     """
-    forced_branch_id, allowed = _get_user_branch_restriction(request.user)
-    if not allowed:
+    from django.http import JsonResponse
+    if not _can_manage(request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
-    params = request.GET.copy()
-    if forced_branch_id is not None:
-        params["branch"] = str(forced_branch_id)
+    q = request.GET.get("q", "").strip()
+    leads_qs = FacebookLead.objects.select_related("lead", "lead__assigned_telecaller", "lead__branch")
+    if q:
+        leads_qs = leads_qs.filter(
+            Q(full_name__icontains=q) | Q(phone__icontains=q) | Q(email__icontains=q)
+            | Q(form_name__icontains=q) | Q(ad_name__icontains=q) | Q(campaign_name__icontains=q)
+        )
+    selected_form = request.GET.get("form", "").strip()
+    selected_ad = request.GET.get("ad", "").strip()
+    if selected_form:
+        leads_qs = leads_qs.filter(Q(form_name=selected_form) | Q(form_id=selected_form))
+    if selected_ad:
+        leads_qs = leads_qs.filter(Q(ad_name=selected_ad) | Q(ad_id=selected_ad))
+    if request.GET.get("crm") == "error":
+        leads_qs = leads_qs.filter(crm_result="error")
 
-    leads_qs = get_meta_leads_qs(params, forced_branch_id=forced_branch_id).order_by("-created_on_facebook", "-received_at")
+    total_count = FacebookLead.objects.count()
+    error_count = FacebookLead.objects.filter(crm_result="error").count()
 
-    # Counts matching active filters (or overall)
-    total_count = leads_qs.count()
-    error_count = leads_qs.filter(crm_result="error").count()
-
-    lead_url_name = "admin_lead_detail" if getattr(request.user, 'is_admin_user', False) else "manager_lead_detail"
+    lead_url_name = "admin_lead_detail" if request.user.is_admin_user else "manager_lead_detail"
     from django.urls import reverse
 
     results = []
@@ -472,7 +253,7 @@ def api_recent_leads(request):
                 "id": fb.lead.pk,
                 "name": fb.lead.name,
                 "url": lead_url,
-                "branch": fb.branch_name,
+                "branch": fb.lead.branch.name if fb.lead.branch else "No branch",
                 "assigned_to": telecaller_name,
             }
 
@@ -480,7 +261,6 @@ def api_recent_leads(request):
         results.append({
             "id": fb.id,
             "leadgen_id": fb.leadgen_id,
-            "platform": fb.platform or "unknown",
             "full_name": fb.full_name or "—",
             "phone": fb.phone or "—",
             "email": fb.email or "",
@@ -989,13 +769,11 @@ def api_autosync_status(request):
 @login_required
 def export_facebook_leads(request):
     """
-    Exports filtered Meta leads to an Excel (XLSX) or CSV spreadsheet.
-    Respects all active cascading filters: platform, date_from, date_to, branch, status, form, ad, crm, q.
-    Enforces branch restriction for Branch Head / Counselor.
+    Exports filtered Facebook leads to an Excel (XLSX) or CSV spreadsheet.
+    Respects active filters: date_from, date_to, branch, status, form, ad, crm, q.
     """
-    forced_branch_id, allowed = _get_user_branch_restriction(request.user)
-    if not allowed:
-        raise PermissionDenied("You do not have permission to export Meta leads.")
+    if not _can_manage(request.user):
+        raise PermissionDenied("You do not have permission to export Facebook leads.")
 
     import csv
     import openpyxl
@@ -1010,29 +788,60 @@ def export_facebook_leads(request):
             return f"'{s}"
         return s
 
-    params = request.GET.copy()
-    if forced_branch_id is not None:
-        params["branch"] = str(forced_branch_id)
-
+    q = request.GET.get("q", "").strip()
+    selected_form = request.GET.get("form", "").strip()
+    selected_ad = request.GET.get("ad", "").strip()
+    crm_filter = request.GET.get("crm", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    branch_id = request.GET.get("branch", "").strip()
+    status_filter = request.GET.get("status", "").strip()
     export_format = request.GET.get("format", "xlsx").lower()
-    leads = get_meta_leads_qs(params, forced_branch_id=forced_branch_id).order_by("-created_on_facebook", "-received_at")
+
+    leads = FacebookLead.objects.select_related(
+        "lead", "lead__assigned_telecaller", "lead__branch", "fb_page", "fb_page__branch"
+    )
+
+    if selected_form:
+        leads = leads.filter(Q(form_name=selected_form) | Q(form_id=selected_form))
+    if selected_ad:
+        leads = leads.filter(Q(ad_name=selected_ad) | Q(ad_id=selected_ad))
+    if date_from:
+        d_from_q = Q(created_on_facebook__date__gte=date_from) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__gte=date_from))
+        leads = leads.filter(d_from_q)
+    if date_to:
+        d_to_q = Q(created_on_facebook__date__lte=date_to) | (Q(created_on_facebook__isnull=True) & Q(received_at__date__lte=date_to))
+        leads = leads.filter(d_to_q)
+    if branch_id and branch_id.isdigit():
+        b_id = int(branch_id)
+        leads = leads.filter(Q(lead__branch_id=b_id) | Q(fb_page__branch_id=b_id))
+    if status_filter:
+        leads = leads.filter(lead__status=status_filter)
+    if crm_filter == "error":
+        leads = leads.filter(crm_result="error")
+    elif crm_filter == "pending":
+        leads = leads.filter(Q(crm_result="") | Q(lead__isnull=True))
+    elif crm_filter == "success":
+        leads = leads.filter(crm_result__in=["new", "existing"])
+    if q:
+        leads = leads.filter(
+            Q(full_name__icontains=q) |
+            Q(phone__icontains=q) |
+            Q(email__icontains=q) |
+            Q(form_name__icontains=q) |
+            Q(ad_name__icontains=q)
+        )
+
+    leads = leads.order_by("-received_at")
 
     headers = [
-        'Lead ID', 'Platform', 'Full Name', 'Phone', 'Email', 'Form Name', 'Ad Name',
-        'Page', 'Branch', 'CRM Result', 'CRM Lead ID', 'Received At'
+        'FB Lead ID', 'Full Name', 'Phone', 'Email', 'Form Name', 'Ad Name',
+        'Facebook Page', 'Branch', 'CRM Result', 'CRM Lead ID', 'Received At'
     ]
-
-    def _platform_label(plat):
-        p = (plat or "").lower()
-        if p == "facebook":
-            return "Facebook"
-        if p == "instagram":
-            return "Instagram"
-        return "Unknown"
 
     if export_format == 'csv':
         response = HttpResponse(content_type='text/csv; charset=utf-8')
-        filename = f"meta_leads_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        filename = f"facebook_leads_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         writer = csv.writer(response)
         writer.writerow(headers)
@@ -1045,7 +854,6 @@ def export_facebook_leads(request):
             crm_stat = fb.crm_result or ("In CRM" if fb.lead_id else "Pending")
             writer.writerow([
                 fb.leadgen_id,
-                _platform_label(fb.platform),
                 _sanitize(fb.full_name or ''),
                 _sanitize(fb.phone or ''),
                 _sanitize(fb.email or ''),
@@ -1055,13 +863,13 @@ def export_facebook_leads(request):
                 _sanitize(branch_name),
                 crm_stat,
                 fb.lead_id or '',
-                (fb.created_on_facebook or fb.received_at).strftime('%Y-%m-%d %H:%M:%S') if (fb.created_on_facebook or fb.received_at) else ''
+                fb.received_at.strftime('%Y-%m-%d %H:%M:%S') if fb.received_at else ''
             ])
         return response
     else:
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = "Meta Leads"
+        ws.title = "Facebook Leads"
         ws.append(headers)
 
         header_fill = PatternFill(start_color="1877F2", end_color="1877F2", fill_type="solid")
@@ -1081,7 +889,6 @@ def export_facebook_leads(request):
             crm_stat = fb.crm_result or ("In CRM" if fb.lead_id else "Pending")
             ws.append([
                 fb.leadgen_id,
-                _platform_label(fb.platform),
                 _sanitize(fb.full_name or ''),
                 _sanitize(fb.phone or ''),
                 _sanitize(fb.email or ''),
@@ -1091,7 +898,7 @@ def export_facebook_leads(request):
                 _sanitize(branch_name),
                 crm_stat,
                 fb.lead_id or '',
-                (fb.created_on_facebook or fb.received_at).strftime('%Y-%m-%d %H:%M:%S') if (fb.created_on_facebook or fb.received_at) else ''
+                fb.received_at.strftime('%Y-%m-%d %H:%M:%S') if fb.received_at else ''
             ])
 
         for col in ws.columns:
@@ -1102,7 +909,7 @@ def export_facebook_leads(request):
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        filename = f"meta_leads_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        filename = f"facebook_leads_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         wb.save(response)
         return response

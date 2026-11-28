@@ -1,54 +1,51 @@
 {% extends 'base.html' %}
-{% block title %}Meta Lead Ads - DigiPanda CRM{% endblock %}
+{% block title %}Facebook Leads - DigiPanda CRM{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div class="page-title-group">
-    <h1>Meta Lead Ads</h1>
-    <p>Every Meta lead (Facebook and Instagram) is added to the CRM as a lead with source <strong>Meta</strong> and assigned by your branch rules</p>
+    <h1>Facebook Lead Ads</h1>
+    <p>Every Facebook lead is added to the CRM as a lead with source <strong>Facebook</strong> and assigned by your branch rules</p>
   </div>
   <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
     <a href="{% url 'admin_leads_import' %}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" title="Import leads from Excel spreadsheet">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
       Import Leads (Excel)
     </a>
-    <a href="{% url 'fb_leads:fb_accounts' %}" class="btn btn-secondary">Manage Accounts &amp; Pages</a>
+    <a href="{% url 'fb_leads:fb_accounts' %}" class="btn btn-secondary">Manage Accounts & Pages</a>
     <form method="post" action="{% url 'fb_leads:facebook_leads_sync' %}" style="display: flex; gap: 8px; align-items: center; margin: 0;">
       {% csrf_token %}
       <div style="display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
         <span style="font-size: 0.78rem; color: var(--tp-text-muted); font-weight: 700;">From:</span>
         <input type="date" name="sync_from_date" style="border: none; font-size: 0.8rem; outline: none; background: transparent; color: #1e293b;" title="Optional: Only sync leads created on or after this date">
       </div>
-      <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;" {% if not configured %}disabled title="Add FB_PAGE_TOKEN and FB_PAGE_ID to .env first"{% endif %}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-        Sync Leads
-      </button>
+      <button type="submit" class="btn btn-primary" {% if not configured %}disabled title="Add FB_PAGE_TOKEN and FB_PAGE_ID to .env first"{% endif %}>⟳ Sync Leads</button>
     </form>
   </div>
 </div>
 
 {% if not configured %}
 <div class="alert alert-warning" style="margin-bottom: 16px; padding: 12px 16px; border-radius: 8px; background: #fef3c7; color: #92400e;">
-  Meta isn't connected yet: add <code>FB_VERIFY_TOKEN</code>, <code>FB_APP_SECRET</code>, <code>FB_PAGE_TOKEN</code> and <code>FB_PAGE_ID</code> to your <code>.env</code> file and restart the server.
+  Facebook isn't connected yet: add <code>FB_VERIFY_TOKEN</code>, <code>FB_APP_SECRET</code>, <code>FB_PAGE_TOKEN</code> and <code>FB_PAGE_ID</code> to your <code>.env</code> file and restart the server.
 </div>
 {% endif %}
 
 <div class="kpi-grid" style="margin-bottom: 20px;">
-  <a href="?{% if platform %}platform={{ platform|urlencode }}&{% endif %}{% if branch_id %}branch={{ branch_id }}&{% endif %}{% if selected_form %}form={{ selected_form|urlencode }}&{% endif %}{% if selected_ad %}ad={{ selected_ad|urlencode }}&{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}{% if q %}q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if not crm_filter %}box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15); border-left: 4px solid #2563eb;{% endif %}" title="Click to view all Meta leads matching current filters">
+  <a href="?{% if selected_form %}form={{ selected_form|urlencode }}&{% endif %}{% if selected_ad %}ad={{ selected_ad|urlencode }}&{% endif %}{% if q %}q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if not crm_filter %}box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15); border-left: 4px solid #2563eb;{% endif %}" title="Click to view all Facebook leads (preserves active form/ad filters)">
     <div class="kpi-info">
-      <h4>Leads received</h4>
-      <div class="kpi-value kpi-total-val" style="color: #2563eb;">{{ total }}</div>
-      <span style="font-size: 0.78rem; color: var(--tp-text-muted);">{% if platform or branch_id or selected_form or selected_ad or status_filter or date_from or date_to or q %}Matching active filters{% else %}All inbound campaigns{% endif %}</span>
+      <h4>Facebook leads received</h4>
+      <div class="kpi-value" style="color: #2563eb;">{{ total }}</div>
+      <span style="font-size: 0.78rem; color: var(--tp-text-muted);">{% if selected_form or selected_ad %}Matching current filter criteria{% else %}All inbound campaigns{% endif %}</span>
     </div>
     <div class="kpi-icon-wrap blue">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
     </div>
   </a>
 
-  <a href="?crm=error{% if platform %}&platform={{ platform|urlencode }}{% endif %}{% if branch_id %}&branch={{ branch_id }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if status_filter %}&status={{ status_filter|urlencode }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if crm_filter == 'error' %}background: #fff5f5; border: 2px solid #ef4444; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);{% else %}border-left: 4px solid #ef4444;{% endif %}" title="Click to view leads with sync errors">
+  <a href="?crm=error{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}" class="kpi-card" style="text-decoration: none; color: inherit; display: flex; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; border-radius: 12px; {% if crm_filter == 'error' %}background: #fff5f5; border: 2px solid #ef4444; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);{% else %}border-left: 4px solid #ef4444;{% endif %}" title="Click to view leads with sync errors">
     <div class="kpi-info">
       <h4>Not added to CRM</h4>
-      <div class="kpi-value kpi-error-val" style="color: {% if errors %}#dc2626{% else %}#10b981{% endif %};">{{ errors }}</div>
+      <div class="kpi-value" style="color: {% if errors %}#dc2626{% else %}#10b981{% endif %};">{{ errors }}</div>
       <span style="font-size: 0.78rem; color: {% if errors %}#dc2626{% else %}var(--tp-text-muted){% endif %};">{% if errors %}Requires manual investigation{% else %}All leads synced{% endif %}</span>
     </div>
     <div class="kpi-icon-wrap rose">
@@ -59,57 +56,47 @@
 
 <div class="filter-card" style="margin-bottom: 20px; padding: 16px 20px;">
   <form method="get" class="filter-form" style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;">
-    <div class="filter-col" style="flex: 2; min-width: 190px;">
+    <div class="filter-col" style="flex: 2; min-width: 200px;">
       <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Search</label>
       <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Name, phone, email, form...">
     </div>
 
-    <div class="filter-col" style="flex: 1.2; min-width: 140px;">
-      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Platform</label>
-      <select name="platform" class="form-select" style="border-radius: 8px;">
-        <option value="">All Platforms ({{ faceted_data.all_platforms_count }})</option>
-        {% for p in faceted_data.platforms %}
-        <option value="{{ p.value }}" {% if platform == p.value %}selected{% endif %}>{{ p.label }} ({{ p.count }})</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div class="filter-col" style="flex: 1.4; min-width: 150px;">
-      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Branch</label>
-      <select name="branch" class="form-select" style="border-radius: 8px;" {% if is_branch_restricted %}disabled title="Your view is scoped to your branch"{% endif %}>
-        <option value="">All Branches ({{ faceted_data.all_branches_count }})</option>
-        {% for b in faceted_data.branches %}
-        <option value="{{ b.id }}" {% if branch_id == b.id %}selected{% endif %}>{{ b.name }} ({{ b.count }})</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div class="filter-col" style="flex: 1.6; min-width: 170px;">
+    <div class="filter-col" style="flex: 1.5; min-width: 170px;">
       <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Instant Form</label>
-      <select name="form" class="form-select" style="border-radius: 8px;">
-        <option value="">All Forms ({{ faceted_data.all_forms_count }})</option>
-        {% for f in faceted_data.forms %}
-        <option value="{{ f.name }}" {% if selected_form == f.name %}selected{% endif %}>{{ f.name }} ({{ f.count }})</option>
+      <select name="form" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
+        <option value="">All Forms ({{ available_forms|length }})</option>
+        {% for f in available_forms %}
+        <option value="{{ f }}" {% if selected_form == f %}selected{% endif %}>{{ f }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="filter-col" style="flex: 1.6; min-width: 170px;">
+    <div class="filter-col" style="flex: 1.5; min-width: 170px;">
       <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Ad Creative</label>
-      <select name="ad" class="form-select" style="border-radius: 8px;">
-        <option value="">All Ads ({{ faceted_data.all_ads_count }})</option>
-        {% for a in faceted_data.ads %}
-        <option value="{{ a.name }}" {% if selected_ad == a.name %}selected{% endif %}>{{ a.name }} ({{ a.count }})</option>
+      <select name="ad" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
+        <option value="">All Ads ({{ available_ads|length }})</option>
+        {% for a in available_ads %}
+        <option value="{{ a }}" {% if selected_ad == a %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-col" style="flex: 1.2; min-width: 140px;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">Branch</label>
+      <select name="branch" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
+        <option value="">All Branches</option>
+        {% for b in branches %}
+        <option value="{{ b.id }}" {% if branch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
         {% endfor %}
       </select>
     </div>
 
     <div class="filter-col" style="flex: 1.2; min-width: 140px;">
       <label style="font-size: 0.8rem; font-weight: 700; color: var(--tp-text-muted); text-transform: uppercase; margin-bottom: 4px; display: block;">CRM Status</label>
-      <select name="status" class="form-select" style="border-radius: 8px;">
-        <option value="">All Statuses ({{ faceted_data.all_statuses_count }})</option>
-        {% for s in faceted_data.statuses %}
-        <option value="{{ s.value }}" {% if status_filter == s.value %}selected{% endif %}>{{ s.label }} ({{ s.count }})</option>
+      <select name="status" class="form-select" onchange="this.form.submit()" style="border-radius: 8px;">
+        <option value="">All Statuses</option>
+        {% for val, label in lead_statuses %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
@@ -131,35 +118,17 @@
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
       <button type="submit" class="btn btn-primary" style="padding: 7px 18px; font-weight: 600;">Filter</button>
       <a href="{% url 'fb_leads:facebook_leads' %}" class="btn btn-secondary" style="padding: 7px 14px;" title="Reset all filters">Reset</a>
-      <button type="button" onclick="exportFilteredMetaLeads('xlsx')" class="btn btn-secondary" style="padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;" title="Export filtered leads to Excel spreadsheet (.xlsx)">
+      <button type="button" onclick="exportFilteredFacebookLeads('xlsx')" class="btn btn-secondary" style="padding: 7px 14px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;" title="Export filtered leads to Excel spreadsheet (.xlsx)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         Export Excel (Filtered)
       </button>
     </div>
   </form>
 
-  {% if platform or selected_form or selected_ad or crm_filter == 'error' or branch_id or status_filter or date_from or date_to or q %}
+  {% if selected_form or selected_ad or crm_filter == 'error' or branch_id or status_filter or date_from or date_to %}
   <!-- Active Filter Pills -->
   <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--tp-surface-border, #e2e8f0); display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
     <span style="font-size: 0.78rem; font-weight: 700; color: var(--tp-text-muted);">Active Filters:</span>
-    {% if q %}
-    <span class="badge" style="background: #f1f5f9; color: #334155; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
-      Search: {{ q }}
-    </span>
-    {% endif %}
-
-    {% if platform %}
-    <span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
-      Platform: {{ platform|title }}
-    </span>
-    {% endif %}
-
-    {% if branch_id %}
-    <span class="badge" style="background: #fef3c7; color: #b45309; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
-      Branch: {{ branch_name|default:branch_id }}
-    </span>
-    {% endif %}
-
     {% if selected_form %}
     <span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
       Form: {{ selected_form }}
@@ -169,6 +138,12 @@
     {% if selected_ad %}
     <span class="badge" style="background: #f3e8ff; color: #7e22ce; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
       Ad: {{ selected_ad }}
+    </span>
+    {% endif %}
+
+    {% if branch_id %}
+    <span class="badge" style="background: #fef3c7; color: #b45309; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+      Branch ID: {{ branch_id }}
     </span>
     {% endif %}
 
@@ -186,7 +161,7 @@
 
     {% if crm_filter == 'error' %}
     <span class="badge" style="background: #fee2e2; color: #b91c1c; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
-      Sync: Error Only
+      Status: Error Only
     </span>
     {% endif %}
 
@@ -203,7 +178,6 @@
         <thead>
           <tr>
             <th>Received</th>
-            <th>Platform</th>
             <th>Name</th>
             <th>Phone</th>
             <th>Form / Ad</th>
@@ -213,17 +187,8 @@
         </thead>
         <tbody>
           {% for fb in page.object_list %}
-          <tr data-lead-id="{{ fb.id }}">
+          <tr>
             <td>{{ fb.created_on_facebook|default:fb.received_at|date:"d M Y, h:i A" }}</td>
-            <td>
-              {% if fb.platform == 'facebook' %}
-                <span class="badge" style="background:#e0f2fe;color:#0369a1;font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:4px;">FB</span>
-              {% elif fb.platform == 'instagram' %}
-                <span class="badge" style="background:#fce7f3;color:#be185d;font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:4px;">IG</span>
-              {% else %}
-                <span class="badge" style="background:#f1f5f9;color:#64748b;font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:4px;">—</span>
-              {% endif %}
-            </td>
             <td><strong>{{ fb.full_name|default:"—" }}</strong>{% if fb.email %}<br><span style="color: var(--text-muted); font-size: 0.8rem;">{{ fb.email }}</span>{% endif %}</td>
             <td><a href="tel:{{ fb.phone }}" style="font-family: monospace;">{{ fb.phone|default:"—" }}</a></td>
             <td style="font-size: 0.85rem;">
@@ -235,7 +200,7 @@
               {% if fb.lead %}
                 <a href="{% url lead_url_name fb.lead.pk %}" style="font-weight: 600;">{{ fb.lead.name }}</a>
                 {% if fb.crm_result == 'new' %}<span class="badge" style="background:#dcfce7;color:#15803d;">New lead</span>{% else %}<span class="badge" style="background:#e0f2fe;color:#0369a1;">Existing lead</span>{% endif %}
-                <br><span style="color: var(--text-muted);">{{ fb.branch_name }} · {% if fb.lead.assigned_telecaller %}{{ fb.lead.assigned_telecaller.get_full_name|default:fb.lead.assigned_telecaller.username }}{% else %}{{ fb.lead.assignment_status|default:"Unassigned" }}{% endif %}</span>
+                <br><span style="color: var(--text-muted);">{{ fb.lead.branch.name|default:"No branch" }} · {% if fb.lead.assigned_telecaller %}{{ fb.lead.assigned_telecaller.get_full_name|default:fb.lead.assigned_telecaller.username }}{% else %}{{ fb.lead.assignment_status|default:"Unassigned" }}{% endif %}</span>
               {% elif fb.crm_result == 'error' %}
                 <span class="badge" style="background:#fee2e2;color:#b91c1c;">Not added</span><br><span style="color: var(--text-muted);">{{ fb.crm_error }}</span>
               {% else %}
@@ -256,10 +221,10 @@
         </tbody>
       </table>
     </div>
-    {% if page.has_other_pages %}
+        {% if page.has_other_pages %}
     <div style="display: flex; gap: 8px; justify-content: center; padding: 14px 0; align-items: center;">
       {% if page.has_previous %}
-      <a class="btn btn-sm btn-secondary" href="?page={{ page.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if platform %}&platform={{ platform|urlencode }}{% endif %}{% if branch_id %}&branch={{ branch_id }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if status_filter %}&status={{ status_filter|urlencode }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
+      <a class="btn btn-sm btn-secondary" href="?page={{ page.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
         &larr; Previous
       </a>
       {% endif %}
@@ -267,7 +232,7 @@
         Page {{ page.number }} of {{ page.paginator.num_pages }} ({{ page.paginator.count }} leads)
       </span>
       {% if page.has_next %}
-      <a class="btn btn-sm btn-secondary" href="?page={{ page.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if platform %}&platform={{ platform|urlencode }}{% endif %}{% if branch_id %}&branch={{ branch_id }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if status_filter %}&status={{ status_filter|urlencode }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
+      <a class="btn btn-sm btn-secondary" href="?page={{ page.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}">
         Next &rarr;
       </a>
       {% endif %}
@@ -275,8 +240,8 @@
     {% endif %}
     {% else %}
     <div style="text-align: center; color: var(--text-muted); padding: 32px 16px;">
-      <p style="margin: 0;">No Meta leads found matching current criteria.</p>
-      <p style="margin: 4px 0 0; font-size: 0.8rem;">New leads arrive automatically through the webhook. Use <strong>Sync Leads</strong> to pull collected leads from your connected accounts.</p>
+      <p style="margin: 0;">No Facebook leads yet.</p>
+      <p style="margin: 4px 0 0; font-size: 0.8rem;">New leads arrive automatically through the webhook. Use <strong>Sync from Facebook</strong> to bring in leads your ads already collected.</p>
     </div>
     {% endif %}
   </div>
@@ -284,183 +249,16 @@
 
 <script>
 (function() {
-  let debounceTimer = null;
-
-  // 1. Cascading Faceted Filter Options Engine (Debounce 300ms)
-  function updateCascadingOptions(triggerPoll) {
-    const form = document.querySelector('.filter-form');
-    if (!form) return;
-
-    const formData = new FormData(form);
-    const params = new URLSearchParams();
-    for (const [key, val] of formData.entries()) {
-      if (val !== '') {
-        params.append(key, val);
-      }
-    }
-    const branchSelect = form.querySelector('select[name="branch"]');
-    if (branchSelect && branchSelect.disabled && branchSelect.value) {
-      params.set('branch', branchSelect.value);
-    }
-
-    fetch("{% url 'fb_leads:filter_options' %}?" + params.toString(), {
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (!data || !data.success) return;
-
-      // Update Top Cards
-      const totalKpi = document.querySelector('.kpi-total-val');
-      if (totalKpi && data.total !== undefined) totalKpi.textContent = data.total;
-
-      const errorKpi = document.querySelector('.kpi-error-val');
-      if (errorKpi && data.errors !== undefined) errorKpi.textContent = data.errors;
-
-      let valueResetOccurred = false;
-
-      // Dropdown: Platform
-      const platSelect = form.querySelector('select[name="platform"]');
-      if (platSelect && data.platforms) {
-        const curPlat = platSelect.value;
-        const validValues = new Set(data.platforms.map(p => p.value));
-        const targetVal = (curPlat && !validValues.has(curPlat)) ? '' : curPlat;
-        if (curPlat && !validValues.has(curPlat)) valueResetOccurred = true;
-
-        let html = `<option value="">All Platforms (${data.all_platforms_count !== undefined ? data.all_platforms_count : data.platforms.length})</option>`;
-        data.platforms.forEach(p => {
-          const sel = (targetVal === p.value) ? 'selected' : '';
-          html += `<option value="${p.value}" ${sel}>${p.label} (${p.count})</option>`;
-        });
-        platSelect.innerHTML = html;
-        platSelect.value = targetVal;
-      }
-
-      // Dropdown: Branch
-      if (branchSelect && data.branches && !branchSelect.disabled) {
-        const curBranch = branchSelect.value;
-        const validValues = new Set(data.branches.map(b => String(b.id)));
-        const targetVal = (curBranch && !validValues.has(curBranch)) ? '' : curBranch;
-        if (curBranch && !validValues.has(curBranch)) valueResetOccurred = true;
-
-        let html = `<option value="">All Branches (${data.all_branches_count !== undefined ? data.all_branches_count : data.branches.length})</option>`;
-        data.branches.forEach(b => {
-          const sel = (targetVal === String(b.id)) ? 'selected' : '';
-          html += `<option value="${b.id}" ${sel}>${b.name} (${b.count})</option>`;
-        });
-        branchSelect.innerHTML = html;
-        branchSelect.value = targetVal;
-      }
-
-      // Dropdown: Form
-      const formSelect = form.querySelector('select[name="form"]');
-      if (formSelect && data.forms) {
-        const curForm = formSelect.value;
-        const validValues = new Set(data.forms.map(f => f.name));
-        const targetVal = (curForm && !validValues.has(curForm)) ? '' : curForm;
-        if (curForm && !validValues.has(curForm)) valueResetOccurred = true;
-
-        let html = `<option value="">All Forms (${data.all_forms_count !== undefined ? data.all_forms_count : data.forms.length})</option>`;
-        data.forms.forEach(f => {
-          const sel = (targetVal === f.name) ? 'selected' : '';
-          const escVal = f.name.replace(/"/g, '&quot;');
-          html += `<option value="${escVal}" ${sel}>${f.name} (${f.count})</option>`;
-        });
-        formSelect.innerHTML = html;
-        formSelect.value = targetVal;
-      }
-
-      // Dropdown: Ad
-      const adSelect = form.querySelector('select[name="ad"]');
-      if (adSelect && data.ads) {
-        const curAd = adSelect.value;
-        const validValues = new Set(data.ads.map(a => a.name));
-        const targetVal = (curAd && !validValues.has(curAd)) ? '' : curAd;
-        if (curAd && !validValues.has(curAd)) valueResetOccurred = true;
-
-        let html = `<option value="">All Ads (${data.all_ads_count !== undefined ? data.all_ads_count : data.ads.length})</option>`;
-        data.ads.forEach(a => {
-          const sel = (targetVal === a.name) ? 'selected' : '';
-          const escVal = a.name.replace(/"/g, '&quot;');
-          html += `<option value="${escVal}" ${sel}>${a.name} (${a.count})</option>`;
-        });
-        adSelect.innerHTML = html;
-        adSelect.value = targetVal;
-      }
-
-      // Dropdown: Status
-      const statusSelect = form.querySelector('select[name="status"]');
-      if (statusSelect && data.statuses) {
-        const curStatus = statusSelect.value;
-        const validValues = new Set(data.statuses.map(s => s.value));
-        const targetVal = (curStatus && !validValues.has(curStatus)) ? '' : curStatus;
-        if (curStatus && !validValues.has(curStatus)) valueResetOccurred = true;
-
-        let html = `<option value="">All Statuses (${data.all_statuses_count !== undefined ? data.all_statuses_count : data.statuses.length})</option>`;
-        data.statuses.forEach(s => {
-          const sel = (targetVal === s.value) ? 'selected' : '';
-          html += `<option value="${s.value}" ${sel}>${s.label} (${s.count})</option>`;
-        });
-        statusSelect.innerHTML = html;
-        statusSelect.value = targetVal;
-      }
-
-      // If any selected value was reset because it's no longer valid under new filters, re-sync cascading options
-      if (valueResetOccurred) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => updateCascadingOptions(true), 100);
-      } else if (triggerPoll) {
-        pollLocalLeads(true);
-      }
-    })
-    .catch(err => {
-      console.warn("Cascading filter update warning:", err);
-    });
-  }
-
-  function handleFilterChange() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => updateCascadingOptions(true), 300);
-  }
-
-  const filterForm = document.querySelector('.filter-form');
-  if (filterForm) {
-    filterForm.querySelectorAll('select, input[type="date"]').forEach(el => {
-      el.addEventListener('change', handleFilterChange);
-    });
-    const searchInput = filterForm.querySelector('input[name="q"]');
-    if (searchInput) {
-      searchInput.addEventListener('input', handleFilterChange);
-    }
-  }
-
-  // 2. Safe Local Polling for Incoming Meta Leads (every 3 seconds)
+  // Safe local polling for incoming Facebook leads (Issue 2)
+  // Polls ONLY local CRM database every 3 seconds - never calls external Graph API!
+  const pollUrl = "{% url 'fb_leads:facebook_leads_recent_api' %}?q={{ q|urlencode }}{% if selected_form %}&form={{ selected_form|urlencode }}{% endif %}{% if selected_ad %}&ad={{ selected_ad|urlencode }}{% endif %}{% if crm_filter %}&crm={{ crm_filter }}{% endif %}";
   let isPolling = false;
 
-  function pollLocalLeads(forceUpdate) {
+  function pollLocalLeads() {
     if (isPolling || document.hidden) return;
     isPolling = true;
 
-    const form = document.querySelector('.filter-form');
-    let dynamicPollParams = "";
-    if (form) {
-      const formData = new FormData(form);
-      const params = new URLSearchParams();
-      for (const [key, val] of formData.entries()) {
-        if (val !== '') params.append(key, val);
-      }
-      const branchSelect = form.querySelector('select[name="branch"]');
-      if (branchSelect && branchSelect.disabled && branchSelect.value) {
-        params.set('branch', branchSelect.value);
-      }
-      dynamicPollParams = params.toString();
-    }
-
-    const currentPollUrl = "{% url 'fb_leads:facebook_leads_recent_api' %}?" + dynamicPollParams;
-
-    fetch(currentPollUrl, {
+    fetch(pollUrl, {
       headers: {
         'X-Requested-With': 'XMLHttpRequest'
       }
@@ -470,27 +268,23 @@
       isPolling = false;
       if (!data || !data.success) return;
 
-      const totalKpi = document.querySelector('.kpi-total-val');
+      // Update total counters if elements exist
+      const totalKpi = document.querySelector('.kpi-card:nth-child(1) .kpi-value');
       if (totalKpi && data.total !== undefined) totalKpi.textContent = data.total;
 
-      const errorKpi = document.querySelector('.kpi-error-val');
+      const errorKpi = document.querySelector('.kpi-card:nth-child(2) .kpi-value');
       if (errorKpi && data.errors !== undefined) errorKpi.textContent = data.errors;
 
       const tbody = document.querySelector('.crm-table tbody');
-      if (!tbody) return;
+      if (!tbody || !data.leads || data.leads.length === 0) return;
 
-      if (!data.leads || data.leads.length === 0) {
-        if (forceUpdate) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--tp-text-muted);">No Meta leads match the selected filters.</td></tr>';
-        }
-        return;
-      }
-
+      // Check if new leads arrived by comparing top lead ID or leadgen_id
       const currentTopRow = tbody.querySelector('tr');
       const currentTopId = currentTopRow ? currentTopRow.getAttribute('data-lead-id') : null;
       const latestLead = data.leads[0];
 
-      if (forceUpdate === true || (latestLead && String(latestLead.id) !== String(currentTopId))) {
+      if (latestLead && String(latestLead.id) !== String(currentTopId)) {
+        // Re-render rows safely using DOM
         let newHtml = '';
         data.leads.forEach(fb => {
           let leadHtml = '<span style="color: var(--text-muted);">—</span>';
@@ -524,17 +318,9 @@
           if (fb.ad_name) metaDetails += `<br><span style="color: var(--text-muted);">Ad: ${fb.ad_name}</span>`;
           if (fb.campaign_name) metaDetails += `<br><span style="color: var(--text-muted);">Campaign: ${fb.campaign_name}</span>`;
 
-          let platBadge = '<span class="badge" style="background:#f1f5f9;color:#64748b;font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:4px;">—</span>';
-          if (fb.platform === 'facebook') {
-            platBadge = '<span class="badge" style="background:#e0f2fe;color:#0369a1;font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:4px;">FB</span>';
-          } else if (fb.platform === 'instagram') {
-            platBadge = '<span class="badge" style="background:#fce7f3;color:#be185d;font-weight:700;font-size:0.72rem;padding:2px 6px;border-radius:4px;">IG</span>';
-          }
-
           newHtml += `
             <tr data-lead-id="${fb.id}">
               <td>${fb.created_str}</td>
-              <td>${platBadge}</td>
               <td><strong>${fb.full_name}</strong>${fb.email ? `<br><span style="color: var(--text-muted); font-size: 0.8rem;">${fb.email}</span>` : ''}</td>
               <td><a href="tel:${fb.phone}" style="font-family: monospace;">${fb.phone}</a></td>
               <td style="font-size: 0.85rem;">${fb.form_name}${metaDetails}</td>
@@ -548,21 +334,18 @@
     })
     .catch(err => {
       isPolling = false;
-      console.warn('Local Meta leads poll warning:', err);
+      console.warn('Local FB leads poll warning:', err);
     });
   }
 
-  setInterval(() => pollLocalLeads(false), 3000);
+  // Poll local DB every 3 seconds
+  setInterval(pollLocalLeads, 3000);
 })();
 
-function exportFilteredMetaLeads(format) {
+function exportFilteredFacebookLeads(format) {
   format = format || 'xlsx';
-  const form = document.querySelector('.filter-form');
-  const params = new URLSearchParams(new FormData(form));
-  const branchSelect = form.querySelector('select[name="branch"]');
-  if (branchSelect && branchSelect.disabled && branchSelect.value) {
-    params.set('branch', branchSelect.value);
-  }
+  var form = document.querySelector('.filter-form');
+  var params = new URLSearchParams(new FormData(form));
   params.set('format', format);
   window.location.href = "{% url 'fb_leads:export_facebook_leads' %}?" + params.toString();
 }

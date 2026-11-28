@@ -166,372 +166,279 @@
 <!-- ========================================================================= -->
 {% if selected_branch and selected_branch_data %}
 <div class="crm-card tp-card branch-allocation-card" id="branch-card-{{ selected_branch.id }}" data-available="{{ selected_branch_data.available_leads_count }}" style="margin-bottom: 24px; overflow: hidden; {% if selected_branch_data.is_centralized %}border: 2px solid #6366f1;{% endif %}">
- <!-- Branch Header with Breadcrumb, Badges & Top Toolbar -->
- <div class="crm-card-header tp-card-header" style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; {% if selected_branch_data.is_centralized %}background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.08) 100%);{% endif %}">
-  <div style="display: flex; align-items: center; gap: 12px;">
-   <div style="background: {% if selected_branch_data.is_centralized %}linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%){% else %}var(--tp-primary-50){% endif %}; color: {% if selected_branch_data.is_centralized %}#ffffff{% else %}var(--tp-primary-600){% endif %}; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700;">
-   {% if selected_branch_data.is_centralized %}
-   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-   {% else %}
-   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-   {% endif %}
-   </div>
-   <div>
-    <div style="font-size: 0.8rem; font-weight: 600; color: var(--tp-text-muted); display: flex; align-items: center; gap: 6px;">
-    {% if branches|length > 1 %}<a href="{% url 'admin_lead_setup' %}" class="breadcrumb-nav-link" style="color: var(--tp-primary-600); text-decoration: none;">All Branches</a><span>&rsaquo;</span>{% endif %}
-    <span>&rsaquo;</span>
-    <span>{% if selected_branch_data.is_centralized %}Centralized (All Branches){% else %}{{ selected_branch.name }}{% endif %}</span>
-    <span>&rsaquo;</span>
-    <span style="color: var(--tp-primary-600); font-weight: 700;">{{ selected_branch_data.source }}</span>
-    </div>
-    <h3 style="font-size: 1.25rem; font-weight: 800; margin: 2px 0 0; color: var(--tp-text-primary);">
-    {% if selected_branch_data.is_centralized %}
-    Centralized Allocation Setup &rsaquo; {{ selected_branch_data.source }}
-    {% else %}
-    {{ selected_branch.name }} Allocation Setup &rsaquo; {{ selected_branch_data.source }}
-    {% endif %}
-    </h3>
-   </div>
-  </div>
+ <!-- Branch Header with Breadcrumb -->
+ <div class="crm-card-header tp-card-header" style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; {% if selected_branch_data.is_centralized %}background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.08) 100%);{% endif %}">
+ <div style="display: flex; align-items: center; gap: 12px;">
+ <div style="background: {% if selected_branch_data.is_centralized %}linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%){% else %}var(--tp-primary-50){% endif %}; color: {% if selected_branch_data.is_centralized %}#ffffff{% else %}var(--tp-primary-600){% endif %}; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+ {% if selected_branch_data.is_centralized %}
+ <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+ {% else %}
+ <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+ {% endif %}
+ </div>
+ <div>
+ <div style="font-size: 0.8rem; font-weight: 600; color: var(--tp-text-muted); display: flex; align-items: center; gap: 6px;">
+ {% if branches|length > 1 %}<a href="{% url 'admin_lead_setup' %}" style="color: var(--tp-primary-600); text-decoration: none;">All Branches</a><span>&rsaquo;</span>{% endif %}
+ <span>&rsaquo;</span>
+ <span>{% if selected_branch_data.is_centralized %}Centralized (All Branches){% else %}{{ selected_branch.name }}{% endif %}</span>
+ <span>&rsaquo;</span>
+ <span style="color: var(--tp-primary-600); font-weight: 700;">{{ selected_branch_data.source }}</span>
+ </div>
+ <h3 style="font-size: 1.25rem; font-weight: 800; margin: 2px 0 0; color: var(--tp-text-primary);">
+ {% if selected_branch_data.is_centralized %}
+ Centralized Allocation Setup &rsaquo; {{ selected_branch_data.source }}
+ {% else %}
+ {{ selected_branch.name }} Allocation Setup &rsaquo; {{ selected_branch_data.source }}
+ {% endif %}
+ </h3>
+ </div>
+ </div>
 
-  <!-- Live Status Badge & Action Toolbar -->
-  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-   {% if selected_branch_data.inactive_tcs_count > 0 %}
-   <span class="badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-weight: 600; font-size: 0.775rem; padding: 5px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-    <span>{{ selected_branch_data.inactive_tcs_count }} inactive telecaller{{ selected_branch_data.inactive_tcs_count|pluralize }} hidden (<a href="{% url 'admin_users_list' %}?role=telecaller" style="color: var(--tp-primary-600); text-decoration: underline;">Team &amp; Staff</a>)</span>
-   </span>
-   {% endif %}
-
-   <!-- Live Total Badge -->
-   <span class="badge branch-status-badge tp-badge" id="badge-branch-{{ selected_branch.id }}" style="background: {% if selected_branch_data.is_valid %}#ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% elif selected_branch_data.total_percentage == 0 and selected_branch_data.telecallers|length == 0 %}#fffbeb; color: #b45309; border: 1px solid #fde68a;{% else %}#fef2f2; color: #b91c1c; border: 1px solid #fecaca;{% endif %} font-weight: 700; font-size: 0.875rem; padding: 6px 14px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px;">
-   {% if selected_branch_data.is_valid %}
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-   <span>{{ selected_branch_data.source }} Allocation: 100% (Valid)</span>
-   {% elif selected_branch_data.total_percentage == 0 and selected_branch_data.telecallers|length == 0 %}
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-   <span>{{ selected_branch_data.source }} Unallocated (0%)</span>
-   {% else %}
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-   <span>{{ selected_branch_data.source }} Total: {{ selected_branch_data.total_percentage }}% (Must equal 100%)</span>
-   {% endif %}
-   </span>
-
-   <!-- Toolbar Buttons -->
-   <button type="button" class="btn btn-secondary btn-sm" onclick="resetToEqual('{{ selected_branch.id }}')" title="Clear all locks and distribute equal split" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-    Reset to equal
-   </button>
-
-   <button type="button" class="btn btn-secondary btn-sm" onclick="openCopySourcesModal()" title="Copy this allocation split to other sources" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-    Copy to other sources
-   </button>
-
-   <button type="button" class="btn btn-primary btn-sm save-action-trigger" id="top-save-btn-{{ selected_branch.id }}" onclick="submitAllocationForm('{{ selected_branch.id }}')" {% if not selected_branch_data.is_valid and selected_branch_data.total_percentage != 0 %}disabled{% endif %} style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; padding: 6px 14px;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-    Save Allocation
-   </button>
-  </div>
+ <!-- Live Status Badge -->
+ <div>
+ <span class="badge branch-status-badge tp-badge" id="badge-branch-{{ selected_branch.id }}" style="background: {% if selected_branch_data.is_valid %}#ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% else %}#fef2f2; color: #b91c1c; border: 1px solid #fecaca;{% endif %} font-weight: 700; font-size: 0.875rem; padding: 6px 14px; border-radius: 9999px;">
+ {% if selected_branch_data.is_valid %} {{ selected_branch_data.source }} Allocation: 100% (Valid){% else %} {{ selected_branch_data.source }} Total: {{ selected_branch_data.total_percentage }}% (Must equal 100%){% endif %}
+ </span>
+ </div>
  </div>
 
  {% if selected_branch_data.is_centralized %}
  <!-- Centralized Pool Explainer Banner -->
  <div style="background: #eef2ff; border-top: 1px solid #c7d2fe; border-bottom: 1px solid #c7d2fe; padding: 12px 20px; color: #3730a3; font-size: 0.85rem; display: flex; align-items: center; gap: 10px;">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-  <span><strong>Centralized Multi-Branch Lead Pool:</strong> All incoming {{ selected_branch_data.source }} leads across all branches are aggregated here (Total Available: <strong>{{ selected_branch_data.available_leads_count }}</strong>). All active telecallers across the organization are listed below. Checked telecallers receive leads according to their configured allocation percentages.</span>
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+ <span><strong>Centralized Multi-Branch Lead Pool:</strong> All incoming {{ selected_branch_data.source }} leads across all branches are aggregated here (Total Available: <strong>{{ selected_branch_data.available_leads_count }}</strong>). All active telecallers across the organization are listed below. Checked telecallers receive leads according to their configured allocation percentages.</span>
  </div>
  {% endif %}
 
  <!-- LEAD SOURCE SELECTOR TABS -->
  <div style="background: var(--tp-surface-card); padding: 12px 20px 0 20px; border-bottom: 1px solid var(--tp-surface-border); display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; align-items: flex-end;">
-  <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted); margin-right: 6px; align-self: center;">
-  Lead Source:
-  </div>
-  {% for tab in selected_branch_data.source_tabs %}
-  <a href="?branch_id={{ selected_branch.id }}&source={{ tab.name }}" 
-     class="source-tab-link"
-     data-source="{{ tab.name }}"
-     style="text-decoration: none; padding: 9px 14px; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 8px; border: 1px solid {% if tab.is_selected %}var(--tp-surface-border){% else %}transparent{% endif %}; border-bottom: {% if tab.is_selected %}3px solid var(--tp-primary-600){% else %}none{% endif %}; background: {% if tab.is_selected %}var(--tp-surface-bg){% else %}transparent{% endif %}; color: {% if tab.is_selected %}var(--tp-text-primary){% else %}var(--tp-text-muted){% endif %}; white-space: nowrap;">
-   <span>{{ tab.name }}</span>
-   <span class="badge tp-badge" style="{% if tab.is_valid %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% else %}background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;{% endif %} font-size: 0.72rem; padding: 2px 6px;">
-   {% if tab.is_valid %}100%{% else %}{{ tab.total_percentage }}%{% endif %}
-   </span>
-   {% if tab.leads_count > 0 %}
-   <span style="font-size: 0.7rem; color: #0369a1; background: #e0f2fe; border-radius: 9999px; padding: 1px 6px; font-weight: 600;">{{ tab.leads_count }} leads</span>
-   {% endif %}
-  </a>
-  {% endfor %}
+ <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--tp-text-muted); margin-right: 6px; align-self: center;">
+ Lead Source:
  </div>
-
- <!-- Inline Error Banner -->
- <div id="inline-error-banner-{{ selected_branch.id }}" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 8px; padding: 12px 18px; margin: 16px 20px 0 20px; font-size: 0.875rem; font-weight: 600; align-items: center; gap: 10px;">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-  <span id="inline-error-text-{{ selected_branch.id }}">Locked percentages exceed 100%. Please adjust locked rows.</span>
+ {% for tab in selected_branch_data.source_tabs %}
+ <a href="?branch_id={{ selected_branch.id }}&source={{ tab.name }}" 
+ style="text-decoration: none; padding: 9px 14px; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 8px; border: 1px solid {% if tab.is_selected %}var(--tp-surface-border){% else %}transparent{% endif %}; border-bottom: {% if tab.is_selected %}3px solid var(--tp-primary-600){% else %}none{% endif %}; background: {% if tab.is_selected %}var(--tp-surface-bg){% else %}transparent{% endif %}; color: {% if tab.is_selected %}var(--tp-text-primary){% else %}var(--tp-text-muted){% endif %}; white-space: nowrap;">
+ <span>{{ tab.name }}</span>
+ <span class="badge tp-badge" style="{% if tab.is_valid %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% else %}background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;{% endif %} font-size: 0.72rem; padding: 2px 6px;">
+ {% if tab.is_valid %}100%{% else %}{{ tab.total_percentage }}%{% endif %}
+ </span>
+ {% if tab.leads_count > 0 %}
+ <span style="font-size: 0.7rem; color: #0369a1; background: #e0f2fe; border-radius: 9999px; padding: 1px 6px; font-weight: 600;">{{ tab.leads_count }} leads</span>
+ {% endif %}
+ </a>
+ {% endfor %}
  </div>
 
  <!-- Branch Allocation Form -->
  <form method="POST" action="{% url 'admin_lead_setup' %}" id="form-branch-{{ selected_branch.id }}">
-  {% csrf_token %}
-  <input type="hidden" name="action" value="save_branch_allocation">
-  <input type="hidden" name="branch_id" value="{{ selected_branch.id }}">
-  <input type="hidden" name="source" value="{{ selected_branch_data.source }}">
+ {% csrf_token %}
+ <input type="hidden" name="action" value="save_branch_allocation">
+ <input type="hidden" name="branch_id" value="{{ selected_branch.id }}">
+ <input type="hidden" name="source" value="{{ selected_branch_data.source }}">
 
-  <!-- Grouped by Counselor / Branch Card -->
-  <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
-  {% if selected_branch_data.telecallers|length == 0 %}
-  <div class="tp-card" style="padding: 24px; border-radius: 12px; background: #fffbeb; border: 1px solid #fde68a; display: flex; flex-direction: column; gap: 12px;">
-   <div style="display: flex; align-items: center; gap: 10px;">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-    <strong style="font-size: 1.05rem; color: #92400e;">No Dedicated Telecallers in {{ selected_branch.name }}</strong>
-   </div>
-   <p style="margin: 0; color: #78350f; font-size: 0.9rem; line-height: 1.5;">
-    There are currently no active telecallers assigned directly to <strong>{{ selected_branch.name }}</strong>. Incoming leads for this branch are automatically pooled into and distributed across organization telecallers by the <strong>Centralized Lead Allocation Hub</strong>.
-   </p>
-   <div style="display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap;">
-    {% if centralized_branch_id %}
-    <a href="?branch_id={{ centralized_branch_id }}&source={{ selected_branch_data.source }}" class="btn btn-primary tp-btn-primary" style="background: #4f46e5; border-color: #4f46e5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-     Configure Centralized Allocation Hub &rarr;
-    </a>
-    {% endif %}
-    <a href="{% url 'admin_users_list' %}?role=telecaller" class="btn btn-secondary" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-     Assign Telecallers to {{ selected_branch.name }} &rarr;
-    </a>
-   </div>
+ <!-- Grouped by Counselor -->
+ <div style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+ {% if selected_branch_data.telecallers|length == 0 %}
+ <div class="tp-card" style="padding: 24px; border-radius: 12px; background: #fffbeb; border: 1px solid #fde68a; display: flex; flex-direction: column; gap: 12px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+   <strong style="font-size: 1.05rem; color: #92400e;">No Dedicated Telecallers in {{ selected_branch.name }}</strong>
   </div>
-  {% endif %}
-
-  {% for group in selected_branch_data.counselor_groups %}
-  <div style="border: 1px solid var(--tp-surface-border); border-radius: var(--tp-radius-sm); overflow: hidden; background: var(--tp-surface-card);">
-   <!-- Group Header with 'Select all' Checkbox -->
-   <div style="background: var(--tp-surface-bg); padding: 10px 16px; border-bottom: 1px solid var(--tp-surface-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-     <!-- Select all checkbox -->
-     <label style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.82rem; color: var(--tp-text-primary); cursor: pointer; user-select: none; margin: 0; background: rgba(0,0,0,0.03); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--tp-surface-border);">
-      <input 
-       type="checkbox" 
-       class="group-select-all-cb" 
-       data-branch="{{ selected_branch.id }}" 
-       data-group="{{ forloop.counter }}" 
-       onchange="toggleGroupSelectAll(this, '{{ selected_branch.id }}', '{{ forloop.counter }}')" 
-       style="width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer;"
-      >
-      <span>Select all</span>
-     </label>
-
-     <div style="font-weight: 700; font-size: 0.95rem; color: var(--tp-text-primary); display: flex; align-items: center; gap: 8px;">
-     {% if selected_branch_data.is_centralized %}
-     <span>Branch:</span>
-     <strong>{{ group.name }}</strong>
-     {% else %}
-     <span>Counselor:</span>
-     <strong>{{ group.name }}</strong>
-     {% endif %}
-     {% if group.email %}<span style="font-size: 0.78rem; color: var(--tp-text-muted); font-weight: normal;">({{ group.email }})</span>{% endif %}
-     </div>
-    </div>
-
-    <span class="badge tp-badge" style="background: var(--tp-surface-card); color: var(--tp-text-secondary); border: 1px solid var(--tp-surface-border); font-weight: 700; font-size: 0.75rem;">
-     {{ group.telecallers|length }} Telecaller{{ group.telecallers|length|pluralize }}
-    </span>
-   </div>
-
-   <div class="table-responsive">
-    <table class="crm-table" style="font-size: 0.875rem; width: 100%; border-collapse: collapse;">
-     <thead>
-      <tr style="background: #fdfdfd; border-bottom: 1px solid #e2e8f0;">
-       <th style="width: 50px; text-align: center;">Active</th>
-       <th>Telecaller</th>
-       <th style="width: 220px;">Assignment %</th>
-       <th style="width: 140px; text-align: center;">Expected Leads</th>
-       <th style="width: 150px; text-align: center;">Status</th>
-       <th style="text-align: right; width: 90px;">Actions</th>
-      </tr>
-     </thead>
-     <tbody>
-      {% for item in group.telecallers %}
-      <tr id="row-{{ selected_branch.id }}-{{ item.telecaller.id }}" data-group="{{ forloop.parentloop.counter }}" style="background: {% if item.is_active %}#ffffff{% else %}#fbfbfc{% endif %}; transition: background 0.2s ease;">
-       <!-- Checkbox -->
-       <td style="text-align: center; vertical-align: middle;">
-        <input 
-         type="checkbox" 
-         name="active_telecallers" 
-         value="{{ item.telecaller.id }}" 
-         class="tc-select-cb" 
-         data-branch="{{ selected_branch.id }}" 
-         data-tc="{{ item.telecaller.id }}"
-         data-group="{{ forloop.parentloop.counter }}"
-         {% if item.is_active %}checked{% endif %}
-         onchange="handleTelecallerCheckChange('{{ selected_branch.id }}', '{{ item.telecaller.id }}', this.checked)"
-         style="width: 18px; height: 18px; accent-color: var(--color-primary); cursor: pointer;"
-        >
-       </td>
-
-       <!-- Telecaller Info -->
-       <td>
-        <div style="display: flex; align-items: center; gap: 10px;">
-         <div style="width: 32px; height: 32px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
-          {{ item.telecaller.first_name|first|default:item.telecaller.username|first|upper }}
-         </div>
-         <div>
-          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-           <strong style="color: var(--text-main);">{{ item.telecaller.get_full_name|default:item.telecaller.username }}</strong>
-           {% if selected_branch_data.is_centralized %}
-           <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; padding: 1px 7px; border-radius: 9999px; font-weight: 600;">
-            {{ item.telecaller.branch.name|default:"Central Pool" }}
-           </span>
-           {% endif %}
-          </div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">@{{ item.telecaller.username }} &bull; {{ item.telecaller.email|default:"No email" }}</div>
-         </div>
-        </div>
-       </td>
-
-       <!-- Percentage Input + Manual Lock Button -->
-       <td>
-        <div style="display: flex; align-items: center; gap: 8px;">
-         <div style="position: relative; max-width: 120px; flex: 1;">
-          <input 
-           type="number" 
-           name="percentage_{{ item.telecaller.id }}" 
-           id="pct-{{ selected_branch.id }}-{{ item.telecaller.id }}" 
-           value="{{ item.percentage }}" 
-           min="0" 
-           max="100" 
-           class="form-control tc-pct-input" 
-           data-branch="{{ selected_branch.id }}" 
-           data-tc="{{ item.telecaller.id }}"
-           oninput="handleManualPercentageInput('{{ selected_branch.id }}', '{{ item.telecaller.id }}')"
-           {% if not item.is_active %}disabled style="opacity: 0.5;"{% endif %}
-           style="padding-right: 26px; font-weight: 700; font-size: 0.95rem;"
-           required
-          >
-          <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94a3b8; pointer-events: none;">%</span>
-         </div>
-
-         <!-- Hidden Lock Input -->
-         <input type="hidden" name="is_locked_{{ item.telecaller.id }}" id="lock-{{ selected_branch.id }}-{{ item.telecaller.id }}" value="{% if item.is_locked %}1{% else %}0{% endif %}">
-
-         <!-- Interactive Lock Button -->
-         <button 
-          type="button" 
-          class="btn btn-sm tc-lock-btn" 
-          id="lock-btn-{{ selected_branch.id }}-{{ item.telecaller.id }}"
-          title="{% if item.is_locked %}Locked (click to unlock and include in equal split){% else %}Unlocked (click or type to lock percentage){% endif %}"
-          onclick="toggleRowLock('{{ selected_branch.id }}', '{{ item.telecaller.id }}')"
-          style="padding: 5px 8px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border: 1px solid {% if item.is_locked %}#f59e0b{% else %}#e2e8f0{% endif %}; background: {% if item.is_locked %}#fffbeb{% else %}#f8fafc{% endif %}; color: {% if item.is_locked %}#b45309{% else %}#94a3b8{% endif %};"
-          {% if not item.is_active %}disabled style="opacity: 0.4; cursor: not-allowed;"{% endif %}
-         >
-          {% if item.is_locked %}
-          <!-- Locked icon -->
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          {% else %}
-          <!-- Unlocked icon -->
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
-          {% endif %}
-         </button>
-        </div>
-       </td>
-
-       <!-- Expected Leads -->
-       <td style="text-align: center; vertical-align: middle;">
-        <span id="expected-leads-{{ selected_branch.id }}-{{ item.telecaller.id }}" class="expected-leads-val" style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">
-         {{ item.expected_leads }}
-        </span>
-       </td>
-
-       <!-- Status Indicator -->
-       <td style="text-align: center; vertical-align: middle;">
-        <span class="badge" id="status-badge-{{ selected_branch.id }}-{{ item.telecaller.id }}" style="{% if item.is_active %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% else %}background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;{% endif %} font-weight: 600; font-size: 0.775rem; padding: 4px 10px; border-radius: 9999px;">
-         {% if item.is_active %}Active in Allocation{% else %}Excluded{% endif %}
-        </span>
-       </td>
-
-       <!-- Actions -->
-       <td style="text-align: right; vertical-align: middle;">
-        <button 
-         type="button" 
-         class="btn btn-secondary btn-sm" 
-         onclick="editSetupModal('{{ item.setup.id|default:'' }}', '{{ selected_branch.id }}', '{{ item.telecaller.id }}', '{{ item.percentage }}', '{{ selected_branch_data.source }}')"
-         style="padding: 4px 10px; font-size: 0.8rem;"
-        >
-         Edit
-        </button>
-       </td>
-      </tr>
-      {% empty %}
-      <tr>
-       <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 18px;">
-        No telecallers currently assigned to this counselor.
-       </td>
-      </tr>
-      {% endfor %}
-     </tbody>
-    </table>
-   </div>
+  <p style="margin: 0; color: #78350f; font-size: 0.9rem; line-height: 1.5;">
+   There are currently no active telecallers assigned directly to <strong>{{ selected_branch.name }}</strong>. Incoming leads for this branch are automatically pooled into and distributed across organization telecallers by the <strong>Centralized Lead Allocation Hub</strong>.
+  </p>
+  <div style="display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap;">
+   {% if centralized_branch_id %}
+   <a href="?branch_id={{ centralized_branch_id }}&source={{ selected_branch_data.source }}" class="btn btn-primary tp-btn-primary" style="background: #4f46e5; border-color: #4f46e5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+    Configure Centralized Allocation Hub &rarr;
+   </a>
+   {% endif %}
+   <a href="{% url 'admin_users_list' %}?role=telecaller" class="btn btn-secondary" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+    Assign Telecallers to {{ selected_branch.name }} &rarr;
+   </a>
   </div>
-  {% empty %}
-  <div style="color: var(--text-muted); padding: 20px; text-align: center;">
-   No counselors or telecallers configured for this branch.
-  </div>
-  {% endfor %}
-  </div>
+ </div>
+ {% endif %}
+ {% for group in selected_branch_data.counselor_groups %}
+ <div style="border: 1px solid var(--tp-surface-border); border-radius: var(--tp-radius-sm); overflow: hidden; background: var(--tp-surface-card);">
+ <div style="background: var(--tp-surface-bg); padding: 10px 16px; border-bottom: 1px solid var(--tp-surface-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+ <div style="font-weight: 700; font-size: 0.95rem; color: var(--tp-text-primary); display: flex; align-items: center; gap: 8px;">
+ {% if selected_branch_data.is_centralized %}
+ <span>Branch:</span>
+ <strong>{{ group.name }}</strong>
+ {% else %}
+ <span>Counselor:</span>
+ <strong>{{ group.name }}</strong>
+ {% endif %}
+ {% if group.email %}<span style="font-size: 0.78rem; color: var(--tp-text-muted); font-weight: normal;">({{ group.email }})</span>{% endif %}
+ </div>
+ <span class="badge tp-badge" style="background: var(--tp-surface-card); color: var(--tp-text-secondary); border: 1px solid var(--tp-surface-border); font-weight: 700; font-size: 0.75rem;">
+ {{ group.telecallers|length }} Telecaller{{ group.telecallers|length|pluralize }}
+ </span>
+ </div>
 
-  <!-- Branch Footer with Live Calculation Summary and Save Button -->
-  <div class="crm-card-footer" style="padding: 16px 20px; background: #fafafa; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-   <div style="display: flex; align-items: center; gap: 20px; font-size: 0.9rem; flex-wrap: wrap;">
-    <div>
-     Total Available: <strong style="font-size: 1.05rem; color: #0284c7;">{{ selected_branch_data.available_leads_count }}</strong>
-    </div>
-    <div>
-     Total Allocated: <strong id="total-val-{{ selected_branch.id }}" style="font-size: 1.05rem; color: {% if selected_branch_data.is_valid %}#047857{% else %}#b91c1c{% endif %};">{{ selected_branch_data.total_percentage }}%</strong>
-    </div>
-    <div>
-     Expected Leads: <strong id="total-expected-{{ selected_branch.id }}" style="font-size: 1.05rem; color: #0f766e;">{{ selected_branch_data.total_expected_leads }}</strong>
-    </div>
-    <div>
-     Remaining Needed: <strong id="rem-val-{{ selected_branch.id }}" style="font-size: 1.05rem; color: {% if selected_branch_data.remaining_percentage == 0 %}#047857{% else %}#b91c1c{% endif %};">{{ selected_branch_data.remaining_percentage }}%</strong>
-    </div>
-   </div>
+ <div class="table-responsive">
+ <table class="crm-table" style="font-size: 0.875rem; width: 100%; border-collapse: collapse;">
+ <thead>
+ <tr style="background: #fdfdfd; border-bottom: 1px solid #e2e8f0;">
+ <th style="width: 50px; text-align: center;">Active</th>
+ <th>Telecaller</th>
+ <th style="width: 180px;">Assignment %</th>
+ <th style="width: 140px; text-align: center;">Expected Leads</th>
+ <th style="width: 150px; text-align: center;">Status</th>
+ <th style="text-align: right; width: 90px;">Actions</th>
+ </tr>
+ </thead>
+ <tbody>
+ {% for item in group.telecallers %}
+ <tr id="row-{{ selected_branch.id }}-{{ item.telecaller.id }}" style="background: {% if item.is_active %}#ffffff{% else %}#fbfbfc{% endif %}; transition: background 0.2s ease;">
+ <!-- Checkbox -->
+ <td style="text-align: center; vertical-align: middle;">
+ <input 
+ type="checkbox" 
+ name="active_telecallers" 
+ value="{{ item.telecaller.id }}" 
+ class="tc-select-cb" 
+ data-branch="{{ selected_branch.id }}" 
+ data-tc="{{ item.telecaller.id }}"
+ {% if item.is_active %}checked{% endif %}
+ onchange="recalcBranchTotal('{{ selected_branch.id }}')"
+ style="width: 18px; height: 18px; accent-color: var(--color-primary); cursor: pointer;"
+ >
+ </td>
 
-   <div style="display: flex; gap: 10px; align-items: center;">
-    <button 
-     type="button" 
-     class="btn btn-secondary" 
-     onclick="resetToEqual('{{ selected_branch.id }}')"
-     style="font-weight: 600;"
-    >
-     Reset to equal
-    </button>
+ <!-- Telecaller Info -->
+ <td>
+ <div style="display: flex; align-items: center; gap: 10px;">
+ <div style="width: 32px; height: 32px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+ {{ item.telecaller.first_name|first|default:item.telecaller.username|first|upper }}
+ </div>
+ <div>
+ <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+ <strong style="color: var(--text-main);">{{ item.telecaller.get_full_name|default:item.telecaller.username }}</strong>
+ {% if selected_branch_data.is_centralized %}
+ <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; padding: 1px 7px; border-radius: 9999px; font-weight: 600;">
+ {{ item.telecaller.branch.name|default:"Central Pool" }}
+ </span>
+ {% endif %}
+ </div>
+ <div style="font-size: 0.75rem; color: var(--text-muted);">@{{ item.telecaller.username }} &bull; {{ item.telecaller.email|default:"No email" }}</div>
+ </div>
+ </div>
+ </td>
 
-    <button 
-     type="submit" 
-     class="btn btn-primary" 
-     id="save-btn-{{ selected_branch.id }}" 
-     {% if not selected_branch_data.is_valid and selected_branch_data.total_percentage != 0 %}disabled{% endif %}
-     style="font-weight: 600; padding: 8px 22px;"
-    >
-     Save {{ selected_branch_data.source }} Allocation
-    </button>
-   </div>
-  </div>
+ <!-- Percentage Input (0-100% only) -->
+ <td>
+ <div style="position: relative; max-width: 140px;">
+ <input 
+ type="number" 
+ name="percentage_{{ item.telecaller.id }}" 
+ id="pct-{{ selected_branch.id }}-{{ item.telecaller.id }}" 
+ value="{{ item.percentage }}" 
+ min="0" 
+ max="100" 
+ class="form-control tc-pct-input" 
+ data-branch="{{ selected_branch.id }}" 
+ data-tc="{{ item.telecaller.id }}"
+ oninput="recalcBranchTotal('{{ selected_branch.id }}')"
+ {% if not item.is_active %}disabled style="opacity: 0.5;"{% endif %}
+ style="padding-right: 28px; font-weight: 700; font-size: 0.95rem;"
+ required
+ >
+ <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94a3b8;">%</span>
+ </div>
+ </td>
+
+ <!-- Expected Leads -->
+ <td style="text-align: center; vertical-align: middle;">
+ <span id="expected-leads-{{ selected_branch.id }}-{{ item.telecaller.id }}" class="expected-leads-val" style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">
+ {{ item.expected_leads }}
+ </span>
+ </td>
+
+ <!-- Status Indicator -->
+ <td style="text-align: center; vertical-align: middle;">
+ <span class="badge" id="status-badge-{{ selected_branch.id }}-{{ item.telecaller.id }}" style="{% if item.is_active %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% else %}background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;{% endif %} font-weight: 600; font-size: 0.775rem; padding: 4px 10px; border-radius: 9999px;">
+ {% if item.is_active %}Active in Allocation{% else %}Excluded{% endif %}
+ </span>
+ </td>
+
+ <!-- Actions -->
+ <td style="text-align: right; vertical-align: middle;">
+ <button 
+ type="button" 
+ class="btn btn-secondary btn-sm" 
+ onclick="editSetupModal('{{ item.setup.id|default:'' }}', '{{ selected_branch.id }}', '{{ item.telecaller.id }}', '{{ item.percentage }}', '{{ selected_branch_data.source }}')"
+ style="padding: 4px 10px; font-size: 0.8rem;"
+ >
+ Edit
+ </button>
+ </td>
+ </tr>
+ {% empty %}
+ <tr>
+ <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 18px;">
+ No telecallers currently assigned to this counselor.
+ </td>
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+ </div>
+ {% empty %}
+ <div style="color: var(--text-muted); padding: 20px; text-align: center;">
+ No counselors or telecallers configured for this branch.
+ </div>
+ {% endfor %}
+ </div>
+
+ <!-- Branch Footer with Live Calculation Summary and Save Button -->
+ <div class="crm-card-footer" style="padding: 16px 20px; background: #fafafa; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+ <div style="display: flex; align-items: center; gap: 20px; font-size: 0.9rem; flex-wrap: wrap;">
+ <div>
+ Total Available: <strong style="font-size: 1.05rem; color: #0284c7;">{{ selected_branch_data.available_leads_count }}</strong>
+ </div>
+ <div>
+ Total Allocated: <strong id="total-val-{{ selected_branch.id }}" style="font-size: 1.05rem; color: {% if selected_branch_data.is_valid %}#047857{% else %}#b91c1c{% endif %};">{{ selected_branch_data.total_percentage }}%</strong>
+ </div>
+ <div>
+ Expected Leads: <strong id="total-expected-{{ selected_branch.id }}" style="font-size: 1.05rem; color: #0f766e;">{{ selected_branch_data.total_expected_leads }}</strong>
+ </div>
+ <div>
+ Remaining Needed: <strong id="rem-val-{{ selected_branch.id }}" style="font-size: 1.05rem; color: {% if selected_branch_data.remaining_percentage == 0 %}#047857{% else %}#b91c1c{% endif %};">{{ selected_branch_data.remaining_percentage }}%</strong>
+ </div>
+ </div>
+
+ <div style="display: flex; gap: 10px; align-items: center;">
+ <button 
+ type="submit" 
+ class="btn btn-primary" 
+ id="save-btn-{{ selected_branch.id }}" 
+ {% if not selected_branch_data.is_valid %}disabled{% endif %}
+ style="font-weight: 600; padding: 8px 22px;"
+ >
+ Save {{ selected_branch_data.source }} Allocation (100%)
+ </button>
+ </div>
+ </div>
  </form>
 </div>
 
-<!-- AUDIT TRAIL LOGS -->
+<!-- AUDIT TRAIL LOGS (MODULE 3) -->
 {% if recent_audits %}
 <div class="crm-card" style="margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 10px; padding: 18px 20px; background: var(--bg-card, #ffffff); box-shadow: var(--shadow-sm);">
  <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main, #334155); margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
-  <span>Recent Allocation Audit Logs &bull; {{ selected_branch.name }} [{{ selected_branch_data.source }}]</span>
+ <span>Recent Allocation Audit Logs &bull; {{ selected_branch.name }} [{{ selected_branch_data.source }}]</span>
  </h4>
  <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem;">
  {% for audit in recent_audits %}
  <div style="background: var(--bg-card-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-  <div>
-   <strong style="color: var(--text-main, #1e293b);">{{ audit.changed_by.get_full_name|default:audit.changed_by.username|default:"System" }}</strong>
-   <span style="color: var(--text-muted, #64748b); margin-left: 6px;">{{ audit.notes|default:"Updated allocation" }}</span>
-  </div>
-  <div style="color: var(--text-muted, #94a3b8); font-family: monospace; font-size: 0.78rem;">{{ audit.created_at|date:"Y-m-d H:i:s" }}</div>
+ <div>
+ <strong style="color: var(--text-main, #1e293b);">{{ audit.changed_by.get_full_name|default:audit.changed_by.username|default:"System" }}</strong>
+ <span style="color: var(--text-muted, #64748b); margin-left: 6px;">{{ audit.notes|default:"Updated allocation" }}</span>
+ </div>
+ <div style="color: var(--text-muted, #94a3b8); font-family: monospace; font-size: 0.78rem;">{{ audit.created_at|date:"Y-m-d H:i:s" }}</div>
  </div>
  {% endfor %}
  </div>
@@ -539,776 +446,306 @@
 {% endif %}
 {% endif %}
 
-<!-- MODAL: COPY SPLIT TO OTHER SOURCES -->
-<div id="copySourcesModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 1060; align-items: center; justify-content: center; padding: 20px;">
- <div class="modal-dialog" style="background: var(--bg-card, #ffffff); color: var(--text-main); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; width: 100%; max-width: 520px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); overflow: hidden;">
-  <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-hover, #f8fafc);">
-   <div>
-    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Copy Allocation Split to Other Sources</h4>
-    <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">
-     Source: <strong>{{ selected_branch_data.source }}</strong> &bull; Branch: <strong>{{ selected_branch.name }}</strong>
-    </p>
-   </div>
-   <button type="button" onclick="closeCopySourcesModal()" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted, #94a3b8);">&times;</button>
-  </div>
-
-  <form id="copySourcesForm" method="POST" action="{% url 'admin_lead_setup' %}" style="padding: 20px;">
-   {% csrf_token %}
-   <input type="hidden" name="action" value="copy_split_sources">
-   <input type="hidden" name="branch_id" value="{{ selected_branch.id }}">
-   <input type="hidden" name="source" value="{{ selected_branch_data.source }}">
-
-   <div style="margin-bottom: 16px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-     <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin: 0;">
-      Select Target Sources
-     </label>
-     <button type="button" id="toggleCopyTargetsBtn" onclick="toggleAllCopyTargets()" style="background: none; border: none; padding: 0; font-size: 0.8rem; font-weight: 600; color: #4f46e5; cursor: pointer; text-decoration: underline;">
-      Select All
-     </button>
-    </div>
-
-    <div style="background: var(--bg-card-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 14px;">
-     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 16px;">
-      {% for src in available_sources %}
-      {% if src != selected_branch_data.source %}
-      <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-main); cursor: pointer; margin: 0; user-select: none;">
-       <input type="checkbox" name="target_sources" value="{{ src }}" class="copy-target-cb" style="accent-color: #4f46e5; width: 16px; height: 16px; border-radius: 4px; cursor: pointer;">
-       <span>{{ src }}</span>
-      </label>
-      {% endif %}
-      {% endfor %}
-     </div>
-    </div>
-    <div id="copyTargetError" style="display: none; color: #ef4444; font-size: 0.78rem; margin-top: 6px; font-weight: 500;">
-     Please select at least one target lead source.
-    </div>
-   </div>
-
-   <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.82rem; color: #92400e; display: flex; align-items: flex-start; gap: 8px;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-    <div>
-     <strong>Confirm Overwrite:</strong> Copying will replace the active telecaller allocations and percentages in the selected target sources with the exact split configured for {{ selected_branch_data.source }}.
-    </div>
-   </div>
-
-   <div style="display: flex; justify-content: flex-end; gap: 10px;">
-    <button type="button" class="btn btn-secondary" onclick="closeCopySourcesModal()">Cancel</button>
-    <button type="submit" class="btn btn-primary" style="font-weight: 700; background: #4f46e5; border-color: #4f46e5;">Copy Split &amp; Save</button>
-   </div>
-  </form>
- </div>
-</div>
-
-<!-- MODAL: RETRY ASSIGNMENTS CONFIRMATION DIALOG -->
-<div id="retryAssignmentsModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 1070; align-items: center; justify-content: center; padding: 20px;">
- <div class="modal-dialog" style="background: var(--bg-card, #ffffff); color: var(--text-main); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); overflow: hidden;">
-  <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #ecfdf5;">
-   <div style="display: flex; align-items: center; gap: 8px;">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #065f46;">Allocation Saved Successfully</h4>
-   </div>
-   <button type="button" onclick="closeRetryModal()" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted, #94a3b8);">&times;</button>
-  </div>
-
-  <form id="retryAssignmentsForm" method="POST" action="{% url 'admin_lead_setup' %}" style="padding: 20px;">
-   {% csrf_token %}
-   <input type="hidden" name="action" value="retry_assignments">
-   <input type="hidden" name="branch_id" value="{{ selected_branch.id }}">
-   <input type="hidden" name="source" value="{{ selected_branch_data.source }}">
-
-   <div style="margin-bottom: 18px;">
-    <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.5; margin: 0 0 10px 0;">
-     There are currently <strong id="retryModalLeadCount" style="color: #0369a1; font-size: 1.1rem;">{{ selected_branch_data.available_leads_count }}</strong> unassigned leads for <strong>{{ selected_branch_data.source }}</strong>.
-    </p>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
-     Would you like to run <strong>Retry Assignments</strong> now to distribute these unassigned leads across active telecallers according to the updated percentage split?
-    </p>
-   </div>
-
-   <div style="display: flex; justify-content: flex-end; gap: 10px;">
-    <button type="button" class="btn btn-secondary" onclick="closeRetryModal()">Later / Done</button>
-    <button type="submit" class="btn btn-primary" style="font-weight: 700; background: #047857; border-color: #047857;">Yes, Run Retry Assignments</button>
-   </div>
-  </form>
- </div>
-</div>
-
 <!-- MODAL: ADD / EDIT TELECALLER ASSIGNMENT -->
 <div id="leadSetupModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 1050; align-items: center; justify-content: center; padding: 20px;">
  <div class="modal-dialog" style="background: var(--bg-card, #ffffff); color: var(--text-main); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); overflow: hidden;">
-  <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-hover, #f8fafc);">
-   <h4 id="modalTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Add Telecaller Assignment</h4>
-   <button type="button" onclick="closeModal()" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted, #94a3b8);">&times;</button>
-  </div>
+ <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-hover, #f8fafc);">
+ <h4 id="modalTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Add Telecaller Assignment</h4>
+ <button type="button" onclick="closeModal()" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-muted, #94a3b8);">&times;</button>
+ </div>
 
-  <form id="leadSetupForm" method="POST" action="{% url 'admin_lead_setup' %}" style="padding: 20px;">
-   {% csrf_token %}
-   <input type="hidden" name="action" value="save_assignment">
+ <form id="leadSetupForm" method="POST" action="{% url 'admin_lead_setup' %}" style="padding: 20px;">
+ {% csrf_token %}
+ <input type="hidden" name="action" value="save_assignment">
 
-   <div style="margin-bottom: 16px;">
-    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">
-     Branch
-    </label>
-    <select name="branch_id" id="modalBranchSelect" class="form-select" required onchange="filterTelecallersByBranch()">
-     <option value="">Select Branch</option>
-     {% for b in branches %}
-     <option value="{{ b.id }}" {% if selected_branch and b.id == selected_branch.id %}selected{% endif %}>{{ b.name }}</option>
-     {% endfor %}
-    </select>
-   </div>
+ <div style="margin-bottom: 16px;">
+ <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">
+ Branch
+ </label>
+ <select name="branch_id" id="modalBranchSelect" class="form-select" required onchange="filterTelecallersByBranch()">
+ <option value="">Select Branch ▼</option>
+ {% for b in branches %}
+ <option value="{{ b.id }}" {% if selected_branch and b.id == selected_branch.id %}selected{% endif %}>{{ b.name }}</option>
+ {% endfor %}
+ </select>
+ </div>
 
-   <div style="margin-bottom: 16px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-     <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin: 0;">
-      Lead Source
-     </label>
-     <button 
-      type="button" 
-      id="toggleAllSourcesBtn"
-      onclick="toggleAllModalSources()" 
-      style="background: none; border: none; padding: 0; font-size: 0.8rem; font-weight: 600; color: #4f46e5; cursor: pointer; text-decoration: underline;"
-     >
-      Select All
-     </button>
-    </div>
+ <div style="margin-bottom: 16px;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+ <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin: 0;">
+ Lead Source
+ </label>
+ <button 
+ type="button" 
+ id="toggleAllSourcesBtn"
+ onclick="toggleAllModalSources()" 
+ style="background: none; border: none; padding: 0; font-size: 0.8rem; font-weight: 600; color: #4f46e5; cursor: pointer; text-decoration: underline;"
+ >
+ Select All
+ </button>
+ </div>
 
-    <div style="background: var(--bg-card-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 12px 14px;">
-     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px;">
-      {% for src in available_sources %}
-      {% if src != 'Walk-in' and src != 'Google Call' and src != 'Manual' %}
-      <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-main); cursor: pointer; margin: 0; user-select: none;">
-       <input 
-        type="checkbox" 
-        name="sources" 
-        value="{{ src }}" 
-        class="modal-source-cb" 
-        style="accent-color: #2563eb; width: 16px; height: 16px; border-radius: 4px; cursor: pointer;"
-       >
-       <span>{{ src }}</span>
-      </label>
-      {% endif %}
-      {% endfor %}
-     </div>
-    </div>
-    <div id="sourceErrorMsg" style="display: none; color: #ef4444; font-size: 0.78rem; margin-top: 5px; font-weight: 500;">
-     Please select at least one lead source.
-    </div>
-   </div>
+ <div style="background: var(--bg-card-hover, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 12px 14px;">
+ <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px;">
+ {% for src in available_sources %}
+ {% if src != 'Walk-in' and src != 'Google Call' and src != 'Manual' %}
+ <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-main); cursor: pointer; margin: 0; user-select: none;">
+ <input 
+ type="checkbox" 
+ name="sources" 
+ value="{{ src }}" 
+ class="modal-source-cb" 
+ style="accent-color: #2563eb; width: 16px; height: 16px; border-radius: 4px; cursor: pointer;"
+ >
+ <span>{{ src }}</span>
+ </label>
+ {% endif %}
+ {% endfor %}
+ </div>
+ </div>
+ <div id="sourceErrorMsg" style="display: none; color: #ef4444; font-size: 0.78rem; margin-top: 5px; font-weight: 500;">
+ Please select at least one lead source.
+ </div>
+ </div>
 
-   <div style="margin-bottom: 16px;">
-    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">
-     Telecaller
-    </label>
-    <select name="telecaller_id" id="modalTelecallerSelect" class="form-select" required>
-     <option value="">Select Telecaller</option>
-     {% for tc in telecallers %}
-     <option value="{{ tc.id }}" data-branch="{{ tc.branch_id|default:'' }}">
-      {{ tc.get_full_name|default:tc.username }} ({{ tc.username }}){% if tc.branch %} - {{ tc.branch.name }}{% endif %}
-     </option>
-     {% endfor %}
-    </select>
-   </div>
+ <div style="margin-bottom: 16px;">
+ <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">
+ Telecaller
+ </label>
+ <select name="telecaller_id" id="modalTelecallerSelect" class="form-select" required>
+ <option value="">Select Telecaller ▼</option>
+ {% for tc in telecallers %}
+ <option value="{{ tc.id }}" data-branch="{{ tc.branch_id|default:'' }}">
+ {{ tc.get_full_name|default:tc.username }} ({{ tc.username }}){% if tc.branch %} - {{ tc.branch.name }}{% endif %}
+ </option>
+ {% endfor %}
+ </select>
+ </div>
 
-   <div style="margin-bottom: 24px;">
-    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">
-     Assignment Percentage (0 - 100%)
-    </label>
-    <div style="position: relative;">
-     <input type="number" name="assignment_percentage" id="modalPercentageInput" class="form-control" placeholder="Enter Percentage" min="0" max="100" required>
-     <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94a3b8;">%</span>
-    </div>
-   </div>
+ <div style="margin-bottom: 24px;">
+ <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main);">
+ Assignment Percentage (0 - 100%)
+ </label>
+ <div style="position: relative;">
+ <input type="number" name="assignment_percentage" id="modalPercentageInput" class="form-control" placeholder="Enter Percentage" min="0" max="100" required>
+ <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94a3b8;">%</span>
+ </div>
+ </div>
 
-   <div style="display: flex; justify-content: flex-end; gap: 10px;">
-    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-    <button type="submit" class="btn btn-primary" style="font-weight: 600;">Save Telecaller Setup</button>
-   </div>
-  </form>
+ <div style="display: flex; justify-content: flex-end; gap: 10px;">
+ <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+ <button type="submit" class="btn btn-primary" style="font-weight: 600;">Save Telecaller Setup</button>
+ </div>
+ </form>
  </div>
 </div>
 
 <script>
-// Track unsaved changes
-let hasUnsavedChanges = false;
+function recalcBranchTotal(branchId) {
+ const card = document.getElementById(`branch-card-${branchId}`);
+ if (!card) return;
 
-function markDirty() {
-  hasUnsavedChanges = true;
-}
+ const availableCount = parseInt(card.getAttribute('data-available') || '0', 10);
+ const checkboxes = card.querySelectorAll(`.tc-select-cb[data-branch="${branchId}"]`);
+ let totalPct = 0;
+ let totalExp = 0;
+ let activeCount = 0;
 
-function clearDirty() {
-  hasUnsavedChanges = false;
-}
+ checkboxes.forEach(cb => {
+ const tcId = cb.getAttribute('data-tc');
+ const pctInput = document.getElementById(`pct-${branchId}-${tcId}`);
+ const statusBadge = document.getElementById(`status-badge-${branchId}-${tcId}`);
+ const expectedEl = document.getElementById(`expected-leads-${branchId}-${tcId}`);
+ const row = document.getElementById(`row-${branchId}-${tcId}`);
 
-// Unsaved changes prompt when switching tabs or unloading
-window.addEventListener('beforeunload', function(e) {
-  if (hasUnsavedChanges) {
-    e.preventDefault();
-    e.returnValue = 'You have unsaved allocation changes. Are you sure you want to leave?';
-  }
-});
+ if (cb.checked) {
+ activeCount++;
+ let val = 0;
+ if (pctInput) {
+ pctInput.disabled = false;
+ pctInput.style.opacity = '1';
+ val = parseInt(pctInput.value, 10);
+ if (!isNaN(val) && val >0) {
+ totalPct += val;
+ } else {
+ val = 0;
+ }
+ }
+ const exp = (!isNaN(val) && val >0) ? Math.round(availableCount * (val / 100.0)) : 0;
+ totalExp += exp;
+ if (expectedEl) expectedEl.textContent = exp;
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Intercept source tab links and breadcrumb links
-  document.querySelectorAll('.source-tab-link, .breadcrumb-nav-link').forEach(link => {
-    link.addEventListener('click', function(e) {
-      if (hasUnsavedChanges) {
-        if (!confirm('You have unsaved allocation changes. Discard changes and navigate away?')) {
-          e.preventDefault();
-          return false;
-        }
-        clearDirty();
-      }
-    });
-  });
+ if (statusBadge) {
+ statusBadge.textContent = 'Active in Allocation';
+ statusBadge.style.background = '#ecfdf5';
+ statusBadge.style.color = '#047857';
+ statusBadge.style.border = '1px solid #a7f3d0';
+ }
+ if (row) row.style.background = '#ffffff';
+ } else {
+ if (pctInput) {
+ pctInput.disabled = true;
+ pctInput.style.opacity = '0.5';
+ }
+ if (expectedEl) expectedEl.textContent = '0';
+ if (statusBadge) {
+ statusBadge.textContent = 'Excluded';
+ statusBadge.style.background = '#f1f5f9';
+ statusBadge.style.color = '#64748b';
+ statusBadge.style.border = '1px solid #e2e8f0';
+ }
+ if (row) row.style.background = '#fbfbfc';
+ }
+ });
 
-  // Check if URL has ?saved=1&unassigned=N to show Retry Assignments modal
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('saved') === '1') {
-    const unassignedCount = parseInt(urlParams.get('unassigned') || '0', 10);
-    if (unassignedCount > 0) {
-      const countEl = document.getElementById('retryModalLeadCount');
-      if (countEl) countEl.textContent = unassignedCount;
-      const modal = document.getElementById('retryAssignmentsModal');
-      if (modal) modal.style.display = 'flex';
-    }
-  }
+ const totalEl = document.getElementById(`total-val-${branchId}`);
+ const remEl = document.getElementById(`rem-val-${branchId}`);
+ const totalExpEl = document.getElementById(`total-expected-${branchId}`);
+ const badgeEl = document.getElementById(`badge-branch-${branchId}`);
+ const saveBtn = document.getElementById(`save-btn-${branchId}`);
 
-  // Bind forms to clear dirty on submit
-  const mainForm = document.getElementById('form-branch-{{ selected_branch.id }}');
-  if (mainForm) {
-    mainForm.addEventListener('submit', function() {
-      clearDirty();
-    });
-  }
-  const copyForm = document.getElementById('copySourcesForm');
-  if (copyForm) {
-    copyForm.addEventListener('submit', function(e) {
-      const checkedTargets = document.querySelectorAll('.copy-target-cb:checked');
-      if (checkedTargets.length === 0) {
-        e.preventDefault();
-        const errEl = document.getElementById('copyTargetError');
-        if (errEl) errEl.style.display = 'block';
-        return false;
-      }
-      clearDirty();
-    });
-  }
-});
+ if (totalEl) {
+ totalEl.textContent = `${totalPct}%`;
+ totalEl.style.color = (totalPct === 100) ? '#047857' : '#b91c1c';
+ }
 
-/**
- * Core mathematical auto equal split engine with manual override lock support.
- * Rules:
- * - Checked telecallers: whole numbers only, remainder (+1) distributed to top rows in display order.
- * - Locked rows keep their manual %; unlocked checked rows equally share (100 - sum(locked)).
- * - If locked sum > 100, or all locked and total != 100, display inline error and disable save.
- */
-function recalculateEqualSplit(branchId) {
-  const card = document.getElementById(`branch-card-${branchId}`);
-  if (!card) return;
+ if (totalExpEl) {
+ totalExpEl.textContent = totalExp;
+ }
 
-  const availableCount = parseInt(card.getAttribute('data-available') || '0', 10);
-  const checkboxes = card.querySelectorAll(`.tc-select-cb[data-branch="${branchId}"]`);
+ const remaining = Math.max(0, 100 - totalPct);
+ if (remEl) {
+ remEl.textContent = `${remaining}%`;
+ remEl.style.color = (totalPct === 100) ? '#047857' : '#b91c1c';
+ }
 
-  const checkedRows = [];
-  checkboxes.forEach(cb => {
-    const tcId = cb.getAttribute('data-tc');
-    const row = document.getElementById(`row-${branchId}-${tcId}`);
-    const pctInput = document.getElementById(`pct-${branchId}-${tcId}`);
-    const lockInput = document.getElementById(`lock-${branchId}-${tcId}`);
-    const isLocked = lockInput ? (lockInput.value === '1' || lockInput.value === 'true') : false;
+ const isValid = (totalPct === 100 && activeCount >0);
 
-    if (cb.checked) {
-      let currentVal = parseInt(pctInput ? pctInput.value : '0', 10);
-      if (isNaN(currentVal) || currentVal < 0) currentVal = 0;
-      checkedRows.push({
-        tcId: tcId,
-        row: row,
-        pctInput: pctInput,
-        lockInput: lockInput,
-        isLocked: isLocked,
-        pct: currentVal
-      });
-    } else {
-      // Excluded row: set to 0, unlocked, disabled
-      if (pctInput) {
-        pctInput.value = '0';
-        pctInput.disabled = true;
-        pctInput.style.opacity = '0.5';
-      }
-      if (lockInput) {
-        lockInput.value = '0';
-      }
-      updateRowLockIcon(branchId, tcId, false);
-      updateRowStatus(branchId, tcId, false);
-      const expectedEl = document.getElementById(`expected-leads-${branchId}-${tcId}`);
-      if (expectedEl) expectedEl.textContent = '0';
-      if (row) row.style.background = '#fbfbfc';
-    }
-  });
+ if (badgeEl) {
+ if (isValid) {
+ badgeEl.textContent = ' Allocation: 100% (Valid)';
+ badgeEl.style.background = '#ecfdf5';
+ badgeEl.style.color = '#047857';
+ badgeEl.style.border = '1px solid #a7f3d0';
+ } else {
+ badgeEl.textContent = ` Total: ${totalPct}% (Must equal 100%)`;
+ badgeEl.style.background = '#fef2f2';
+ badgeEl.style.color = '#b91c1c';
+ badgeEl.style.border = '1px solid #fecaca';
+ }
+ }
 
-  const activeCount = checkedRows.length;
-  let inlineError = '';
-
-  if (activeCount === 0) {
-    // Zero telecallers selected: total = 0%, source unallocated
-    updateSummaryAndBadge(branchId, 0, 0, 0, 'Zero telecallers selected (source unallocated)');
-    return;
-  }
-
-  // Partition checked rows into locked and unlocked
-  const lockedRows = checkedRows.filter(r => r.isLocked);
-  const unlockedRows = checkedRows.filter(r => !r.isLocked);
-
-  let sumLocked = 0;
-  lockedRows.forEach(r => {
-    sumLocked += r.pct;
-  });
-
-  if (sumLocked > 100) {
-    inlineError = `Locked percentages (${sumLocked}%) exceed 100%. Please reduce locked percentages.`;
-  } else if (unlockedRows.length === 0) {
-    // All rows are locked
-    if (sumLocked !== 100) {
-      inlineError = `All telecallers are locked, but total is ${sumLocked}%. It must equal exactly 100%.`;
-    }
-  } else {
-    // Distribute remaining (100 - sumLocked) equally among unlocked rows
-    const availablePct = 100 - sumLocked;
-    const numUnlocked = unlockedRows.length;
-    const base = Math.floor(availablePct / numUnlocked);
-    const remainder = availablePct % numUnlocked;
-
-    unlockedRows.forEach((r, idx) => {
-      // First 'remainder' rows get base + 1, subsequent get base
-      const allocatedPct = (idx < remainder) ? (base + 1) : base;
-      r.pct = allocatedPct;
-      if (r.pctInput) {
-        r.pctInput.value = allocatedPct;
-        r.pctInput.disabled = false;
-        r.pctInput.style.opacity = '1';
-      }
-    });
-  }
-
-  // Calculate final totals and update individual row UI
-  let finalTotal = 0;
-  let totalExp = 0;
-
-  checkedRows.forEach(r => {
-    const val = parseInt(r.pctInput ? r.pctInput.value : '0', 10) || 0;
-    finalTotal += val;
-
-    // Expected leads
-    const exp = (val > 0 && availableCount > 0) ? Math.round(availableCount * (val / 100.0)) : 0;
-    totalExp += exp;
-    const expectedEl = document.getElementById(`expected-leads-${branchId}-${r.tcId}`);
-    if (expectedEl) expectedEl.textContent = exp;
-
-    updateRowLockIcon(branchId, r.tcId, r.isLocked);
-    updateRowStatus(branchId, r.tcId, true);
-    if (r.row) r.row.style.background = '#ffffff';
-  });
-
-  updateSummaryAndBadge(branchId, finalTotal, activeCount, totalExp, inlineError);
-}
-
-/**
- * Update header and footer live badges, counters and save button states
- */
-function updateSummaryAndBadge(branchId, totalPct, activeCount, totalExp, inlineError) {
-  const totalEl = document.getElementById(`total-val-${branchId}`);
-  const remEl = document.getElementById(`rem-val-${branchId}`);
-  const totalExpEl = document.getElementById(`total-expected-${branchId}`);
-  const badgeEl = document.getElementById(`badge-branch-${branchId}`);
-  const footerSaveBtn = document.getElementById(`save-btn-${branchId}`);
-  const topSaveBtn = document.getElementById(`top-save-btn-${branchId}`);
-  const errorBanner = document.getElementById(`inline-error-banner-${branchId}`);
-  const errorText = document.getElementById(`inline-error-text-${branchId}`);
-
-  // Display or hide inline error banner
-  if (inlineError && activeCount > 0) {
-    if (errorBanner) errorBanner.style.display = 'flex';
-    if (errorText) errorText.textContent = inlineError;
-  } else {
-    if (errorBanner) errorBanner.style.display = 'none';
-  }
-
-  // Update summary numbers
-  if (totalEl) {
-    totalEl.textContent = `${totalPct}%`;
-    totalEl.style.color = (totalPct === 100) ? '#047857' : (activeCount === 0 ? '#b45309' : '#b91c1c');
-  }
-
-  if (totalExpEl) {
-    totalExpEl.textContent = totalExp;
-  }
-
-  const remaining = Math.max(0, 100 - totalPct);
-  if (remEl) {
-    remEl.textContent = `${remaining}%`;
-    remEl.style.color = (totalPct === 100) ? '#047857' : '#b91c1c';
-  }
-
-  // Save is allowed if total = 100% (with at least 1 active) OR total = 0% with 0 telecallers checked
-  const isValid100 = (totalPct === 100 && activeCount > 0 && !inlineError);
-  const isValidZero = (totalPct === 0 && activeCount === 0);
-  const isSaveable = (isValid100 || isValidZero);
-
-  if (badgeEl) {
-    if (isValid100) {
-      badgeEl.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        <span>Allocation: 100% (Valid)</span>
-      `;
-      badgeEl.style.background = '#ecfdf5';
-      badgeEl.style.color = '#047857';
-      badgeEl.style.border = '1px solid #a7f3d0';
-    } else if (isValidZero) {
-      badgeEl.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-        <span>0% (Source Not Allocated)</span>
-      `;
-      badgeEl.style.background = '#fffbeb';
-      badgeEl.style.color = '#b45309';
-      badgeEl.style.border = '1px solid #fde68a';
-    } else {
-      badgeEl.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-        <span>Total: ${totalPct}% (Must equal 100%)</span>
-      `;
-      badgeEl.style.background = '#fef2f2';
-      badgeEl.style.color = '#b91c1c';
-      badgeEl.style.border = '1px solid #fecaca';
-    }
-  }
-
-  if (footerSaveBtn) footerSaveBtn.disabled = !isSaveable;
-  if (topSaveBtn) topSaveBtn.disabled = !isSaveable;
-}
-
-/**
- * Handle manual percentage input typing:
- * - Automatically locks the edited row
- * - Redistributes remainder of (100 - sum(locked)) across remaining unlocked checked rows
- */
-function handleManualPercentageInput(branchId, tcId) {
-  markDirty();
-  const lockInput = document.getElementById(`lock-${branchId}-${tcId}`);
-  if (lockInput) {
-    lockInput.value = '1';
-  }
-  updateRowLockIcon(branchId, tcId, true);
-  recalculateEqualSplit(branchId);
-}
-
-/**
- * Toggle row lock state when clicking lock icon button
- */
-function toggleRowLock(branchId, tcId) {
-  markDirty();
-  const lockInput = document.getElementById(`lock-${branchId}-${tcId}`);
-  if (!lockInput) return;
-
-  const isCurrentlyLocked = (lockInput.value === '1' || lockInput.value === 'true');
-  const newLockState = !isCurrentlyLocked;
-  lockInput.value = newLockState ? '1' : '0';
-
-  updateRowLockIcon(branchId, tcId, newLockState);
-  recalculateEqualSplit(branchId);
-}
-
-/**
- * Update row lock button SVG and styling
- */
-function updateRowLockIcon(branchId, tcId, isLocked) {
-  const btn = document.getElementById(`lock-btn-${branchId}-${tcId}`);
-  if (!btn) return;
-
-  if (isLocked) {
-    btn.innerHTML = `
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-    `;
-    btn.style.borderColor = '#f59e0b';
-    btn.style.background = '#fffbeb';
-    btn.style.color = '#b45309';
-    btn.title = 'Locked (click to unlock and include in equal split)';
-  } else {
-    btn.innerHTML = `
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
-    `;
-    btn.style.borderColor = '#e2e8f0';
-    btn.style.background = '#f8fafc';
-    btn.style.color = '#94a3b8';
-    btn.title = 'Unlocked (click or type to lock percentage)';
-  }
-}
-
-/**
- * Update status badge text & colors
- */
-function updateRowStatus(branchId, tcId, isActive) {
-  const badge = document.getElementById(`status-badge-${branchId}-${tcId}`);
-  if (!badge) return;
-
-  if (isActive) {
-    badge.textContent = 'Active in Allocation';
-    badge.style.background = '#ecfdf5';
-    badge.style.color = '#047857';
-    badge.style.border = '1px solid #a7f3d0';
-  } else {
-    badge.textContent = 'Excluded';
-    badge.style.background = '#f1f5f9';
-    badge.style.color = '#64748b';
-    badge.style.border = '1px solid #e2e8f0';
-  }
-}
-
-/**
- * Checkbox toggle handler:
- * - If checked: enables row, recalculates equal split
- * - If unchecked: disables row, sets to 0 / Excluded, redistributes among remaining unlocked checked rows
- */
-function handleTelecallerCheckChange(branchId, tcId, isChecked) {
-  markDirty();
-  const pctInput = document.getElementById(`pct-${branchId}-${tcId}`);
-  const lockBtn = document.getElementById(`lock-btn-${branchId}-${tcId}`);
-  const lockInput = document.getElementById(`lock-${branchId}-${tcId}`);
-
-  if (isChecked) {
-    if (pctInput) {
-      pctInput.disabled = false;
-      pctInput.style.opacity = '1';
-    }
-    if (lockBtn) {
-      lockBtn.disabled = false;
-      lockBtn.style.opacity = '1';
-      lockBtn.style.cursor = 'pointer';
-    }
-  } else {
-    if (pctInput) {
-      pctInput.value = '0';
-      pctInput.disabled = true;
-      pctInput.style.opacity = '0.5';
-    }
-    if (lockInput) {
-      lockInput.value = '0';
-    }
-    if (lockBtn) {
-      lockBtn.disabled = true;
-      lockBtn.style.opacity = '0.4';
-      lockBtn.style.cursor = 'not-allowed';
-    }
-    updateRowLockIcon(branchId, tcId, false);
-    updateRowStatus(branchId, tcId, false);
-  }
-
-  recalculateEqualSplit(branchId);
-}
-
-/**
- * Reset to equal button per source:
- * - Clears all row locks
- * - Recalculates equal split across all checked telecallers
- */
-function resetToEqual(branchId) {
-  markDirty();
-  const card = document.getElementById(`branch-card-${branchId}`);
-  if (!card) return;
-
-  const lockInputs = card.querySelectorAll(`input[id^="lock-${branchId}-"]`);
-  lockInputs.forEach(input => {
-    input.value = '0';
-  });
-
-  const checkboxes = card.querySelectorAll(`.tc-select-cb[data-branch="${branchId}"]`);
-  checkboxes.forEach(cb => {
-    const tcId = cb.getAttribute('data-tc');
-    updateRowLockIcon(branchId, tcId, false);
-  });
-
-  recalculateEqualSplit(branchId);
-}
-
-/**
- * 'Select all' checkbox on each branch/counselor header card
- */
-function toggleGroupSelectAll(headerCb, branchId, groupIndex) {
-  markDirty();
-  const card = document.getElementById(`branch-card-${branchId}`);
-  if (!card) return;
-
-  const isChecked = headerCb.checked;
-  const rows = card.querySelectorAll(`tr[data-group="${groupIndex}"]`);
-
-  rows.forEach(row => {
-    const cb = row.querySelector('.tc-select-cb');
-    if (cb) {
-      cb.checked = isChecked;
-      const tcId = cb.getAttribute('data-tc');
-      const pctInput = document.getElementById(`pct-${branchId}-${tcId}`);
-      const lockBtn = document.getElementById(`lock-btn-${branchId}-${tcId}`);
-      const lockInput = document.getElementById(`lock-${branchId}-${tcId}`);
-
-      if (isChecked) {
-        if (pctInput) {
-          pctInput.disabled = false;
-          pctInput.style.opacity = '1';
-        }
-        if (lockBtn) {
-          lockBtn.disabled = false;
-          lockBtn.style.opacity = '1';
-          lockBtn.style.cursor = 'pointer';
-        }
-      } else {
-        if (pctInput) {
-          pctInput.value = '0';
-          pctInput.disabled = true;
-          pctInput.style.opacity = '0.5';
-        }
-        if (lockInput) lockInput.value = '0';
-        if (lockBtn) {
-          lockBtn.disabled = true;
-          lockBtn.style.opacity = '0.4';
-          lockBtn.style.cursor = 'not-allowed';
-        }
-        updateRowLockIcon(branchId, tcId, false);
-        updateRowStatus(branchId, tcId, false);
-      }
-    }
-  });
-
-  recalculateEqualSplit(branchId);
-}
-
-/**
- * Form submit helper for top toolbar save button
- */
-function submitAllocationForm(branchId) {
-  const form = document.getElementById(`form-branch-${branchId}`);
-  if (form) {
-    clearDirty();
-    form.submit();
-  }
-}
-
-/**
- * Copy Split Modal functions
- */
-function openCopySourcesModal() {
-  const modal = document.getElementById('copySourcesModal');
-  if (modal) modal.style.display = 'flex';
-}
-
-function closeCopySourcesModal() {
-  const modal = document.getElementById('copySourcesModal');
-  if (modal) modal.style.display = 'none';
-}
-
-function toggleAllCopyTargets() {
-  const cbs = document.querySelectorAll('.copy-target-cb');
-  const allChecked = Array.from(cbs).every(cb => cb.checked);
-  cbs.forEach(cb => { cb.checked = !allChecked; });
-  const btn = document.getElementById('toggleCopyTargetsBtn');
-  if (btn) btn.textContent = allChecked ? 'Select All' : 'Deselect All';
-  const err = document.getElementById('copyTargetError');
-  if (err && !allChecked) err.style.display = 'none';
-}
-
-/**
- * Retry Assignments Modal functions
- */
-function closeRetryModal() {
-  const modal = document.getElementById('retryAssignmentsModal');
-  if (modal) modal.style.display = 'none';
-}
-
-/**
- * Add / Edit telecaller single modal functions
- */
-function openAddModal() {
-  document.getElementById('modalTitle').textContent = 'Add Telecaller Assignment';
-  document.getElementById('modalPercentageInput').value = '50';
-  filterTelecallersByBranch();
-
-  const cbs = document.querySelectorAll('.modal-source-cb');
-  cbs.forEach(cb => { cb.checked = false; });
-  const btn = document.getElementById('toggleAllSourcesBtn');
-  if (btn) btn.textContent = 'Select All';
-  const err = document.getElementById('sourceErrorMsg');
-  if (err) err.style.display = 'none';
-
-  document.getElementById('leadSetupModal').style.display = 'flex';
-}
-
-function editSetupModal(setupId, branchId, telecallerId, pct, source) {
-  document.getElementById('modalTitle').textContent = 'Edit Telecaller Assignment';
-  document.getElementById('modalBranchSelect').value = branchId;
-  filterTelecallersByBranch();
-  document.getElementById('modalTelecallerSelect').value = telecallerId;
-  document.getElementById('modalPercentageInput').value = pct || '0';
-
-  const cbs = document.querySelectorAll('.modal-source-cb');
-  cbs.forEach(cb => { cb.checked = false; });
-  if (source) {
-    const cleanSource = source.trim().toLowerCase();
-    cbs.forEach(cb => {
-      if (cb.value.trim().toLowerCase() === cleanSource) {
-        cb.checked = true;
-      }
-    });
-  }
-  const btn = document.getElementById('toggleAllSourcesBtn');
-  if (btn) {
-    const allChecked = Array.from(cbs).every(cb => cb.checked);
-    btn.textContent = allChecked ? 'Deselect All' : 'Select All';
-  }
-  const err = document.getElementById('sourceErrorMsg');
-  if (err) err.style.display = 'none';
-
-  document.getElementById('leadSetupModal').style.display = 'flex';
-}
-
-function closeModal() {
-  document.getElementById('leadSetupModal').style.display = 'none';
-}
-
-function filterTelecallersByBranch() {
-  const branchSelect = document.getElementById('modalBranchSelect');
-  const branchId = branchSelect ? branchSelect.value : '';
-  const selectedText = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].text : '';
-  const isCentral = selectedText.includes('Centralized') || branchId === 'centralized';
-  const tcSelect = document.getElementById('modalTelecallerSelect');
-  const options = tcSelect ? tcSelect.querySelectorAll('option') : [];
-
-  options.forEach(opt => {
-    if (!opt.value) return;
-    const optBranch = opt.getAttribute('data-branch');
-    if (isCentral || !branchId || !optBranch || optBranch === branchId) {
-      opt.style.display = 'block';
-    } else {
-      opt.style.display = 'none';
-    }
-  });
+ if (saveBtn) {
+ saveBtn.disabled = !isValid;
+ }
 }
 
 function toggleAllModalSources() {
-  const cbs = document.querySelectorAll('.modal-source-cb');
-  const allChecked = Array.from(cbs).every(cb => cb.checked);
-  cbs.forEach(cb => { cb.checked = !allChecked; });
-  const btn = document.getElementById('toggleAllSourcesBtn');
-  if (btn) btn.textContent = allChecked ? 'Select All' : 'Deselect All';
-  const err = document.getElementById('sourceErrorMsg');
-  if (err && !allChecked) err.style.display = 'none';
+ const cbs = document.querySelectorAll('.modal-source-cb');
+ const allChecked = Array.from(cbs).every(cb =>cb.checked);
+ cbs.forEach(cb => { cb.checked = !allChecked; });
+ const btn = document.getElementById('toggleAllSourcesBtn');
+ if (btn) btn.textContent = allChecked ? 'Select All' : 'Deselect All';
+ const err = document.getElementById('sourceErrorMsg');
+ if (err && !allChecked) err.style.display = 'none';
 }
 
+function openAddModal() {
+ document.getElementById('modalTitle').textContent = 'Add Telecaller Assignment';
+ document.getElementById('modalPercentageInput').value = '50';
+ filterTelecallersByBranch();
+ 
+ const cbs = document.querySelectorAll('.modal-source-cb');
+ cbs.forEach(cb => { cb.checked = false; });
+ const btn = document.getElementById('toggleAllSourcesBtn');
+ if (btn) btn.textContent = 'Select All';
+ const err = document.getElementById('sourceErrorMsg');
+ if (err) err.style.display = 'none';
+ 
+ document.getElementById('leadSetupModal').style.display = 'flex';
+}
+
+function editSetupModal(setupId, branchId, telecallerId, pct, source) {
+ document.getElementById('modalTitle').textContent = 'Edit Telecaller Assignment';
+ document.getElementById('modalBranchSelect').value = branchId;
+ filterTelecallersByBranch();
+ document.getElementById('modalTelecallerSelect').value = telecallerId;
+ document.getElementById('modalPercentageInput').value = pct || '0';
+ 
+ // Set source checkboxes
+ const cbs = document.querySelectorAll('.modal-source-cb');
+ cbs.forEach(cb => { cb.checked = false; });
+ if (source) {
+ const cleanSource = source.trim().toLowerCase();
+ cbs.forEach(cb => {
+ if (cb.value.trim().toLowerCase() === cleanSource) {
+ cb.checked = true;
+ }
+ });
+ }
+ const btn = document.getElementById('toggleAllSourcesBtn');
+ if (btn) {
+ const allChecked = Array.from(cbs).every(cb =>cb.checked);
+ btn.textContent = allChecked ? 'Deselect All' : 'Select All';
+ }
+ const err = document.getElementById('sourceErrorMsg');
+ if (err) err.style.display = 'none';
+ 
+ document.getElementById('leadSetupModal').style.display = 'flex';
+}
+
+function closeModal() {
+ document.getElementById('leadSetupModal').style.display = 'none';
+}
+
+function filterTelecallersByBranch() {
+ const branchSelect = document.getElementById('modalBranchSelect');
+ const branchId = branchSelect ? branchSelect.value : '';
+ const selectedText = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].text : '';
+ const isCentral = selectedText.includes('Centralized') || branchId === 'centralized';
+ const tcSelect = document.getElementById('modalTelecallerSelect');
+ const options = tcSelect.querySelectorAll('option');
+
+ options.forEach(opt => {
+ if (!opt.value) return;
+ const optBranch = opt.getAttribute('data-branch');
+ if (isCentral || !branchId || !optBranch || optBranch === branchId) {
+ opt.style.display = 'block';
+ } else {
+ opt.style.display = 'none';
+ }
+ });
+}
+
+// Validate that at least one lead source checkbox is selected
+document.addEventListener('DOMContentLoaded', function() {
+ const form = document.getElementById('leadSetupForm');
+ if (form) {
+ form.addEventListener('submit', function(e) {
+ const checkedSources = document.querySelectorAll('.modal-source-cb:checked');
+ if (checkedSources.length === 0) {
+ e.preventDefault();
+ const err = document.getElementById('sourceErrorMsg');
+ if (err) err.style.display = 'block';
+ return false;
+ }
+ });
+ }
+
+ // Hide error message when any checkbox is ticked
+ document.querySelectorAll('.modal-source-cb').forEach(cb => {
+ cb.addEventListener('change', function() {
+ const err = document.getElementById('sourceErrorMsg');
+ if (err && document.querySelectorAll('.modal-source-cb:checked').length >0) {
+ err.style.display = 'none';
+ }
+ });
+ });
+});
+
 window.addEventListener('click', function(e) {
-  const modal1 = document.getElementById('leadSetupModal');
-  if (e.target === modal1) closeModal();
-  const modal2 = document.getElementById('copySourcesModal');
-  if (e.target === modal2) closeCopySourcesModal();
-  const modal3 = document.getElementById('retryAssignmentsModal');
-  if (e.target === modal3) closeRetryModal();
+ const modal = document.getElementById('leadSetupModal');
+ if (e.target === modal) closeModal();
 });
 </script>
 {% endblock %}

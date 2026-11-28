@@ -3,7 +3,7 @@ import io
 import openpyxl
 from django.db import transaction
 from django.db.models import Count
-from .models import Lead, LeadStatus, LeadImportHistory, normalize_lead_source
+from .models import Lead, LeadStatus, LeadImportHistory
 from accounts.models import User, UserRole
 from lead_channels.models import Channel
 from products.models import Product
@@ -99,52 +99,23 @@ def import_leads_file(uploaded_file, user):
                 else:
                     branch_obj = default_branch
 
-                raw_platform = clean_row.get('platform', '')
-                raw_source = clean_row.get('source', '')
-                normalized_platform = ''
-                if raw_platform:
-                    rp = raw_platform.lower()
-                    if rp in ('fb', 'facebook'):
-                        normalized_platform = 'facebook'
-                    elif rp in ('ig', 'instagram'):
-                        normalized_platform = 'instagram'
-                    elif rp in ('wa', 'whatsapp'):
-                        normalized_platform = 'whatsapp'
-                    elif rp in ('google', 'gads'):
-                        normalized_platform = 'google'
-                    elif rp in ('direct', 'walk-in', 'walkin'):
-                        normalized_platform = 'direct'
-                    elif rp in ('unknown',):
-                        normalized_platform = 'unknown'
-                    else:
-                        normalized_platform = 'other'
-
-                normalized_source = normalize_lead_source(raw_source) if raw_source else ''
-                if not normalized_source and normalized_platform in ('facebook', 'instagram'):
-                    normalized_source = 'Meta'
-
                 # Check duplicate in DB (by normalized phone, email, or details)
                 search_phone = clean_phone if (clean_phone and not clean_phone.startswith('NoPhone-')) else phone
                 existing_lead = find_duplicate_lead(phone=search_phone, email=clean_email or email, name=name)
 
                 if existing_lead:
                     # Update existing lead and register branch without creating duplicate
-                    dup_incoming = {
-                        'name': name,
-                        'phone': search_phone,
-                        'email': clean_email or email,
-                        'alternate_phone': clean_alt_phone or alt_phone,
-                        'product': product_obj,
-                        'channel': channel_obj,
-                        'notes': notes,
-                    }
-                    if normalized_platform:
-                        dup_incoming['platform'] = normalized_platform
-                    if normalized_source:
-                        dup_incoming['source'] = normalized_source
                     handle_incoming_lead_duplicate(
                         existing_lead=existing_lead,
-                        incoming_data=dup_incoming,
+                        incoming_data={
+                            'name': name,
+                            'phone': search_phone,
+                            'email': clean_email or email,
+                            'alternate_phone': clean_alt_phone or alt_phone,
+                            'product': product_obj,
+                            'channel': channel_obj,
+                            'notes': notes
+                        },
                         branch=branch_obj,
                         user=user,
                         source_label=f"File Import '{filename}'"
@@ -165,10 +136,6 @@ def import_leads_file(uploaded_file, user):
                     status=LeadStatus.NEW,
                     notes=notes
                 )
-                if normalized_platform:
-                    new_lead.platform = normalized_platform
-                if normalized_source:
-                    new_lead.source = normalized_source
 
                 if user.is_telecaller_user:
                     new_lead.assigned_telecaller = assigned_telecaller

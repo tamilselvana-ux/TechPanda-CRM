@@ -50,12 +50,14 @@
         <span style="color: var(--text-muted);">Recording:</span>
         <div>
           {% if call.recording_url %}
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <audio controls src="{{ call.recording_url }}" style="height: 32px; max-width: 100%;">
-              Your browser does not support the audio element.
-            </audio>
-            <a href="{{ call.recording_url }}" target="_blank" class="btn btn-secondary btn-sm">[ Play Recording ]</a>
-          </div>
+            {% if call.recording_url|slice:":1" == "/" or call.recording_url|slice:":4" == "http" %}
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <audio controls src="{{ call.recording_url }}" style="height: 32px; max-width: 100%;">
+                Your browser does not support the audio element.
+              </audio>
+              <a href="{{ call.recording_url }}" target="_blank" class="btn btn-secondary btn-sm">[ Play Recording ]</a>
+            </div>
+            {% endif %}
           {% else %}
           <span style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No recording available</span>
           {% endif %}

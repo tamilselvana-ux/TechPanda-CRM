@@ -23,7 +23,7 @@ SECRET = "app-secret-123"
 FB = dict(FB_VERIFY_TOKEN="verify-me", FB_APP_SECRET=SECRET, FB_PAGE_TOKEN="page-token", FB_PAGE_ID="PAGE1")
 
 
-def graph_lead(lead_id="L1", phone="+91 98765 11111", name="Priya S", extra=None, form_id="F1", email=None, platform="fb"):
+def graph_lead(lead_id="L1", phone="+91 98765 11111", name="Priya S", extra=None, form_id="F1", email=None):
     lead_email = email if email is not None else (f"{lead_id.lower()}@example.com" if lead_id != "L1" else "priya@example.com")
     fields = [{"name": "full_name", "values": [name]},
               {"name": "phone_number", "values": [phone]},
@@ -31,7 +31,7 @@ def graph_lead(lead_id="L1", phone="+91 98765 11111", name="Priya S", extra=None
     for k, v in (extra or {}).items():
         fields.append({"name": k, "values": [v]})
     return {"id": lead_id, "created_time": "2026-10-10T09:30:00+0000", "field_data": fields,
-            "form_id": form_id, "ad_id": "AD1", "ad_name": "DS Oct", "campaign_name": "Admissions Oct", "platform": platform}
+            "form_id": form_id, "ad_id": "AD1", "ad_name": "DS Oct", "campaign_name": "Admissions Oct"}
 
 
 def fake_graph(leads, form_name="Data Science Enquiry"):
@@ -93,12 +93,12 @@ class FacebookToCRMTests(TestCase):
         self.assertEqual(lead.phone, "9876511111")
         self.assertEqual(lead.name, "Priya S")
         self.assertEqual(lead.email, "priya@example.com")
-        self.assertEqual(lead.source, "Meta")
-        self.assertEqual(lead.platform, "facebook")
+        self.assertEqual(lead.source, "Facebook")
+        self.assertEqual(lead.channel, Channel.objects.get(name="Facebook"))
         self.assertEqual(lead.branch, self.velachery)
         self.assertEqual(lead.product, self.product)
         self.assertEqual(lead.assigned_telecaller, self.tc)
-        self.assertIn("Meta Lead Ad", lead.notes)
+        self.assertIn("Facebook Lead Ad", lead.notes)
         self.assertIn("Campaign: Admissions Oct", lead.notes)
 
         # Facebook re-sends the same lead: nothing duplicated
@@ -111,7 +111,7 @@ class FacebookToCRMTests(TestCase):
         with patch("fb_leads.facebook._get", side_effect=fake_graph([graph_lead()])):
             r = self.post_lead(url=reverse("meta_webhook_endpoint"))
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(Lead.objects.filter(phone="9876511111", source="Meta").exists())
+        self.assertTrue(Lead.objects.filter(phone="9876511111", source="Facebook").exists())
 
     def test_unsigned_or_unconfigured_webhook_is_refused(self):
         body = b'{"entry": []}'
@@ -174,7 +174,7 @@ class FacebookToCRMTests(TestCase):
                 patch("fb_leads.views.subscribe_page", return_value=True):
             r = self.client.post(reverse("fb_leads:facebook_leads_sync"))
         self.assertEqual(r.status_code, 302)
-        self.assertEqual(Lead.objects.filter(source="Meta").count(), 2)
+        self.assertEqual(Lead.objects.filter(source="Facebook").count(), 2)
         page = self.client.get(reverse("fb_leads:facebook_leads"))
         self.assertContains(page, "Arun")
         self.assertContains(page, "New lead")
@@ -186,7 +186,7 @@ class FacebookToCRMTests(TestCase):
         out = StringIO()
         call_command("sync_fb_leads", "--crm-only", stdout=out)
         self.assertIn("1 Facebook lead(s) added to the CRM", out.getvalue())
-        self.assertEqual(FacebookLead.objects.get().lead.source, "Meta")
+        self.assertEqual(FacebookLead.objects.get().lead.source, "Facebook")
 
     def test_lead_page_shows_facebook_form(self):
         with patch("fb_leads.facebook._get", side_effect=fake_graph([graph_lead(extra={"preferred_branch": "Velachery"})])):

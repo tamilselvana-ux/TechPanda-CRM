@@ -4,7 +4,6 @@ Provides robust, reproducible cleaning of phone numbers and email addresses.
 """
 import re
 from typing import Optional
-from django.conf import settings
 
 
 def normalize_phone_number(raw_phone: Optional[str]) -> Optional[str]:
@@ -78,12 +77,9 @@ def normalize_email(raw_email: Optional[str]) -> Optional[str]:
 
     # Reject common dummy placeholders
     dummy_patterns = [
-        'noemail', 'na@', 'none@', 'null@', 'nil@', 'notgiven', 'noreply@', 'dummy@'
+        'noemail', 'na@', 'none@', 'test@', 'test.com', 'example.com',
+        'null@', 'nil@', 'notgiven', 'noreply@'
     ]
-    import sys
-    is_testing = 'test' in sys.argv or getattr(settings, 'TESTING', False)
-    if not is_testing:
-        dummy_patterns.extend(['test@', 'test.com', 'example.com'])
     if any(p in email for p in dummy_patterns):
         return None
 
