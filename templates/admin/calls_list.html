@@ -142,9 +142,7 @@
           <td style="text-align: center;"><span class="badge badge-completed">{{ c.call_status }}</span></td>
           <td style="text-align: center;">
             {% if c.recording_url %}
-              {% if c.recording_url|slice:":1" == "/" or c.recording_url|slice:":4" == "http" %}
-              <a href="{{ c.recording_url }}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.75rem;">Play</a>
-              {% endif %}
+            <a href="{{ c.recording_url }}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 0.75rem;">Play</a>
             {% else %}
             <span style="color: var(--text-muted); font-size: 0.75rem; font-style: italic;">No recording</span>
             {% endif %}

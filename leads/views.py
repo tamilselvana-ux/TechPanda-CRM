@@ -6354,261 +6354,301 @@ def admin_lead_setup(request):
 
 
         # 2. Strict Branch & Source Allocation (Hierarchy: Branch -> Lead Source -> Eligible Telecallers -> 100% Allocation)
-
         elif action == 'save_branch_allocation':
-
             branch_id = request.POST.get('branch_id')
-
             source = request.POST.get('source', '').strip()
-
             if not branch_id or not str(branch_id).isdigit():
-
                 err_msg = "Please select a valid branch."
-
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-
                     return JsonResponse({'success': False, 'error': err_msg}, status=400)
-
                 messages.error(request, err_msg)
-
                 return redirect('admin_lead_setup')
 
-
-
             branch = get_object_or_404(Branch, pk=int(branch_id))
-
             accessible_bids = get_accessible_branch_ids(request.user)
-
             if not request.user.is_admin_user and branch.id not in accessible_bids:
-
                 err_msg = "Access denied: You do not have permission to manage lead allocation for this branch."
-
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-
                     return JsonResponse({'success': False, 'error': err_msg}, status=403)
-
                 messages.error(request, err_msg)
-
                 return redirect('admin_lead_setup')
 
             from .models import normalize_lead_source, CANONICAL_LEAD_SOURCES, LeadAllocationConfigAudit
-
             norm_source = normalize_lead_source(source) or 'WhatsApp'
-
-
+            is_central_branch = (branch.name == 'Centralized (All Branches)')
 
             # Parse checked telecallers
-
             active_tc_ids = []
-
             for raw_val in request.POST.getlist('active_telecallers'):
-
                 if str(raw_val).isdigit():
-
                     active_tc_ids.append(int(raw_val))
 
-
-
             for k in request.POST.keys():
-
                 if k.startswith('active_tc_') and request.POST.get(k) in ['1', 'true', 'on', 'checked']:
-
                     tc_part = k.replace('active_tc_', '')
-
                     if tc_part.isdigit() and int(tc_part) not in active_tc_ids:
-
                         active_tc_ids.append(int(tc_part))
 
-
-
+            # Case: Zero telecallers checked (Source unallocated / 0%)
             if not active_tc_ids:
-
-                err_msg = f"No telecallers selected for branch '{branch.name}' (Source: {norm_source}). At least one telecaller must be selected with 100% total allocation."
-
+                with transaction.atomic():
+                    prev_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values(
+                        'telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_locked', 'is_active'
+                    ))
+                    TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).update(
+                        assignment_percentage=0, is_locked=False, is_active=False, lead_count=0
+                    )
+                    new_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values(
+                        'telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_locked', 'is_active'
+                    ))
+                    LeadAllocationConfigAudit.objects.create(
+                        branch=branch,
+                        source=norm_source,
+                        changed_by=request.user,
+                        previous_config=prev_configs,
+                        new_config=new_configs,
+                        notes=f"Source unallocated (0%) for {branch.name} - {norm_source}"
+                    )
+                msg = f"Allocation cleared for branch '{branch.name}' (Source: {norm_source}). Source is unallocated (0%)."
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-
-                    return JsonResponse({'success': False, 'error': err_msg}, status=400)
-
-                messages.error(request, err_msg)
-
+                    return JsonResponse({'success': True, 'message': msg, 'total_percentage': 0, 'unassigned_leads_count': 0})
+                messages.warning(request, msg)
                 return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
 
-
-
-            # Parse & validate percentages for checked telecallers
-
+            # Parse & validate active telecallers, percentages and locks
             pct_map = {}
-
+            lock_map = {}
             for tc_id in active_tc_ids:
+                tc = User.objects.filter(id=tc_id, role=UserRole.TELECALLER, is_active=True).first()
+                if not tc:
+                    err_msg = f"Telecaller ID {tc_id} is not an active user with Telecaller role."
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                        return JsonResponse({'success': False, 'error': err_msg}, status=400)
+                    messages.error(request, err_msg)
+                    return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
+
+                if not is_central_branch and tc.branch_id != branch.id:
+                    err_msg = f"Telecaller '{tc.username}' does not belong to branch '{branch.name}'."
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                        return JsonResponse({'success': False, 'error': err_msg}, status=400)
+                    messages.error(request, err_msg)
+                    return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
 
                 pct_val = request.POST.get(f'percentage_{tc_id}') or request.POST.get(f'pct_{tc_id}')
-
-
-
                 if pct_val is None or str(pct_val).strip() == '':
-
                     err_msg = f"Assignment percentage is required for each selected telecaller in branch '{branch.name}' (Source: {norm_source})."
-
                     if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-
                         return JsonResponse({'success': False, 'error': err_msg}, status=400)
-
                     messages.error(request, err_msg)
-
                     return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
-
-
 
                 try:
-
                     pct_int = int(pct_val)
-
-                    if pct_int <= 0 or pct_int > 100:
-
+                    if pct_int < 0 or pct_int > 100:
                         raise ValueError()
-
                     pct_map[tc_id] = pct_int
-
                 except (ValueError, TypeError):
-
-                    err_msg = f"Allocation percentage for selected telecallers must be a number between 1 and 100."
-
+                    err_msg = "Allocation percentage for selected telecallers must be an integer between 0 and 100."
                     if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-
                         return JsonResponse({'success': False, 'error': err_msg}, status=400)
-
                     messages.error(request, err_msg)
-
                     return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
 
-
+                # Lock flag
+                lock_val = request.POST.get(f'is_locked_{tc_id}') or request.POST.get(f'locked_{tc_id}')
+                lock_map[tc_id] = (str(lock_val).lower() in ['1', 'true', 'on'])
 
             total_pct = sum(pct_map.values())
-
             if total_pct != 100:
-
                 err_msg = f"Total allocation for branch '{branch.name}' (Source: {norm_source}) is {total_pct}%. It must equal exactly 100%."
-
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-
                     return JsonResponse({'success': False, 'error': err_msg}, status=400)
-
                 messages.error(request, err_msg)
-
                 return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
 
-
-
             # Atomically save branch allocation for this source
-
+            assigned = 0
             with transaction.atomic():
-
-                is_central_branch = (branch.name == 'Centralized (All Branches)')
-
                 if is_central_branch:
-
                     all_branch_tcs = User.objects.filter(role=UserRole.TELECALLER, is_active=True)
-
                 else:
-
-                    all_branch_tcs = User.objects.filter(role=UserRole.TELECALLER, branch=branch)
+                    all_branch_tcs = User.objects.filter(role=UserRole.TELECALLER, branch=branch, is_active=True)
 
                 existing_setup_tc_ids = TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values_list('telecaller_id', flat=True)
-
                 relevant_tcs = User.objects.filter(
-
                     Q(id__in=all_branch_tcs.values_list('id', flat=True)) |
-
                     Q(id__in=existing_setup_tc_ids) |
-
                     Q(id__in=active_tc_ids)
-
                 ).distinct()
 
-
-
                 # Previous snapshot for audit
-
-                prev_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values('telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_active'))
-
-
-
-                unchecked_tcs = []
+                prev_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values(
+                    'telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_locked', 'is_active'
+                ))
 
                 for tc in relevant_tcs:
-
                     if tc.id in active_tc_ids:
-
                         setup, _ = TelecallerLeadSetup.objects.get_or_create(telecaller=tc, branch=branch, source=norm_source)
-
                         setup.assignment_percentage = pct_map[tc.id]
-
+                        setup.is_locked = lock_map.get(tc.id, False)
                         setup.lead_count = 0
-
                         setup.is_active = True
-
-                        setup.save(update_fields=['assignment_percentage', 'lead_count', 'is_active', 'updated_at'])
-
+                        setup.save(update_fields=['assignment_percentage', 'is_locked', 'lead_count', 'is_active', 'updated_at'])
                     else:
-
                         setup = TelecallerLeadSetup.objects.filter(telecaller=tc, branch=branch, source=norm_source).first()
-
                         if setup:
-
                             setup.assignment_percentage = 0
-
+                            setup.is_locked = False
                             setup.lead_count = 0
-
                             setup.is_active = False
+                            setup.save(update_fields=['assignment_percentage', 'is_locked', 'lead_count', 'is_active', 'updated_at'])
 
-                            setup.save(update_fields=['assignment_percentage', 'lead_count', 'is_active', 'updated_at'])
-
-                        unchecked_tcs.append(tc)
-
-
-
-                new_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values('telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_active'))
-
-
+                new_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source).values(
+                    'telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_locked', 'is_active'
+                ))
 
                 LeadAllocationConfigAudit.objects.create(
-
                     branch=branch,
-
                     source=norm_source,
-
                     changed_by=request.user,
-
                     previous_config=prev_configs,
-
                     new_config=new_configs,
-
                     notes=f"Updated allocation to 100% for {branch.name} - {norm_source}"
-
                 )
 
+                # Optional immediate retry if requested
+                if request.POST.get('auto_retry') in ['1', 'true', 'on']:
+                    from .assignment import apply_branch_lead_distribution
+                    assigned, remaining, dist_msg = apply_branch_lead_distribution(branch=branch, user=request.user, source=norm_source)
 
-
-                # Re-trigger distribution for unallocated leads of this branch & source
-
-                from .assignment import apply_branch_lead_distribution
-
-                assigned, remaining, dist_msg = apply_branch_lead_distribution(branch=branch, user=request.user, source=norm_source)
-
-
+            # Query unassigned leads for this source
+            protected_statuses = [
+                LeadStatus.CONTACTED, LeadStatus.INTERESTED, LeadStatus.FOLLOW_UP,
+                LeadStatus.DEMO_SCHEDULED, LeadStatus.INSTITUTE_VISIT, LeadStatus.CONVERTED,
+                LeadStatus.LOST, LeadStatus.LATER, LeadStatus.DISCUSSION
+            ]
+            unassigned_qs = Lead.objects.exclude(
+                status__in=protected_statuses
+            ).exclude(
+                calls__isnull=False
+            ).exclude(
+                followups__isnull=False
+            ).filter(
+                Q(assigned_telecaller__isnull=True) |
+                Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
+                Q(status=LeadStatus.NEW)
+            )
+            if not is_central_branch:
+                unassigned_qs = unassigned_qs.filter(branch=branch)
+            unassigned_count = unassigned_qs.filter(
+                Q(source__iexact=norm_source) | Q(source__iexact=norm_source.lower())
+            ).distinct().count()
 
             msg = f"Allocation configuration for branch '{branch.name}' (Source: {norm_source}) saved successfully (100%)."
-
             if assigned > 0:
-
                 msg += f" {assigned} lead(s) automatically assigned."
 
             if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
-
-                return JsonResponse({'success': True, 'message': msg})
+                return JsonResponse({
+                    'success': True,
+                    'message': msg,
+                    'unassigned_leads_count': unassigned_count,
+                    'assigned_count': assigned,
+                    'branch_id': branch.id,
+                    'source': norm_source
+                })
 
             messages.success(request, msg)
+            return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}&saved=1&unassigned={unassigned_count}")
 
+        # 2b. Copy current split to other sources
+        elif action == 'copy_split_sources':
+            branch_id = request.POST.get('branch_id')
+            source = request.POST.get('source', '').strip()
+            target_sources = request.POST.getlist('target_sources') or request.POST.getlist('target_sources[]')
+            if not branch_id or not str(branch_id).isdigit():
+                return JsonResponse({'success': False, 'error': 'Invalid branch specified.'}, status=400)
+            branch = get_object_or_404(Branch, pk=int(branch_id))
+            accessible_bids = get_accessible_branch_ids(request.user)
+            if not request.user.is_admin_user and branch.id not in accessible_bids:
+                return JsonResponse({'success': False, 'error': 'Permission denied for this branch.'}, status=403)
+
+            from .models import normalize_lead_source, CANONICAL_LEAD_SOURCES, LeadAllocationConfigAudit
+            norm_source = normalize_lead_source(source) or 'WhatsApp'
+
+            clean_targets = []
+            for ts in target_sources:
+                nts = normalize_lead_source(ts) or ts.strip()
+                if nts and nts != norm_source and nts in CANONICAL_LEAD_SOURCES and nts not in clean_targets:
+                    clean_targets.append(nts)
+
+            if not clean_targets:
+                return JsonResponse({'success': False, 'error': 'Please select at least one valid target lead source.'}, status=400)
+
+            current_setups = list(TelecallerLeadSetup.objects.filter(branch=branch, source=norm_source, is_active=True).select_related('telecaller'))
+            current_total = sum(s.assignment_percentage for s in current_setups)
+            if current_total != 100 and len(current_setups) > 0:
+                return JsonResponse({'success': False, 'error': f"Source '{norm_source}' currently has total allocation of {current_total}%. Must be 100% to copy."}, status=400)
+
+            with transaction.atomic():
+                for target_src in clean_targets:
+                    prev_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=target_src).values(
+                        'telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_locked', 'is_active'
+                    ))
+
+                    TelecallerLeadSetup.objects.filter(branch=branch, source=target_src).update(
+                        assignment_percentage=0, is_active=False, is_locked=False, lead_count=0
+                    )
+
+                    for s in current_setups:
+                        target_s, _ = TelecallerLeadSetup.objects.get_or_create(
+                            telecaller=s.telecaller, branch=branch, source=target_src
+                        )
+                        target_s.assignment_percentage = s.assignment_percentage
+                        target_s.is_locked = s.is_locked
+                        target_s.is_active = True
+                        target_s.lead_count = 0
+                        target_s.save(update_fields=['assignment_percentage', 'is_locked', 'is_active', 'lead_count', 'updated_at'])
+
+                    new_configs = list(TelecallerLeadSetup.objects.filter(branch=branch, source=target_src).values(
+                        'telecaller_id', 'telecaller__username', 'assignment_percentage', 'is_locked', 'is_active'
+                    ))
+
+                    LeadAllocationConfigAudit.objects.create(
+                        branch=branch,
+                        source=target_src,
+                        changed_by=request.user,
+                        previous_config=prev_configs,
+                        new_config=new_configs,
+                        notes=f"Copied allocation configuration from {norm_source} to {target_src}"
+                    )
+
+            msg = f"Allocation split copied from '{norm_source}' to {len(clean_targets)} source(s): {', '.join(clean_targets)}."
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                return JsonResponse({'success': True, 'message': msg, 'target_sources': clean_targets})
+            messages.success(request, msg)
+            return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
+
+        # 2c. Retry assignments for unassigned leads of this source
+        elif action == 'retry_assignments':
+            branch_id = request.POST.get('branch_id')
+            source = request.POST.get('source', '').strip()
+            if not branch_id or not str(branch_id).isdigit():
+                return JsonResponse({'success': False, 'error': 'Invalid branch specified.'}, status=400)
+            branch = get_object_or_404(Branch, pk=int(branch_id))
+            accessible_bids = get_accessible_branch_ids(request.user)
+            if not request.user.is_admin_user and branch.id not in accessible_bids:
+                return JsonResponse({'success': False, 'error': 'Permission denied for this branch.'}, status=403)
+
+            from .models import normalize_lead_source
+            norm_source = normalize_lead_source(source) or 'WhatsApp'
+
+            from .assignment import apply_branch_lead_distribution
+            assigned, remaining, dist_msg = apply_branch_lead_distribution(branch=branch, user=request.user, source=norm_source)
+            msg = f"Retry assignments completed for {branch.name} ({norm_source}): {assigned} lead(s) assigned. {remaining} unassigned remaining."
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                return JsonResponse({'success': True, 'message': msg, 'assigned': assigned, 'remaining': remaining})
+            messages.success(request, msg)
             return redirect(f"{reverse('admin_lead_setup')}?branch_id={branch.id}&source={norm_source}")
 
 
@@ -7045,105 +7085,59 @@ def admin_lead_setup(request):
             setup_by_tc = {s.telecaller_id: s for s in current_src_setups}
 
             if is_selected_central:
-
                 branch_tcs = User.get_telecallers_queryset().filter(is_active=True).select_related('branch', 'counselor').order_by('branch__name', 'first_name', 'username')
-
+                inactive_tcs_count = User.objects.filter(role=UserRole.TELECALLER, is_active=False).count()
             else:
-
-                branch_tcs = User.get_telecallers_queryset().filter(Q(branch=selected_branch) | Q(id__in=setup_by_tc.keys())).distinct()
-
-
+                branch_tcs = User.get_telecallers_queryset().filter(branch=selected_branch, is_active=True).select_related('counselor').order_by('first_name', 'username')
+                inactive_tcs_count = User.objects.filter(role=UserRole.TELECALLER, branch=selected_branch, is_active=False).count()
 
             # Available unallocated leads for this branch and source
-
             if is_selected_central:
-
                 current_source_leads_count = Lead.objects.filter(
-
                     Q(source__iexact=selected_source) | Q(source__iexact=selected_source.lower())
-
                 ).exclude(
-
                     status__in=protected_statuses
-
                 ).exclude(
-
                     calls__isnull=False
-
                 ).exclude(
-
                     followups__isnull=False
-
                 ).filter(
-
                     Q(assigned_telecaller__isnull=True) |
-
                     Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
-
                     Q(status=LeadStatus.NEW)
-
                 ).distinct().count()
-
             else:
-
                 current_source_leads_count = Lead.objects.filter(branch=selected_branch).filter(
-
                     Q(source__iexact=selected_source) | Q(source__iexact=selected_source.lower())
-
                 ).exclude(
-
                     status__in=protected_statuses
-
                 ).exclude(
-
                     calls__isnull=False
-
                 ).exclude(
-
                     followups__isnull=False
-
                 ).filter(
-
                     Q(assigned_telecaller__isnull=True) |
-
                     Q(assignment_status__in=['Pending Assignment', 'Unassigned']) |
-
                     Q(status=LeadStatus.NEW)
-
                 ).distinct().count()
-
-
 
             tc_items = []
-
             active_sum = 0
-
             for tc in branch_tcs:
-
                 s = setup_by_tc.get(tc.id)
-
                 is_checked = (s.is_active if s else False)
-
                 pct = (s.assignment_percentage if (s and s.is_active) else 0)
-
+                is_locked = (s.is_locked if s else False)
                 if is_checked:
-
                     active_sum += pct
-
                 expected_leads = round(current_source_leads_count * (pct / 100.0)) if (is_checked and pct > 0) else 0
-
                 tc_items.append({
-
                     'telecaller': tc,
-
                     'setup': s,
-
                     'is_active': is_checked,
-
+                    'is_locked': is_locked,
                     'percentage': pct,
-
                     'expected_leads': expected_leads,
-
                 })
 
 
@@ -7261,6 +7255,8 @@ def admin_lead_setup(request):
                 'remaining_percentage': max(0, 100 - active_sum) if active_sum <= 100 else 0,
 
                 'exceeded_percentage': max(0, active_sum - 100) if active_sum > 100 else 0,
+
+                'inactive_tcs_count': inactive_tcs_count,
 
             }
 

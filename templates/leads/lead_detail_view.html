@@ -226,6 +226,26 @@
  <div class="lead-details-body">
  <!-- TAB 1: OVERVIEW & FIELDS -->
  <div id="tab-details" class="ldm-tab-pane active" role="tabpanel">
+ {% if smart_pitch %}
+ <div class="ldm-precall-pitch-card" style="background: linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(99,102,241,0.04) 100%); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+ <div style="display: flex; align-items: center; gap: 12px;">
+ <div style="width: 34px; height: 34px; border-radius: 8px; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.25);">
+ 
+ </div>
+ <div>
+ <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; margin-bottom: 2px;">
+ SUGGESTED DECISION-SUPPORT · AUTO-DETECTED LEAD CONTEXT
+ </div>
+ <div style="font-size: 0.88rem; color: #1e293b; font-weight: 500;">
+ {{ smart_pitch|safe }}
+ </div>
+ </div>
+ </div>
+ <div style="display: flex; gap: 6px; flex-shrink: 0;">
+ <span style="font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: rgba(37,99,235,0.12); color: #1d4ed8;">Suggested · Decision Support</span>
+ </div>
+ </div>
+ {% endif %}
  <div class="lead-fields-grid">
 
  <!-- COLUMN 1 (LEFT COLUMN) -->
@@ -711,7 +731,7 @@
  <div style="margin-top: 4px; color: var(--ld-text-main);">{{ c.notes }}</div>
  {% endif %}
  {% with rec=c.drive_recordings.first %}
- {% if rec and rec.has_audio %}
+ {% if rec %}
  <div style="margin-top: 8px;">
  <audio controls preload="none" src="{% url 'drive_stream_recording' rec.id %}" style="height: 28px; width: 220px; vertical-align: middle;"></audio>
  </div>
@@ -843,8 +863,10 @@
  <td>{{ c.notes|default:"-" }}</td>
  <td>
  {% with rec=c.drive_recordings.first %}
- {% if rec and rec.has_audio %}
+ {% if rec %}
  <audio controls preload="none" src="{% url 'drive_stream_recording' rec.id %}" style="height: 30px; width: 160px; vertical-align: middle;"></audio>
+ {% else %}
+ <span style="color: #94a3b8; font-size: 0.78rem;">No Recording</span>
  {% endif %}
  {% endwith %}
  </td>
@@ -934,11 +956,9 @@
  <td><strong>{% if r.telecaller %}{{ r.telecaller.get_full_name|default:r.telecaller.username }}{% else %}Telecaller{% endif %}</strong></td>
  <td><code>{{ r.duration|default:"-" }}</code></td>
  <td style="min-width: 200px;">
- {% if r.has_audio %}
  <audio controls preload="none" src="{% url 'drive_stream_recording' r.id %}" style="height: 32px; width: 220px; vertical-align: middle;">
  Your browser does not support audio playback.
  </audio>
- {% endif %}
  </td>
  <td>
  <span class="badge" style="{% if r.match_status == 'MATCHED' %}background: #dcfce7; color: #166534;{% else %}background: #f1f5f9; color: #475569;{% endif %} font-size: 0.75rem;">

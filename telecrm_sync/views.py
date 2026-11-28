@@ -4,15 +4,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
-from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 from django.views.decorators.http import require_POST
-from activities.models import Activity
-from leads.models import LeadStatus, LeadStatusHistory
-from .models import SyncConflict, TeleCRMAction, TeleCRMLead, TeleCRMStatusMap, TeleCRMSyncRun, TeleCRMUser
+from leads.models import LeadStatus
+from .models import TeleCRMAction, TeleCRMLead, TeleCRMStatusMap, TeleCRMSyncRun, TeleCRMUser
 
 logger = logging.getLogger("telecrm_sync")
 User = get_user_model()
@@ -45,30 +41,17 @@ def telecrm_sync_dashboard(request):
     total_leads_mirrored = TeleCRMLead.objects.count()
     total_actions_mirrored = TeleCRMAction.objects.count()
 
-    # Collect errors from recent runs (always include latest/failed runs even if errors JSON is empty)
+    # Collect errors from recent runs
     recent_errors = []
     for r in recent_runs:
         if r.errors:
             for err in r.errors:
-                if isinstance(err, dict):
-                    ts = err.get("timestamp") or (r.finished_at or r.started_at).strftime("%Y-%m-%d %H:%M:%S")
-                    detail = err.get("detail") or err.get("error") or str(err)
-                else:
-                    ts = (r.finished_at or r.started_at).strftime("%Y-%m-%d %H:%M:%S")
-                    detail = str(err)
                 recent_errors.append({
                     "run_id": r.id,
                     "kind": r.kind,
-                    "timestamp": ts,
-                    "detail": detail,
+                    "timestamp": err.get("timestamp") or r.started_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "detail": err.get("detail") or err.get("error") or str(err)
                 })
-        elif r.status == "FAILED":
-            recent_errors.append({
-                "run_id": r.id,
-                "kind": r.kind,
-                "timestamp": (r.finished_at or r.started_at).strftime("%Y-%m-%d %H:%M:%S"),
-                "detail": "Run marked FAILED without a recorded exception (process interrupted/terminated or timed out).",
-            })
 
     status_mappings = TeleCRMStatusMap.objects.all().order_by("telecrm_status_name")
     unmapped_statuses_count = status_mappings.filter(crm_status=LeadStatus.NEW).count()
@@ -160,119 +143,3 @@ def telecrm_update_user_map(request):
         messages.info(request, f"User mapping cleared for {mapping.name or mapping.email}")
 
     return redirect("admin_telecrm_sync_dashboard")
-
-
-def can_view_sync_conflicts(user) -> bool:
-    """Allows Superadmin, Admin, Sales Head, and Branch Head."""
-    return bool(
-        user.is_authenticated
-        and (user.is_superuser or user.role in ("SUPERADMIN", "ADMIN", "SALES_HEAD", "BRANCH_HEAD"))
-    )
-
-
-def _conflict_queryset_for_user(user):
-    qs = SyncConflict.objects.select_related("lead", "lead__branch", "telecrm_lead", "resolved_by")
-    if user.is_superuser or user.role in ("SUPERADMIN", "ADMIN", "SALES_HEAD"):
-        return qs
-    if user.role == "BRANCH_HEAD":
-        if user.branch_id:
-            return qs.filter(lead__branch_id=user.branch_id)
-        return qs.none()
-    return qs.none()
-
-
-@login_required
-def telecrm_sync_conflicts(request):
-    """
-    Lists TeleCRM <-> CRM status conflicts for review and one-click resolution.
-    Scoped to Admin/Sales Head (all branches) and Branch Head (own branch only).
-    """
-    if not can_view_sync_conflicts(request.user):
-        raise PermissionDenied("You do not have permission to view Sync Conflicts.")
-
-    status_filter = request.GET.get("status", "OPEN").upper()
-    base_qs = _conflict_queryset_for_user(request.user)
-
-    open_count = base_qs.filter(status=SyncConflict.STATUS_OPEN).count()
-    resolved_count = base_qs.exclude(status=SyncConflict.STATUS_OPEN).count()
-
-    if status_filter in (SyncConflict.STATUS_OPEN, SyncConflict.STATUS_KEPT_CRM, SyncConflict.STATUS_USED_TELECRM):
-        conflicts_qs = base_qs.filter(status=status_filter)
-    else:
-        conflicts_qs = base_qs
-        status_filter = "ALL"
-
-    context = {
-        "conflicts": conflicts_qs[:200],
-        "status_filter": status_filter,
-        "open_count": open_count,
-        "resolved_count": resolved_count,
-        "is_branch_scoped": request.user.role == "BRANCH_HEAD" and not request.user.is_superuser,
-    }
-    return render(request, "admin/telecrm_conflicts.html", context)
-
-
-@login_required
-@require_POST
-def telecrm_resolve_conflict(request, conflict_id):
-    """
-    Resolves a SyncConflict with either 'keep_crm' or 'use_telecrm',
-    updates Lead.status, writes LeadStatusHistory, and logs an Activity audit entry.
-    """
-    if not can_view_sync_conflicts(request.user):
-        raise PermissionDenied("You do not have permission to resolve Sync Conflicts.")
-
-    conflict = get_object_or_404(_conflict_queryset_for_user(request.user), id=conflict_id)
-    decision = (request.POST.get("decision") or "").strip().lower()
-    if decision not in ("keep_crm", "use_telecrm"):
-        messages.error(request, "Invalid conflict resolution decision.")
-        return redirect("telecrm_sync_conflicts")
-
-    with transaction.atomic():
-        lead = conflict.lead
-        prev_status = lead.status
-        if decision == "keep_crm":
-            chosen_status = conflict.crm_status
-            new_state = SyncConflict.STATUS_KEPT_CRM
-            source_tag = "CRM"
-            action_label = "Keep CRM"
-        else:
-            chosen_status = conflict.telecrm_status
-            new_state = SyncConflict.STATUS_USED_TELECRM
-            source_tag = "TeleCRM"
-            action_label = "Use TeleCRM"
-
-        if lead.status != chosen_status:
-            lead.status = chosen_status
-            lead.save(update_fields=["status", "updated_at"])
-            LeadStatusHistory.objects.create(
-                lead=lead,
-                old_status=prev_status,
-                new_status=chosen_status,
-                changed_by=request.user,
-                remarks=f"[{source_tag}] Sync conflict #{conflict.id} resolved ({action_label})",
-            )
-
-        if conflict.telecrm_lead:
-            conflict.telecrm_lead.last_synced_status = chosen_status
-            conflict.telecrm_lead.save(update_fields=["last_synced_status"])
-
-        conflict.status = new_state
-        conflict.resolved_by = request.user
-        conflict.resolved_at = timezone.now()
-        conflict.notes = f"Resolved by {request.user.username} via {action_label} (prev={prev_status} -> {chosen_status})"
-        conflict.save(update_fields=["status", "resolved_by", "resolved_at", "notes"])
-
-        Activity.objects.create(
-            user=request.user,
-            action="TeleCRM Conflict Resolved",
-            object_type="Lead",
-            object_id=str(lead.id),
-            description=(
-                f"Resolved SyncConflict #{conflict.id} for {lead.name} ({lead.phone}): "
-                f"{action_label} -> {chosen_status} (CRM={conflict.crm_status}, TeleCRM={conflict.telecrm_status})"
-            ),
-        )
-
-    messages.success(request, f"Conflict #{conflict.id} resolved ({action_label}): Lead #{lead.id} set to {chosen_status}.")
-    return redirect("telecrm_sync_conflicts")

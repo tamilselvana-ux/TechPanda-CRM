@@ -1,6 +1,5 @@
-from datetime import timedelta
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 from django.utils import timezone
 from leads.models import Lead, LeadStatus
 
@@ -23,7 +22,6 @@ class TeleCRMLead(models.Model):
     )
     telecrm_created_at = models.DateTimeField(null=True, blank=True, db_index=True)
     telecrm_modified_at = models.DateTimeField(null=True, blank=True)
-    last_synced_status = models.CharField(max_length=64, blank=True, default='', help_text="Status at last completed sync for dual-edit conflict detection")
     history_fetched = models.BooleanField(default=False, db_index=True)
     last_synced_at = models.DateTimeField(auto_now=True)
 
@@ -240,144 +238,3 @@ class TeleCRMSyncRun(models.Model):
 
     def __str__(self):
         return f"{self.kind} ({self.status}) - started {self.started_at}"
-
-
-class SyncConflict(models.Model):
-    """
-    Records status conflicts between TechPanda CRM and TeleCRM for manual review
-    (e.g., Enrolled protection or both sides edited since last successful sync).
-    """
-    STATUS_OPEN = 'OPEN'
-    STATUS_KEPT_CRM = 'KEPT_CRM'
-    STATUS_USED_TELECRM = 'USED_TELECRM'
-    RESOLUTION_CHOICES = [
-        (STATUS_OPEN, 'Open'),
-        (STATUS_KEPT_CRM, 'Kept CRM'),
-        (STATUS_USED_TELECRM, 'Used TeleCRM'),
-    ]
-
-    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='sync_conflicts')
-    telecrm_lead = models.ForeignKey(TeleCRMLead, null=True, blank=True, on_delete=models.SET_NULL, related_name='conflicts')
-    crm_status = models.CharField(max_length=64)
-    crm_status_at = models.DateTimeField(null=True, blank=True)
-    telecrm_status = models.CharField(max_length=64)
-    telecrm_status_at = models.DateTimeField(null=True, blank=True)
-    telecrm_status_label = models.CharField(max_length=128, blank=True, default='')
-    applied_status = models.CharField(max_length=64)
-    rule_applied = models.CharField(max_length=64, blank=True, default='')
-    status = models.CharField(max_length=20, choices=RESOLUTION_CHOICES, default=STATUS_OPEN, db_index=True)
-    resolved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='resolved_sync_conflicts'
-    )
-    resolved_at = models.DateTimeField(null=True, blank=True)
-    notes = models.TextField(blank=True, default='')
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    class Meta:
-        db_table = 'telecrm_sync_conflict'
-        ordering = ['-created_at']
-        verbose_name = 'TeleCRM Sync Conflict'
-        verbose_name_plural = 'TeleCRM Sync Conflicts'
-
-    def __str__(self):
-        return f"Lead #{self.lead_id}: CRM({self.crm_status}) vs TeleCRM({self.telecrm_status}) [{self.status}]"
-
-
-class SyncLock(models.Model):
-    """
-    Database-backed distributed lock and sync-enablement state shared between
-    telecrm_import and telecrm_sync. Held by telecrm_import for its entire run;
-    telecrm_sync exits cleanly whenever the import lock is held.
-    """
-    DEFAULT_NAME = 'telecrm_global'
-
-    name = models.CharField(max_length=64, unique=True, default=DEFAULT_NAME)
-    holder = models.CharField(max_length=64, blank=True, default='')
-    run_id = models.IntegerField(null=True, blank=True)
-    is_locked = models.BooleanField(default=False, db_index=True)
-    sync_enabled = models.BooleanField(
-        default=False,
-        help_text='Enabled automatically only after telecrm_import finishes successfully'
-    )
-    acquired_at = models.DateTimeField(null=True, blank=True)
-    expires_at = models.DateTimeField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = 'telecrm_sync_lock'
-        verbose_name = 'TeleCRM Sync Lock'
-        verbose_name_plural = 'TeleCRM Sync Locks'
-
-    def __str__(self):
-        state = f"LOCKED by {self.holder} (run={self.run_id})" if self.is_locked else "UNLOCKED"
-        return f"{self.name}: {state} | sync_enabled={self.sync_enabled}"
-
-    @classmethod
-    def acquire(
-        cls,
-        name: str = DEFAULT_NAME,
-        holder: str = 'import',
-        run_id: int = None,
-        ttl_hours: int = 24,
-        disable_sync_while_held: bool = False,
-    ):
-        now = timezone.now()
-        with transaction.atomic():
-            cls.objects.get_or_create(name=name)
-            lock = cls.objects.select_for_update().get(name=name)
-            if lock.is_locked and (lock.expires_at is None or lock.expires_at > now):
-                return False, lock
-            lock.is_locked = True
-            lock.holder = holder
-            lock.run_id = run_id
-            lock.acquired_at = now
-            lock.expires_at = now + timedelta(hours=ttl_hours)
-            if disable_sync_while_held:
-                lock.sync_enabled = False
-            lock.save(update_fields=[
-                'is_locked', 'holder', 'run_id', 'acquired_at', 'expires_at', 'sync_enabled', 'updated_at'
-            ])
-            return True, lock
-
-    @classmethod
-    def release(
-        cls,
-        name: str = DEFAULT_NAME,
-        holder: str = None,
-        enable_sync: bool = None,
-    ) -> None:
-        with transaction.atomic():
-            lock = cls.objects.select_for_update().filter(name=name).first()
-            if not lock:
-                return
-            if holder is None or lock.holder == holder:
-                lock.is_locked = False
-                lock.holder = ''
-                lock.run_id = None
-                lock.acquired_at = None
-                lock.expires_at = None
-            if enable_sync is not None:
-                lock.sync_enabled = bool(enable_sync)
-            lock.save(update_fields=[
-                'is_locked', 'holder', 'run_id', 'acquired_at', 'expires_at', 'sync_enabled', 'updated_at'
-            ])
-
-    @classmethod
-    def is_held(cls, name: str = DEFAULT_NAME, holder: str = None) -> bool:
-        now = timezone.now()
-        qs = cls.objects.filter(name=name, is_locked=True).filter(
-            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now)
-        )
-        if holder is not None:
-            qs = qs.filter(holder=holder)
-        return qs.exists()
-
-    @classmethod
-    def is_sync_enabled(cls, name: str = DEFAULT_NAME) -> bool:
-        if getattr(settings, 'TELECRM_SYNC_ENABLED', False):
-            return True
-        return cls.objects.filter(name=name, sync_enabled=True).exists()

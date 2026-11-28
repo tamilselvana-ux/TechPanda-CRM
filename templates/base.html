@@ -81,13 +81,13 @@
  <a href="{% url 'automation-list' %}" class="nav-item {% if request.resolver_match.url_name in 'automation-list flow-builder flow-builder-detail' %}active{% endif %}">
  <span class="nav-text">WhatsApp Automations</span>
  </a>
- <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' and request.resolver_match.url_name == 'facebook_leads' %}active{% endif %}">
- <span class="nav-text">Facebook Leads</span>
+ <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' and request.resolver_match.url_name in 'facebook_leads meta_leads' %}active{% endif %}">
+ <span class="nav-text">Meta Leads</span>
  </a>
  <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_telecrm_sync_dashboard' %}active{% endif %}">
  <span class="nav-text">TeleCRM Sync</span>
  </a>
- <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_telecrm_sync_dashboard' %}active{% endif %}">
  <span class="nav-text">Sync Conflicts</span>
  </a>
  <a href="{% url 'telecaller_rnr_report' %}" class="nav-item {% if request.resolver_match.url_name == 'telecaller_rnr_report' %}active{% endif %}">
@@ -265,7 +265,7 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
  <span class="nav-text">Follow-ups</span>
  </a>
- <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_telecrm_sync_dashboard' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
  <span class="nav-text">Sync Conflicts</span>
  </a>
@@ -288,7 +288,7 @@
  </a>
  <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
- <span class="nav-text">Facebook Leads</span>
+ <span class="nav-text">Meta Leads</span>
  </a>
  <a href="{% url 'manager_reports' %}" class="nav-item {% if request.resolver_match.url_name == 'manager_reports' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
@@ -306,7 +306,7 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
  <span class="nav-text">Student Enrollments</span>
  </a>
- <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_telecrm_sync_dashboard' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
  <span class="nav-text">Sync Conflicts</span>
  </a>
@@ -318,7 +318,7 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
  <span class="nav-text">Student Enrollments</span>
  </a>
- <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_telecrm_sync_dashboard' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
  <span class="nav-text">Sync Conflicts</span>
  </a>
@@ -360,7 +360,7 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
  <span class="nav-text">Student Enrollments</span>
  </a>
- <a href="{% url 'telecrm_sync_conflicts' %}" class="nav-item {% if request.resolver_match.url_name == 'telecrm_sync_conflicts' %}active{% endif %}">
+ <a href="{% url 'admin_telecrm_sync_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_telecrm_sync_dashboard' %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
  <span class="nav-text">Sync Conflicts</span>
  </a>
@@ -563,9 +563,9 @@
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
  <span class="nav-text">Import Leads (Excel)</span>
  </a>
- <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if 'facebook-leads' in request.path and 'accounts' not in request.path %}active{% endif %}">
+ <a href="{% url 'fb_leads:facebook_leads' %}" class="nav-item {% if request.resolver_match.namespace == 'fb_leads' and request.resolver_match.url_name in 'facebook_leads meta_leads' or 'meta-leads' in request.path and 'accounts' not in request.path %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
- <span class="nav-text">Facebook Leads</span>
+ <span class="nav-text">Meta Leads</span>
  </a>
  <a href="{% url 'fb_leads:fb_accounts' %}" class="nav-item {% if 'accounts' in request.path and 'facebook' in request.path %}active{% endif %}">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>

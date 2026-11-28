@@ -352,13 +352,11 @@ GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '').strip()
 DEFAULT_GST_RATE = os.getenv('DEFAULT_GST_RATE', '18.00')
 
 # TeleCRM Integration & Live Sync Configuration
-TELECRM_SYNC_TOKEN = os.getenv('TELECRM_SYNC_TOKEN', os.getenv('TELECRM_TOKEN', '')).strip()
-TELECRM_TOKEN = TELECRM_SYNC_TOKEN
+TELECRM_TOKEN = os.getenv('TELECRM_TOKEN', '').strip()
 TELECRM_ENTERPRISE_ID = os.getenv('TELECRM_ENTERPRISE_ID', '681848fb55c90e360f77494c').strip()
 TELECRM_SYNC_ENABLED = os.getenv('TELECRM_SYNC_ENABLED', 'False').strip().lower() in ('true', '1', 'yes')
-TELECRM_SYNC_INTERVAL_MIN = int(os.getenv('TELECRM_SYNC_INTERVAL_MIN', '10'))
+TELECRM_SYNC_INTERVAL_MIN = int(os.getenv('TELECRM_SYNC_INTERVAL_MIN', '5'))
 TELECRM_MAX_WORKERS = int(os.getenv('TELECRM_MAX_WORKERS', '5'))
-TELECRM_RATE_LIMIT_RPS = float(os.getenv('TELECRM_RATE_LIMIT_RPS', '4.0'))
 
 
 # ==============================================================================

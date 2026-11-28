@@ -117,12 +117,18 @@ class FacebookLead(models.Model):
     ad_id = models.CharField(max_length=64, blank=True)
     ad_name = models.CharField(max_length=255, blank=True)
     campaign_name = models.CharField(max_length=255, blank=True)
+    class Platform(models.TextChoices):
+        FACEBOOK = 'facebook', 'Facebook'
+        INSTAGRAM = 'instagram', 'Instagram'
+        UNKNOWN = 'unknown', 'Unknown'
+
     platform = models.CharField(
         max_length=20,
+        choices=Platform.choices,
+        default=Platform.UNKNOWN,
         blank=True,
-        default='',
         db_index=True,
-        help_text="Origin platform from Meta API (fb, ig)"
+        help_text="Origin platform from Meta API (facebook, instagram, unknown)"
     )
 
     all_answers = models.JSONField(default=dict, blank=True)  # every question/answer from the form
@@ -160,6 +166,14 @@ class FacebookLead(models.Model):
 
     class Meta:
         ordering = ["-created_on_facebook", "-received_at"]
+
+    @property
+    def branch_name(self):
+        if self.lead and self.lead.branch:
+            return self.lead.branch.name
+        if self.fb_page and self.fb_page.branch:
+            return self.fb_page.branch.name
+        return "No branch"
 
     def __str__(self):
         return f"{self.full_name or 'Lead'} ({self.phone or self.email})"

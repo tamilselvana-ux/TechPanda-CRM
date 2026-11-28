@@ -75,17 +75,12 @@ class CallHistory(models.Model):
         help_text="True if call notes have been submitted and call record is finalized"
     )
     recording_url = models.CharField(max_length=500, blank=True, default='')
-    telecrm_recording_path = models.CharField(max_length=500, blank=True, default='', help_text="Original TeleCRM callRecording filePath backup (no local audio)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Call histories'
-        indexes = [
-            models.Index(fields=['caller', 'call_started_at'], name='call_caller_start_idx'),
-            models.Index(fields=['lead', 'call_started_at'], name='call_lead_start_idx'),
-        ]
 
     def __str__(self):
         caller_name = self.caller.username if self.caller else 'Unknown'

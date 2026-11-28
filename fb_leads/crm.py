@@ -15,15 +15,13 @@ from leads import intake
 
 log = logging.getLogger('crm')
 
-SOURCE = "Facebook"
-CHANNEL = "Facebook"
+SOURCE = "Meta"
+CHANNEL = "Meta"
 
 def resolve_meta_source_and_channel(fb_lead):
     """
-    Distinguishes between Facebook and Instagram lead origins using:
-    1. Meta Leadgen API 'platform' field ('fb' vs 'ig')
-    2. Ad name / Campaign name / Form name mentioning 'instagram' or 'ig'
-    3. Form answers mentioning Instagram handle or placement
+    Distinguishes between Facebook and Instagram lead origins.
+    Canonical source is 'Meta' with platform = 'facebook' or 'instagram' or 'unknown'.
     """
     platform_val = (getattr(fb_lead, 'platform', '') or '').strip().lower()
     corpus = f"{fb_lead.campaign_name or ''} {fb_lead.ad_name or ''} {fb_lead.form_name or ''}".lower()
@@ -31,8 +29,10 @@ def resolve_meta_source_and_channel(fb_lead):
     combined = f"{corpus} {answers_corpus}"
 
     if platform_val in ['ig', 'instagram'] or 'instagram' in combined or 'insta' in combined:
-        return 'Instagram', 'Instagram', 'instagram', 'Instagram Lead Ad — '
-    return 'Facebook', 'Facebook', 'facebook', 'Facebook Lead Ad — '
+        return 'Meta', 'Meta', 'instagram', 'Meta Lead Ad (Instagram) — '
+    if platform_val in ['fb', 'facebook']:
+        return 'Meta', 'Meta', 'facebook', 'Meta Lead Ad (Facebook) — '
+    return 'Meta', 'Meta', 'unknown', 'Meta Lead Ad — '
 
 
 
@@ -99,8 +99,8 @@ def push_to_crm(fb_lead):
         # Handle cases where lead omitted phone number or provided test tool dummy data
         if not raw_phone or "<test lead:" in raw_phone.lower():
             log.info("Facebook lead %s has no valid phone number (%r); skipping CRM contact intake.", fb_lead.leadgen_id, raw_phone)
-            fb_lead.crm_result = "skipped_no_phone"
-            fb_lead.crm_error = f"Lead omitted phone number or submitted test dummy data ({raw_phone or 'empty'}); skipped CRM lead creation."
+            fb_lead.crm_result = "error"
+            fb_lead.crm_error = f"Invalid phone: lead omitted phone number or submitted test dummy data ({raw_phone or 'empty'}); skipped CRM lead creation."
             fb_lead.save(update_fields=["crm_result", "crm_error"])
             return None
 
@@ -134,6 +134,17 @@ def push_to_crm(fb_lead):
 
         from leads.qualification import autofill_lead_qualification
         autofill_lead_qualification(lead, payload, source=src_name)
+
+        if lead:
+            update_lead_fields = []
+            if lead.source in ('Facebook', ''):
+                lead.source = 'Meta'
+                update_lead_fields.append('source')
+            if plat_code in ('facebook', 'instagram') and lead.platform in ('', 'other', 'unknown'):
+                lead.platform = plat_code
+                update_lead_fields.append('platform')
+            if update_lead_fields:
+                lead.save(update_fields=update_lead_fields)
 
     except Exception as exc:  # bad / missing phone, DB problems: keep the Facebook record, show the error
         log.warning("Facebook lead %s not added to CRM: %s", fb_lead.leadgen_id, exc)

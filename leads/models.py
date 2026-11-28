@@ -21,7 +21,6 @@ class LeadStatus(models.TextChoices):
     INTERESTED = 'Interested', 'Interested'
     FOLLOW_UP = 'Follow-up', 'Follow-up'
     DEMO_SCHEDULED = 'Demo Scheduled', 'Demo Scheduled'
-    DEMO_ATTENDED = 'Demo Attended', 'Demo Attended'
     INSTITUTE_VISIT = 'Institute Visit', 'Institute Visit'
     CONVERTED = 'Converted', 'Converted'
     ENROLLED = 'Enrolled', 'Enrolled'
@@ -174,6 +173,7 @@ class Lead(models.Model):
         ('whatsapp', 'WhatsApp'),
         ('google', 'Google'),
         ('direct', 'Direct / Walk-in'),
+        ('unknown', 'Unknown'),
         ('other', 'Other'),
     )
     platform = models.CharField(
@@ -235,54 +235,11 @@ class Lead(models.Model):
     whatsapp_opt_out = models.BooleanField(default=False, db_index=True, help_text="Lead has opted out of WhatsApp communications")
     whatsapp_consent_given = models.BooleanField(default=True, db_index=True, help_text="Explicit consent on record to message via WhatsApp")
     whatsapp_consent_date = models.DateTimeField(null=True, blank=True)
-    is_deleted = models.BooleanField(default=False, db_index=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    deleted_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='deleted_leads'
-    )
-    is_starred = models.BooleanField(default=False, db_index=True)
-    telecrm_status_id = models.CharField(max_length=64, blank=True, default='', db_index=True, help_text="Original TeleCRM status identifier")
-    telecrm_status_label = models.CharField(max_length=128, blank=True, default='', help_text="Original TeleCRM status label name")
-    priority = models.CharField(max_length=32, blank=True, default='', db_index=True, help_text="Lead priority e.g. Hot, Warm, Cold")
-    sub_status_reason = models.CharField(max_length=128, blank=True, default='', help_text="Granular reason e.g. Financial Issue, Other Language")
-    call_attempts_count = models.PositiveIntegerField(default=0, db_index=True, help_text="Derived call attempts count from Call not picked_N")
-    is_recall_eligible = models.BooleanField(default=False, db_index=True, help_text="Flagged for recall list after 3+ unanswered attempts")
-    visit_scheduled_date = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Center visit scheduled date and time from TeleCRM")
-    do_not_call = models.BooleanField(default=False, db_index=True, help_text="Enforced constraint: do not initiate outbound calls")
-    do_not_email = models.BooleanField(default=False, db_index=True, help_text="Enforced constraint: do not dispatch marketing/outbound emails")
-    BRANCH_SOURCE_CHOICES = (
-        ('status', 'Derived from Status'),
-        ('preferred', 'Preferred Branch'),
-        ('base', 'Base Branch'),
-        ('assignee', 'Assignee Branch'),
-        ('none', 'None / Unknown'),
-    )
-    branch_source = models.CharField(
-        max_length=20,
-        choices=BRANCH_SOURCE_CHOICES,
-        default='none',
-        blank=True,
-        db_index=True,
-        help_text="Origin of assigned physical branch (status/preferred/base/none)"
-    )
-    phone_invalid = models.BooleanField(
-        default=False,
-        db_index=True,
-        help_text="True if contact number is not a valid 10-digit Indian mobile starting with 6-9"
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['status', 'updated_at'], name='lead_stat_upd_idx'),
-            models.Index(fields=['is_deleted', 'created_at'], name='lead_del_created_idx'),
-        ]
 
     def __str__(self):
         return f"{self.name} - {self.phone} ({self.status})"
@@ -406,9 +363,7 @@ class Lead(models.Model):
             })
 
     def save(self, *args, **kwargs):
-        if getattr(self, 'phone_invalid', False):
-            self.normalized_phone = None
-        elif self.phone and not str(self.phone).startswith('NoPhone-'):
+        if self.phone and not str(self.phone).startswith('NoPhone-'):
             from .duplicates import normalize_phone
             norm = normalize_phone(self.phone)
             if norm and not str(norm).startswith('NoPhone-'):
@@ -827,6 +782,7 @@ class TelecallerLeadSetup(models.Model):
     )
     channel_name = models.CharField(max_length=100, blank=True, default='', db_index=True)
     assignment_percentage = models.IntegerField(default=0, help_text="e.g. 40 for 40%")
+    is_locked = models.BooleanField(default=False, help_text="Manual override lock: prevents auto equal split from redistributing this row's percentage")
     lead_count = models.IntegerField(default=0, help_text="Target / Limit lead count")
     current_leads_assigned = models.IntegerField(default=0, help_text="Count of leads assigned under this rule")
     is_active = models.BooleanField(default=True)

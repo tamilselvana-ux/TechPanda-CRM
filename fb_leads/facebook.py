@@ -67,6 +67,7 @@ def get_token_for_page(page_id=None):
         return token
     except Exception as exc:
         log.warning("Could not fetch page token dynamically, falling back to FB_PAGE_TOKEN: %s", exc)
+        _page_token_cache["token"] = settings.FB_PAGE_TOKEN
         return settings.FB_PAGE_TOKEN
 
 
@@ -76,9 +77,28 @@ def _get(path, params=None, page_id=None, token=None):
     r = requests.get(f"{_graph()}/{path}", params=params, timeout=20)
     data = r.json()
     if "error" in data:
-        _page_token_cache.clear()  # try a fresh token next time
-        raise RuntimeError(data["error"].get("message", "Facebook API error"))
+        err = data["error"]
+        if isinstance(err, dict) and err.get("code") in (190, 102):
+            _page_token_cache.clear()  # try a fresh token next time
+        raise RuntimeError(err.get("message", "Facebook API error") if isinstance(err, dict) else str(err))
     return data
+
+
+import re
+
+def normalize_meta_platform(platform_str, ad_name="", campaign_name="", form_name=""):
+    """Normalize Meta API platform values ('fb' -> 'facebook', 'ig' -> 'instagram', else 'unknown')."""
+    s = str(platform_str or "").strip().lower()
+    if s in ("fb", "facebook"):
+        return "facebook"
+    if s in ("ig", "instagram"):
+        return "instagram"
+    corpus = f" {campaign_name or ''} {ad_name or ''} {form_name or ''} ".lower()
+    if "instagram" in corpus or "insta" in corpus or re.search(r'\b(ig)\b', corpus):
+        return "instagram"
+    if "facebook" in corpus or re.search(r'\b(fb)\b', corpus):
+        return "facebook"
+    return "unknown"
 
 
 def _pick(answers, keys):
@@ -240,7 +260,12 @@ def save_lead(lead, page_id="", form_name="", cutoff_date=None):
             "ad_id": lead.get("ad_id", ""),
             "ad_name": lead.get("ad_name", ""),
             "campaign_name": lead.get("campaign_name", ""),
-            "platform": (lead.get("platform") or "").strip(),
+            "platform": normalize_meta_platform(
+                lead.get("platform"),
+                ad_name=lead.get("ad_name", ""),
+                campaign_name=lead.get("campaign_name", ""),
+                form_name=form_name
+            ),
             "all_answers": answers,
             "created_on_facebook": created_dt,
         },

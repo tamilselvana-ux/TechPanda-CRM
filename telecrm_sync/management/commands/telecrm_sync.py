@@ -19,7 +19,6 @@ from telecrm_sync.mapper import (
     suppress_sync_side_effects,
 )
 from telecrm_sync.models import (
-    SyncLock,
     TeleCRMAction,
     TeleCRMLead,
     TeleCRMStatusMap,
@@ -44,7 +43,7 @@ class Command(BaseCommand):
             "--token",
             type=str,
             default=None,
-            help="Override TELECRM_SYNC_TOKEN"
+            help="Override TELECRM_TOKEN"
         )
         parser.add_argument(
             "--enterprise-id",
@@ -72,17 +71,10 @@ class Command(BaseCommand):
         window_minutes_override: Optional[int] = options["window_minutes"]
         max_pages: int = max(1, options.get("max_pages") or 5)
 
-        # 0. Never run telecrm_sync while telecrm_import holds the DB lock
-        if SyncLock.is_held(holder="import") or TeleCRMSyncRun.objects.filter(kind="import", status="RUNNING").exists():
-            self.stdout.write(
-                "Notice: telecrm_import holds SyncLock / is currently running. Exiting cleanly without running sync."
-            )
-            return
-
-        # 1. Feature Flag Gate (settings flag or DB SyncLock.sync_enabled set after import finishes)
-        sync_enabled = SyncLock.is_sync_enabled()
+        # 1. Feature Flag Gate
+        sync_enabled = getattr(settings, "TELECRM_SYNC_ENABLED", False)
         if not sync_enabled and not force_flag:
-            self.stdout.write("Notice: TELECRM_SYNC_ENABLED is False (waiting for import or TELECRM_SYNC_ENABLED=True). Exiting without action. Use --force to override.")
+            self.stdout.write("Notice: TELECRM_SYNC_ENABLED is False. Exiting without action. Use --force to override.")
             return
 
         # 2. Concurrency Lock: Check if another sync is currently RUNNING
@@ -102,92 +94,77 @@ class Command(BaseCommand):
 
         client = TeleCRMClient(token=token, enterprise_id=enterprise_id)
         if not client.token:
-            self.stdout.write("Error: TELECRM_SYNC_TOKEN is not configured. Exiting.")
+            self.stdout.write("Error: TELECRM_TOKEN is not configured. Exiting.")
             return
 
-        acquired, current_lock = SyncLock.acquire(holder="sync", ttl_hours=1)
-        if not acquired:
-            self.stdout.write(
-                f"Notice: SyncLock is currently held by {current_lock.holder} (run_id={current_lock.run_id}). Exiting cleanly."
-            )
-            return
+        # Step 0: Ensure team members and pipeline status metadata are synchronized
+        self._sync_metadata(client)
+
+        start_time = time.time()
+        window_to = timezone.now()
+
+        # 3. Determine Incremental Time Window
+        if window_minutes_override:
+            window_from = window_to - timedelta(minutes=window_minutes_override)
+        else:
+            last_run = TeleCRMSyncRun.objects.filter(kind="sync", status="COMPLETED").order_by("-started_at").first()
+            if last_run and (last_run.finished_at or last_run.started_at):
+                ref_time = last_run.finished_at or last_run.started_at
+                # 10 minutes overlap for clock skew safety
+                window_from = ref_time - timedelta(minutes=10)
+            else:
+                # First run lookback fallback: 2 hours (efficient incremental intake)
+                window_from = window_to - timedelta(hours=2)
+
+        sync_run = TeleCRMSyncRun.objects.create(
+            kind="sync",
+            status="RUNNING",
+            started_at=window_to,
+            cursor={
+                "window_from": window_from.isoformat(),
+                "window_to": window_to.isoformat()
+            }
+        )
+
+        self.stdout.write(f"Sync Run #{sync_run.id} started. Window: {window_from.isoformat()} to {window_to.isoformat()}")
 
         try:
-            # Step 0: Ensure team members and pipeline status metadata are synchronized
-            self._sync_metadata(client)
+            target_lead_ids: Set[str] = set()
+            raw_leads_by_id: Dict[str, Dict[str, Any]] = {}
 
-            start_time = time.time()
-            window_to = timezone.now()
+            # 4. Discover New Leads (newest-first, bounded by max_pages)
+            self._discover_new_leads(client, target_lead_ids, raw_leads_by_id, max_pages=max_pages)
 
-            # 3. Determine Incremental Time Window
-            if window_minutes_override:
-                window_from = window_to - timedelta(minutes=window_minutes_override)
-            else:
-                last_run = TeleCRMSyncRun.objects.filter(kind="sync", status="COMPLETED").order_by("-started_at").first()
-                if last_run and (last_run.finished_at or last_run.started_at):
-                    ref_time = last_run.finished_at or last_run.started_at
-                    # 10 minutes overlap for clock skew safety
-                    window_from = ref_time - timedelta(minutes=10)
-                else:
-                    # Start from the historical import START timestamp so changes during import are captured
-                    last_import = TeleCRMSyncRun.objects.filter(kind="import", status="COMPLETED").order_by("-started_at").first()
-                    if last_import and last_import.started_at:
-                        window_from = last_import.started_at - timedelta(minutes=10)
-                    else:
-                        # Fallback if no prior import exists: 2 hours
-                        window_from = window_to - timedelta(hours=2)
+            # 5. Discover Leads with Activity in Window
+            self._discover_changed_leads(client, window_from, window_to, target_lead_ids, raw_leads_by_id)
 
-            sync_run = TeleCRMSyncRun.objects.create(
-                kind="sync",
-                status="RUNNING",
-                started_at=window_to,
-                cursor={
-                    "window_from": window_from.isoformat(),
-                    "window_to": window_to.isoformat()
-                }
+            self.stdout.write(f"Total leads identified for update/sync: {len(target_lead_ids)}")
+            sync_run.leads_seen = len(target_lead_ids)
+
+            # 6. Fetch New Actions for New/Changed Leads concurrently
+            actions_by_lead_id = self._fetch_new_actions(client, target_lead_ids)
+
+            # 7. Map & Ingest into CRM under side-effect suppression
+            self._map_sync_batch(sync_run, target_lead_ids, raw_leads_by_id, actions_by_lead_id)
+
+            sync_run.status = "COMPLETED"
+            sync_run.finished_at = timezone.now()
+            sync_run.save(update_fields=["status", "finished_at", "leads_seen", "leads_created", "leads_merged", "actions_created", "errors"])
+
+            elapsed = time.time() - start_time
+            self.stdout.write(
+                f"Sync Run #{sync_run.id} COMPLETED in {elapsed:.2f}s | "
+                f"Seen: {sync_run.leads_seen} | Created: {sync_run.leads_created} | Merged: {sync_run.leads_merged} | Actions: {sync_run.actions_created}"
             )
 
-            self.stdout.write(f"Sync Run #{sync_run.id} started. Window: {window_from.isoformat()} to {window_to.isoformat()}")
-
-            try:
-                target_lead_ids: Set[str] = set()
-                raw_leads_by_id: Dict[str, Dict[str, Any]] = {}
-
-                # 4. Discover New Leads (newest-first, bounded by max_pages)
-                self._discover_new_leads(client, target_lead_ids, raw_leads_by_id, max_pages=max_pages)
-
-                # 5. Discover Leads with Activity in Window
-                self._discover_changed_leads(client, window_from, window_to, target_lead_ids, raw_leads_by_id)
-
-                self.stdout.write(f"Total leads identified for update/sync: {len(target_lead_ids)}")
-                sync_run.leads_seen = len(target_lead_ids)
-
-                # 6. Fetch New Actions for New/Changed Leads concurrently
-                actions_by_lead_id = self._fetch_new_actions(client, target_lead_ids)
-
-                # 7. Map & Ingest into CRM under side-effect suppression
-                self._map_sync_batch(sync_run, target_lead_ids, raw_leads_by_id, actions_by_lead_id)
-
-                sync_run.status = "COMPLETED"
-                sync_run.finished_at = timezone.now()
-                sync_run.save(update_fields=["status", "finished_at", "leads_seen", "leads_created", "leads_merged", "actions_created", "errors"])
-
-                elapsed = time.time() - start_time
-                self.stdout.write(
-                    f"Sync Run #{sync_run.id} COMPLETED in {elapsed:.2f}s | "
-                    f"Seen: {sync_run.leads_seen} | Created: {sync_run.leads_created} | Merged: {sync_run.leads_merged} | Actions: {sync_run.actions_created}"
-                )
-
-            except Exception as exc:
-                sync_run.status = "FAILED"
-                sync_run.finished_at = timezone.now()
-                sync_run.errors.append({"error": "SyncError", "detail": str(exc), "timestamp": timezone.now().isoformat()})
-                sync_run.save(update_fields=["status", "finished_at", "errors"])
-                logger.exception("TeleCRM sync run %s failed: %s", sync_run.id, exc)
-                self._handle_failure_streak(sync_run, exc)
-                raise CommandError(f"Sync failed: {exc}") from exc
-        finally:
-            SyncLock.release(holder="sync")
+        except Exception as exc:
+            sync_run.status = "FAILED"
+            sync_run.finished_at = timezone.now()
+            sync_run.errors.append({"error": "SyncError", "detail": str(exc), "timestamp": timezone.now().isoformat()})
+            sync_run.save(update_fields=["status", "finished_at", "errors"])
+            logger.exception("TeleCRM sync run %s failed: %s", sync_run.id, exc)
+            self._handle_failure_streak(sync_run, exc)
+            raise CommandError(f"Sync failed: {exc}") from exc
 
     def _sync_metadata(self, client: TeleCRMClient):
         """Ensures team members and pipeline statuses from TeleCRM are up to date."""

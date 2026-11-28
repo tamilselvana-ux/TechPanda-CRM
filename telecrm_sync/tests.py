@@ -19,13 +19,11 @@ from leads.models import (
 )
 from products.models import Product
 from .client import (
-    SharedRateLimiter,
     TeleCRMAuthError,
     TeleCRMClient,
     TeleCRMError,
     TeleCRMRateLimitError,
     TeleCRMServerError,
-    get_shared_rate_limiter,
 )
 from .mapper import (
     determine_lead_source_and_platform,
@@ -174,71 +172,6 @@ class TeleCRMClientTests(TestCase):
         self.assertEqual(count, 50)
         self.assertEqual(mock_request.call_count, 2)
 
-    def test_shared_rate_limiter_caps_across_workers(self):
-        from concurrent.futures import ThreadPoolExecutor
-
-        limiter = get_shared_rate_limiter()
-        self.assertLessEqual(limiter.rate_per_sec, 4.0)
-
-        shared = SharedRateLimiter(rate_per_sec=4.0)
-        client_a = TeleCRMClient(token="tok", enterprise_id="ent", rate_limiter=shared)
-        client_b = TeleCRMClient(token="tok", enterprise_id="ent", rate_limiter=shared)
-
-        sleep_calls = []
-
-        def fake_sleep(sec):
-            sleep_calls.append(sec)
-
-        with patch("telecrm_sync.client.time.sleep", side_effect=fake_sleep), \
-             patch("telecrm_sync.client.time.monotonic", side_effect=[100.0] * 10):
-            with ThreadPoolExecutor(max_workers=3) as pool:
-                futures = [
-                    pool.submit(client_a.rate_limiter.acquire if i % 2 == 0 else client_b.rate_limiter.acquire)
-                    for i in range(6)
-                ]
-                for f in futures:
-                    f.result()
-
-        stats = shared.get_stats()
-        self.assertEqual(stats["total_requests"], 6)
-        # First call at t=100.0 (no sleep), subsequent 5 calls spaced by 0.25s: 0.25, 0.50, 0.75, 1.00, 1.25
-        self.assertEqual(len(sleep_calls), 5)
-        self.assertAlmostEqual(max(sleep_calls), 1.25, places=2)
-
-    @patch("telecrm_sync.client.time.sleep")
-    @patch("requests.Session.request")
-    def test_429_exponential_backoff_and_logging(self, mock_request, mock_sleep):
-        shared = SharedRateLimiter(rate_per_sec=4.0)
-        client = TeleCRMClient(token="tok", enterprise_id="ent", rate_limiter=shared)
-
-        resp_429_1 = MagicMock(status_code=429, text="Too Many Requests", headers={})
-        resp_429_2 = MagicMock(status_code=429, text="Too Many Requests", headers={})
-        resp_200 = MagicMock(status_code=200, text='{"total_count": 7}')
-        resp_200.json.return_value = {"total_count": 7}
-        mock_request.side_effect = [resp_429_1, resp_429_2, resp_200]
-
-        with self.assertLogs("telecrm_sync.client", level="WARNING") as cm:
-            count = client.count_leads()
-
-        self.assertEqual(count, 7)
-        self.assertEqual(mock_request.call_count, 3)
-        self.assertEqual(shared.get_stats()["rate_limit_429_count"], 2)
-        self.assertTrue(any("HTTP 429 rate limit hit" in msg and "Exponential backoff" in msg for msg in cm.output))
-        # Attempt 1 backoff >= 2.0s, shared penalize sleep, and Attempt 2 backoff >= 4.0s
-        backoff_sleeps = [c.args[0] for c in mock_sleep.call_args_list if c.args[0] >= 2.0]
-        self.assertGreaterEqual(len(backoff_sleeps), 2)
-        self.assertGreaterEqual(backoff_sleeps[0], 2.0)
-        self.assertTrue(any(s >= 4.0 for s in backoff_sleeps))
-
-    def test_single_sync_token_shared_by_import_and_sync(self):
-        with patch.object(settings, "TELECRM_SYNC_TOKEN", "unified_sync_tok"), \
-             patch.object(settings, "TELECRM_TOKEN", ""):
-            c1 = TeleCRMClient()
-            c2 = TeleCRMClient()
-            self.assertEqual(c1.token, "unified_sync_tok")
-            self.assertEqual(c2.token, "unified_sync_tok")
-            self.assertIs(c1.rate_limiter, c2.rate_limiter)
-
 
 class TeleCRMMapperHelperTests(TestCase):
     @classmethod
@@ -376,9 +309,8 @@ class TeleCRMLeadIngestionTests(TestCase):
         # Rating 0 must be empty / None, NOT 1
         self.assertIsNone(lead.rating)
         self.assertEqual(lead.custom_fields.get("telecrm_rating"), 0)
-        # Branch must remain None (branch_source='none') when status/preferred/base/assignee are all absent
-        self.assertIsNone(lead.branch)
-        self.assertEqual(lead.branch_source, "none")
+        # Branch inferred from Facebook pageName because base_branch was empty
+        self.assertEqual(lead.branch, self.branch_annanagar)
         # Assignee role TELECALLER -> assigned_telecaller set
         self.assertEqual(lead.assigned_telecaller, self.telecaller)
         self.assertIsNone(lead.assigned_counselor)
@@ -622,9 +554,10 @@ class TeleCRMImportCommandTests(TestCase):
         from django.core.management.base import CommandError
 
         out = StringIO()
-        with patch.object(settings, "TELECRM_SYNC_TOKEN", ""), patch.object(settings, "TELECRM_TOKEN", ""):
-            with self.assertRaises(CommandError):
-                call_command("telecrm_import", stdout=out)
+        with patch("telecrm_sync.client.settings.TELECRM_TOKEN", ""):
+            with patch("telecrm_sync.management.commands.telecrm_import.settings.TELECRM_TOKEN", ""):
+                with self.assertRaises(CommandError):
+                    call_command("telecrm_import", stdout=out)
 
     @patch("telecrm_sync.management.commands.telecrm_import.TeleCRMClient")
     def test_import_command_end_to_end_mocked(self, mock_client_cls):
@@ -767,199 +700,6 @@ class TeleCRMSyncCommandTests(TestCase):
         run = TeleCRMSyncRun.objects.filter(kind="sync", status="COMPLETED").first()
         self.assertIsNotNone(run)
         self.assertEqual(run.leads_created, 1)
-
-    @patch("telecrm_sync.management.commands.telecrm_sync.TeleCRMClient")
-    def test_sync_exits_cleanly_when_import_holds_lock(self, mock_client_cls):
-        from io import StringIO
-        from django.core.management import call_command
-        from django.test import override_settings
-        from .models import SyncLock
-
-        acquired, _ = SyncLock.acquire(holder="import", run_id=999, disable_sync_while_held=True)
-        self.assertTrue(acquired)
-        try:
-            out = StringIO()
-            with override_settings(TELECRM_SYNC_ENABLED=True):
-                call_command("telecrm_sync", "--force", stdout=out)
-            self.assertIn("holds SyncLock", out.getvalue())
-            mock_client_cls.assert_not_called()
-        finally:
-            SyncLock.release(holder="import")
-
-    @patch("telecrm_sync.management.commands.telecrm_import.TeleCRMClient")
-    def test_import_holds_lock_and_enables_sync_only_after_finish(self, mock_client_cls):
-        from io import StringIO
-        from django.core.management import call_command
-        from django.test import override_settings
-        from .models import SyncLock
-
-        mock_client = MagicMock()
-        mock_client.token = "tok"
-        mock_client.rate_limiter.get_stats.return_value = {
-            "total_requests": 4,
-            "rate_limit_429_count": 0,
-            "elapsed_sec": 1.0,
-            "requests_per_sec": 4.0,
-            "requests_per_hour": 14400.0,
-            "cap_rps": 4.0,
-        }
-        mock_client.list_team_members.return_value = []
-        mock_client.get_enterprise_statuses.return_value = []
-        mock_client.count_leads.return_value = 0
-
-        # While import is mid-run (inside list_leads), SyncLock must be held by import and sync disabled
-        observed_during_run = {}
-
-        def fake_list_leads(skip=0, limit=100):
-            observed_during_run["held_by_import"] = SyncLock.is_held(holder="import")
-            observed_during_run["sync_enabled"] = SyncLock.is_sync_enabled()
-            return []
-
-        mock_client.list_leads.side_effect = fake_list_leads
-        mock_client_cls.return_value = mock_client
-
-        with override_settings(TELECRM_SYNC_ENABLED=False):
-            out = StringIO()
-            call_command("telecrm_import", "--skip-history", stdout=out)
-            self.assertTrue(observed_during_run.get("held_by_import"))
-            self.assertFalse(observed_during_run.get("sync_enabled"))
-            self.assertFalse(SyncLock.is_held(holder="import"))
-            self.assertTrue(SyncLock.is_sync_enabled())
-            self.assertIn("req/hr", out.getvalue())
-
-    def test_rederive_branches_precedence_and_preserves_human_branch(self):
-        from io import StringIO
-        from django.core.management import call_command
-
-        b_tnagar, _ = Branch.objects.get_or_create(name="T. Nagar")
-        b_velachery, _ = Branch.objects.get_or_create(name="Velachery")
-        b_porur, _ = Branch.objects.get_or_create(name="Porur")
-
-        tc = User.objects.create_user(
-            username="tc_rederive",
-            email="tc_rederive@itechpanda.com",
-            role=UserRole.TELECALLER,
-            branch=b_porur,
-        )
-        TeleCRMUser.objects.create(
-            uid="uid_rederive_1",
-            email="tc_rederive@itechpanda.com",
-            name="TC Rederive",
-            crm_user=tc,
-        )
-
-        # 1. Old T. Nagar default (branch_source='none') -> falls back to assignee.branch (Porur)
-        l_default = Lead.objects.create(
-            name="Old Default",
-            phone="9876540001",
-            branch=b_tnagar,
-            branch_source="none",
-        )
-        TeleCRMLead.objects.create(
-            telecrm_id="tc_rd_1",
-            phone="9876540001",
-            crm_lead=l_default,
-            raw={"employeeid": "tc_rederive@itechpanda.com", "fields": {}},
-        )
-
-        # 2. Human-set Velachery (even if branch_source='none') -> must NOT be changed
-        l_human = Lead.objects.create(
-            name="Human Set",
-            phone="9876540002",
-            branch=b_velachery,
-            branch_source="none",
-        )
-        TeleCRMLead.objects.create(
-            telecrm_id="tc_rd_2",
-            phone="9876540002",
-            crm_lead=l_human,
-            raw={"employeeid": "tc_rederive@itechpanda.com", "fields": {}},
-        )
-
-        out = StringIO()
-        call_command("telecrm_rederive_branches", stdout=out)
-        l_default.refresh_from_db()
-        l_human.refresh_from_db()
-
-        self.assertEqual(l_default.branch, b_porur)
-        self.assertEqual(l_default.branch_source, "assignee")
-        self.assertEqual(l_human.branch, b_velachery)
-        self.assertEqual(l_human.branch_source, "none")
-
-    @patch("telecrm_sync.management.commands.telecrm_import.TeleCRMClient")
-    def test_resume_failed_run_skips_extracted_leads_and_fetched_history(self, mock_client_cls):
-        from io import StringIO
-        from django.core.management import call_command
-
-        # Existing FAILED run with skip=2 already extracted and 1 lead already history_fetched=True
-        failed_run = TeleCRMSyncRun.objects.create(
-            kind="import",
-            status="FAILED",
-            leads_seen=2,
-            cursor={"skip": 2, "history_done": False, "mapping_done": False},
-        )
-        TeleCRMLead.objects.create(
-            telecrm_id="tc_done_1",
-            phone="9876541111",
-            history_fetched=True,
-            raw={"id": "tc_done_1", "fields": {"name": "Done Lead", "phone": "9876541111"}},
-        )
-        TeleCRMLead.objects.create(
-            telecrm_id="tc_pending_2",
-            phone="9876542222",
-            history_fetched=False,
-            raw={"id": "tc_pending_2", "fields": {"name": "Pending Lead", "phone": "9876542222"}},
-        )
-
-        mock_client = MagicMock()
-        mock_client.token = "tok"
-        mock_client.rate_limiter.get_stats.return_value = {
-            "total_requests": 3, "rate_limit_429_count": 0, "elapsed_sec": 1.0,
-            "requests_per_sec": 3.0, "requests_per_hour": 10800.0, "cap_rps": 4.0,
-        }
-        mock_client.get_team_members.return_value = []
-        mock_client.get_lead_stage_pipeline.return_value = {"statuses": []}
-        mock_client.count_leads.return_value = 2
-        mock_client.get_lead_actions.return_value = ([], 0)
-        mock_client_cls.return_value = mock_client
-
-        out = StringIO()
-        call_command("telecrm_import", "--resume", "--noinput", stdout=out)
-
-        failed_run.refresh_from_db()
-        self.assertEqual(failed_run.status, "COMPLETED")
-        # Must NOT re-download leads when skip >= total_enterprise_leads
-        mock_client.list_leads.assert_not_called()
-        # Must ONLY fetch history for tc_pending_2, NOT tc_done_1
-        mock_client.get_lead_actions.assert_called_once_with("tc_pending_2", skip=0, limit=100)
-
-    def test_dashboard_shows_failed_run_even_when_errors_json_empty(self):
-        admin = User.objects.create_user(
-            username="admin_dash_err",
-            email="admin_dash_err@itechpanda.com",
-            password="pw",
-            role=UserRole.ADMIN,
-        )
-        failed = TeleCRMSyncRun.objects.create(kind="import", status="FAILED", errors=[])
-        self.client.force_login(admin)
-        resp = self.client.get("/admin/telecrm-sync/")
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Recent Integration Warnings")
-        self.assertContains(resp, f"#{failed.id}")
-
-    def test_multiple_invalid_short_phones_do_not_collide_on_normalized_phone(self):
-        l1, _, c1 = ingest_or_merge_lead(
-            {"id": "tc_inv_91_a", "status": "Fresh", "fields": {"name": "Short A", "phone": "+91"}}
-        )
-        l2, _, c2 = ingest_or_merge_lead(
-            {"id": "tc_inv_91_b", "status": "Fresh", "fields": {"name": "Short B", "phone": "91"}}
-        )
-        self.assertTrue(c1)
-        self.assertTrue(c2)
-        self.assertTrue(l1.phone_invalid)
-        self.assertTrue(l2.phone_invalid)
-        self.assertIsNone(l1.normalized_phone)
-        self.assertIsNone(l2.normalized_phone)
 
 
 class TeleCRMPhase5UITests(TestCase):

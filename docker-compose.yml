@@ -10,19 +10,6 @@ services:
       - /srv/private/crm:/app/private_media:z
     networks: [web]
 
-  scheduler:
-    build: .
-    container_name: techpanda-crm-scheduler
-    restart: always
-    env_file: .env
-    depends_on:
-      - crm
-    command: ["sh", "-c", "while true; do python manage.py telecrm_sync; sleep 600; done"]
-    volumes:
-      - /srv/media/crm:/app/media:z
-      - /srv/private/crm:/app/private_media:z
-    networks: [web]
-
 networks:
   web:
     external: true
